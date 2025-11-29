@@ -23,10 +23,17 @@ CREATE TABLE merchants (
     country TEXT DEFAULT 'US',
     timezone TEXT DEFAULT 'America/New_York',
     currency TEXT DEFAULT 'USD',
+    google_maps_url TEXT,
+    youtube_url TEXT,
+    social_links JSONB DEFAULT '[]'::jsonb,
     theme JSONB DEFAULT '{"primaryColor":"#8B5CF6","secondaryColor":"#EC4899","accentColor":"#F59E0B","backgroundColor":"#FFFFFF","textColor":"#1F2937","fontFamily":"Inter","borderRadius":"md","buttonStyle":"solid"}'::jsonb,
     settings JSONB DEFAULT '{"bookingLeadTime":2,"bookingWindow":30,"cancellationPolicy":"Free cancellation up to 24 hours before your appointment.","confirmationEmailEnabled":true,"reminderEmailEnabled":true,"reminderHoursBefore":24,"showStaffSelection":true,"requirePhoneNumber":false,"allowNotes":true}'::jsonb,
     is_active BOOLEAN DEFAULT true
 );
+
+-- Migration: Add google_maps_url column if it doesn't exist
+-- Run this if you already have the merchants table
+-- ALTER TABLE merchants ADD COLUMN IF NOT EXISTS google_maps_url TEXT;
 
 -- Services table
 CREATE TABLE services (

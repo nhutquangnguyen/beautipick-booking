@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { DesignForm } from "@/components/dashboard/design/design-form";
+import { QRCodeGenerator } from "@/components/dashboard/design/qr-code-generator";
 import { MerchantTheme, defaultTheme } from "@/types/database";
 import { getSignedImageUrl } from "@/lib/wasabi";
 
@@ -31,7 +32,12 @@ export default async function SettingsDesignPage() {
   ]);
 
   const merchant = merchantResult.data;
-  const theme = (merchant?.theme as MerchantTheme) ?? defaultTheme;
+  if (!merchant) redirect("/login");
+
+  const theme = (merchant.theme as MerchantTheme) ?? defaultTheme;
+
+  // Generate signed URL for logo
+  const logoUrl = await getImageUrl(merchant.logo_url);
 
   // Generate signed URLs for gallery images
   const galleryWithSignedUrls = await Promise.all(
@@ -49,6 +55,8 @@ export default async function SettingsDesignPage() {
     }))
   );
 
+  const bookingPageUrl = `${process.env.NEXT_PUBLIC_APP_URL || ""}/${merchant.slug}`;
+
   return (
     <div className="space-y-6">
       <div>
@@ -59,9 +67,15 @@ export default async function SettingsDesignPage() {
       <DesignForm
         merchantId={user.id}
         theme={theme}
-        slug={merchant?.slug ?? ""}
+        slug={merchant.slug}
         gallery={galleryWithSignedUrls}
         products={productsWithSignedUrls}
+      />
+
+      <QRCodeGenerator
+        url={bookingPageUrl}
+        businessName={merchant.business_name}
+        logoUrl={logoUrl}
       />
     </div>
   );

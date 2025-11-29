@@ -23,6 +23,7 @@ import {
   ExternalLink,
   Copy,
   Check,
+  Link as LinkIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Merchant } from "@/types/database";
@@ -70,6 +71,7 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
         { href: "/dashboard/settings/hours", label: tSettings("hours"), icon: Clock },
         { href: "/dashboard/settings/gallery", label: tSettings("gallery"), icon: Images },
         { href: "/dashboard/settings/products", label: tSettings("products"), icon: ShoppingBag },
+        { href: "/dashboard/settings/links", label: tSettings("links"), icon: LinkIcon },
         { href: "/dashboard/settings/design", label: tSettings("design"), icon: Palette },
       ],
     },

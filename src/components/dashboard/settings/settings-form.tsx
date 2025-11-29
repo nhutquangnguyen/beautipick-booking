@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { MapPin, Youtube } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Merchant, MerchantSettings } from "@/types/database";
 import { generateSlug } from "@/lib/utils";
@@ -34,6 +34,8 @@ export function SettingsForm({
     zip_code: merchant.zip_code ?? "",
     timezone: merchant.timezone,
     currency: merchant.currency,
+    google_maps_url: merchant.google_maps_url ?? "",
+    youtube_url: merchant.youtube_url ?? "",
   });
 
   const [bookingSettings, setBookingSettings] = useState<MerchantSettings>(settings);
@@ -56,6 +58,8 @@ export function SettingsForm({
           city: businessInfo.city || null,
           state: businessInfo.state || null,
           zip_code: businessInfo.zip_code || null,
+          google_maps_url: businessInfo.google_maps_url || null,
+          youtube_url: businessInfo.youtube_url || null,
         })
         .eq("id", merchant.id);
 
@@ -82,12 +86,6 @@ export function SettingsForm({
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.push("/");
-    router.refresh();
   };
 
   return (
@@ -260,6 +258,40 @@ export function SettingsForm({
             </div>
           </div>
 
+          <div>
+            <label className="label flex items-center gap-2">
+              <MapPin className="h-4 w-4" />
+              Google Maps Link
+            </label>
+            <input
+              type="url"
+              value={businessInfo.google_maps_url}
+              onChange={(e) => setBusinessInfo({ ...businessInfo, google_maps_url: e.target.value })}
+              className="input mt-1"
+              placeholder="https://maps.app.goo.gl/... or https://goo.gl/maps/..."
+            />
+            <p className="mt-2 text-xs text-gray-500">
+              Paste any Google Maps link to your location. Customers can click to open directions.
+            </p>
+          </div>
+
+          <div>
+            <label className="label flex items-center gap-2">
+              <Youtube className="h-4 w-4" />
+              YouTube Video
+            </label>
+            <input
+              type="url"
+              value={businessInfo.youtube_url}
+              onChange={(e) => setBusinessInfo({ ...businessInfo, youtube_url: e.target.value })}
+              className="input mt-1"
+              placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..."
+            />
+            <p className="mt-2 text-xs text-gray-500">
+              Add a YouTube video to showcase your salon on your booking page.
+            </p>
+          </div>
+
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 pt-4">
             <button type="submit" disabled={loading} className="btn btn-primary btn-md w-full sm:w-auto">
               {loading ? "Saving..." : "Save Changes"}
@@ -400,21 +432,6 @@ export function SettingsForm({
             </button>
           </div>
         </form>
-      </div>
-
-      {/* Account */}
-      <div className="card p-4 sm:p-6">
-        <h2 className="text-base sm:text-lg font-semibold text-gray-900">Account</h2>
-        <p className="mt-1 text-sm text-gray-500">Sign out of your account</p>
-        <div className="mt-4 sm:mt-6">
-          <button
-            onClick={handleSignOut}
-            className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 w-full sm:w-auto"
-          >
-            <LogOut className="h-4 w-4" />
-            Sign Out
-          </button>
-        </div>
       </div>
     </div>
   );

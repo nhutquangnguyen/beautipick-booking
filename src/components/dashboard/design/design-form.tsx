@@ -2,10 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ExternalLink, ShoppingBag } from "lucide-react";
+import { ExternalLink, ShoppingBag, GripVertical, Check, ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { MerchantTheme } from "@/types/database";
+import {
+  MerchantTheme,
+  ContentSection,
+  themePresets,
+  defaultContentOrder,
+  defaultTheme
+} from "@/types/database";
 
 interface GalleryImage {
   id: string;
@@ -28,6 +34,9 @@ const FONT_OPTIONS = [
   { value: "Playfair Display", label: "Playfair Display" },
   { value: "Montserrat", label: "Montserrat" },
   { value: "Lato", label: "Lato" },
+  { value: "DM Sans", label: "DM Sans" },
+  { value: "Nunito", label: "Nunito" },
+  { value: "Quicksand", label: "Quicksand" },
 ];
 
 const RADIUS_OPTIONS = [
@@ -43,6 +52,31 @@ const BUTTON_STYLES = [
   { value: "outline", label: "Outline" },
   { value: "ghost", label: "Ghost" },
 ];
+
+const HEADER_STYLES = [
+  { value: "overlay", label: "Overlay", description: "Logo and name over cover image" },
+  { value: "stacked", label: "Stacked", description: "Cover image above, info below" },
+  { value: "minimal", label: "Minimal", description: "Simple header without cover" },
+];
+
+const SECTION_LABELS: Record<ContentSection, string> = {
+  about: "About",
+  contact: "Contact Info",
+  social: "Social Links",
+  video: "YouTube Video",
+  gallery: "Gallery",
+  products: "Products",
+  services: "Services",
+};
+
+// Helper to ensure theme has all required fields
+function ensureCompleteTheme(theme: Partial<MerchantTheme>): MerchantTheme {
+  return {
+    ...defaultTheme,
+    ...theme,
+    contentOrder: theme.contentOrder || defaultContentOrder,
+  };
+}
 
 export function DesignForm({
   merchantId,
@@ -61,7 +95,8 @@ export function DesignForm({
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [formData, setFormData] = useState<MerchantTheme>(theme);
+  const [showCustomization, setShowCustomization] = useState(false);
+  const [formData, setFormData] = useState<MerchantTheme>(ensureCompleteTheme(theme));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,154 +116,283 @@ export function DesignForm({
     }
   };
 
-  const updateTheme = (field: keyof MerchantTheme, value: string) => {
+  const updateTheme = <K extends keyof MerchantTheme>(field: K, value: MerchantTheme[K]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const selectPreset = (presetId: string) => {
+    const preset = themePresets.find((p) => p.id === presetId);
+    if (preset) {
+      setFormData({
+        themeId: presetId,
+        ...preset.theme,
+      });
+    }
+  };
+
+  const moveSection = (index: number, direction: "up" | "down") => {
+    const newOrder = [...formData.contentOrder];
+    const newIndex = direction === "up" ? index - 1 : index + 1;
+    if (newIndex >= 0 && newIndex < newOrder.length) {
+      [newOrder[index], newOrder[newIndex]] = [newOrder[newIndex], newOrder[index]];
+      updateTheme("contentOrder", newOrder);
+    }
+  };
+
   return (
-    <div className="grid gap-8 lg:grid-cols-2">
-      <div className="card p-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <h3 className="font-semibold text-gray-900">Colors</h3>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="label">Primary Color</label>
-                <div className="mt-1 flex items-center gap-2">
-                  <input
-                    type="color"
-                    value={formData.primaryColor}
-                    onChange={(e) => updateTheme("primaryColor", e.target.value)}
-                    className="h-10 w-14 cursor-pointer rounded border border-gray-300"
-                  />
-                  <input
-                    type="text"
-                    value={formData.primaryColor}
-                    onChange={(e) => updateTheme("primaryColor", e.target.value)}
-                    className="input flex-1"
-                  />
+    <div className="space-y-6">
+      {/* Theme Presets */}
+      <div className="card p-4 sm:p-6">
+        <h3 className="font-semibold text-gray-900 mb-4">Choose a Theme</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {themePresets.map((preset) => (
+            <button
+              key={preset.id}
+              type="button"
+              onClick={() => selectPreset(preset.id)}
+              className={`relative p-3 rounded-xl border-2 text-left transition-all hover:scale-[1.02] ${
+                formData.themeId === preset.id
+                  ? "border-purple-500 ring-2 ring-purple-200"
+                  : "border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              {formData.themeId === preset.id && (
+                <div className="absolute top-2 right-2 bg-purple-500 text-white rounded-full p-0.5">
+                  <Check className="h-3 w-3" />
                 </div>
-              </div>
-              <div>
-                <label className="label">Secondary Color</label>
-                <div className="mt-1 flex items-center gap-2">
-                  <input
-                    type="color"
-                    value={formData.secondaryColor}
-                    onChange={(e) => updateTheme("secondaryColor", e.target.value)}
-                    className="h-10 w-14 cursor-pointer rounded border border-gray-300"
-                  />
-                  <input
-                    type="text"
-                    value={formData.secondaryColor}
-                    onChange={(e) => updateTheme("secondaryColor", e.target.value)}
-                    className="input flex-1"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="label">Background</label>
-                <div className="mt-1 flex items-center gap-2">
-                  <input
-                    type="color"
-                    value={formData.backgroundColor}
-                    onChange={(e) => updateTheme("backgroundColor", e.target.value)}
-                    className="h-10 w-14 cursor-pointer rounded border border-gray-300"
-                  />
-                  <input
-                    type="text"
-                    value={formData.backgroundColor}
-                    onChange={(e) => updateTheme("backgroundColor", e.target.value)}
-                    className="input flex-1"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="label">Text Color</label>
-                <div className="mt-1 flex items-center gap-2">
-                  <input
-                    type="color"
-                    value={formData.textColor}
-                    onChange={(e) => updateTheme("textColor", e.target.value)}
-                    className="h-10 w-14 cursor-pointer rounded border border-gray-300"
-                  />
-                  <input
-                    type="text"
-                    value={formData.textColor}
-                    onChange={(e) => updateTheme("textColor", e.target.value)}
-                    className="input flex-1"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="font-semibold text-gray-900">Typography</h3>
-            <div className="mt-4">
-              <label className="label">Font Family</label>
-              <select
-                value={formData.fontFamily}
-                onChange={(e) => updateTheme("fontFamily", e.target.value)}
-                className="input mt-1"
-              >
-                {FONT_OPTIONS.map((font) => (
-                  <option key={font.value} value={font.value}>
-                    {font.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="font-semibold text-gray-900">Buttons</h3>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="label">Corner Radius</label>
-                <select
-                  value={formData.borderRadius}
-                  onChange={(e) =>
-                    updateTheme("borderRadius", e.target.value as MerchantTheme["borderRadius"])
-                  }
-                  className="input mt-1"
-                >
-                  {RADIUS_OPTIONS.map((radius) => (
-                    <option key={radius.value} value={radius.value}>
-                      {radius.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="label">Button Style</label>
-                <select
-                  value={formData.buttonStyle}
-                  onChange={(e) =>
-                    updateTheme("buttonStyle", e.target.value as MerchantTheme["buttonStyle"])
-                  }
-                  className="input mt-1"
-                >
-                  {BUTTON_STYLES.map((style) => (
-                    <option key={style.value} value={style.value}>
-                      {style.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4 pt-4">
-            <button type="submit" disabled={loading} className="btn btn-primary btn-md">
-              {loading ? "Saving..." : "Save Design"}
+              )}
+              <div
+                className="h-16 rounded-lg mb-2"
+                style={{ background: preset.preview }}
+              />
+              <p className="font-medium text-sm text-gray-900">{preset.name}</p>
+              <p className="text-xs text-gray-500 line-clamp-1">{preset.description}</p>
             </button>
-            {success && (
-              <span className="text-sm text-green-600">Design saved successfully!</span>
-            )}
-          </div>
-        </form>
+          ))}
+        </div>
       </div>
+
+      {/* Content Order */}
+      <div className="card p-4 sm:p-6">
+        <h3 className="font-semibold text-gray-900 mb-2">Content Order</h3>
+        <p className="text-sm text-gray-500 mb-4">Drag to reorder sections on your booking page</p>
+        <div className="space-y-2">
+          {formData.contentOrder.map((section, index) => (
+            <div
+              key={section}
+              className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+            >
+              <GripVertical className="h-4 w-4 text-gray-400" />
+              <span className="flex-1 text-sm font-medium text-gray-700">
+                {SECTION_LABELS[section]}
+              </span>
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  onClick={() => moveSection(index, "up")}
+                  disabled={index === 0}
+                  className="p-1 rounded hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <ChevronUp className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => moveSection(index, "down")}
+                  disabled={index === formData.contentOrder.length - 1}
+                  className="p-1 rounded hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Header Style */}
+      <div className="card p-4 sm:p-6">
+        <h3 className="font-semibold text-gray-900 mb-4">Header Style</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {HEADER_STYLES.map((style) => (
+            <button
+              key={style.value}
+              type="button"
+              onClick={() => updateTheme("headerStyle", style.value as MerchantTheme["headerStyle"])}
+              className={`p-4 rounded-xl border-2 text-left transition-all ${
+                formData.headerStyle === style.value
+                  ? "border-purple-500 bg-purple-50"
+                  : "border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              <p className="font-medium text-sm text-gray-900">{style.label}</p>
+              <p className="text-xs text-gray-500 mt-1">{style.description}</p>
+            </button>
+          ))}
+        </div>
+
+        <label className="flex items-center gap-3 mt-4 p-3 bg-gray-50 rounded-lg cursor-pointer">
+          <input
+            type="checkbox"
+            checked={formData.showSectionTitles}
+            onChange={(e) => updateTheme("showSectionTitles", e.target.checked)}
+            className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+          />
+          <div>
+            <p className="text-sm font-medium text-gray-700">Show Section Titles</p>
+            <p className="text-xs text-gray-500">Display titles like "Our Services", "Gallery", etc.</p>
+          </div>
+        </label>
+      </div>
+
+      {/* Customize Theme Toggle */}
+      <button
+        type="button"
+        onClick={() => setShowCustomization(!showCustomization)}
+        className="w-full card p-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
+      >
+        <div>
+          <h3 className="font-semibold text-gray-900">Customize Colors & Fonts</h3>
+          <p className="text-sm text-gray-500">Fine-tune colors, fonts, and button styles</p>
+        </div>
+        <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform ${showCustomization ? "rotate-180" : ""}`} />
+      </button>
+
+      {/* Custom Theme Options */}
+      {showCustomization && (
+        <div className="card p-4 sm:p-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <h3 className="font-semibold text-gray-900">Colors</h3>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="label">Primary Color</label>
+                  <div className="mt-1 flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={formData.primaryColor}
+                      onChange={(e) => updateTheme("primaryColor", e.target.value)}
+                      className="h-10 w-14 cursor-pointer rounded border border-gray-300"
+                    />
+                    <input
+                      type="text"
+                      value={formData.primaryColor}
+                      onChange={(e) => updateTheme("primaryColor", e.target.value)}
+                      className="input flex-1"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="label">Secondary Color</label>
+                  <div className="mt-1 flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={formData.secondaryColor}
+                      onChange={(e) => updateTheme("secondaryColor", e.target.value)}
+                      className="h-10 w-14 cursor-pointer rounded border border-gray-300"
+                    />
+                    <input
+                      type="text"
+                      value={formData.secondaryColor}
+                      onChange={(e) => updateTheme("secondaryColor", e.target.value)}
+                      className="input flex-1"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="label">Background</label>
+                  <div className="mt-1 flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={formData.backgroundColor}
+                      onChange={(e) => updateTheme("backgroundColor", e.target.value)}
+                      className="h-10 w-14 cursor-pointer rounded border border-gray-300"
+                    />
+                    <input
+                      type="text"
+                      value={formData.backgroundColor}
+                      onChange={(e) => updateTheme("backgroundColor", e.target.value)}
+                      className="input flex-1"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="label">Text Color</label>
+                  <div className="mt-1 flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={formData.textColor}
+                      onChange={(e) => updateTheme("textColor", e.target.value)}
+                      className="h-10 w-14 cursor-pointer rounded border border-gray-300"
+                    />
+                    <input
+                      type="text"
+                      value={formData.textColor}
+                      onChange={(e) => updateTheme("textColor", e.target.value)}
+                      className="input flex-1"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-gray-900">Typography</h3>
+              <div className="mt-4">
+                <label className="label">Font Family</label>
+                <select
+                  value={formData.fontFamily}
+                  onChange={(e) => updateTheme("fontFamily", e.target.value)}
+                  className="input mt-1"
+                >
+                  {FONT_OPTIONS.map((font) => (
+                    <option key={font.value} value={font.value}>
+                      {font.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-gray-900">Buttons</h3>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="label">Corner Radius</label>
+                  <select
+                    value={formData.borderRadius}
+                    onChange={(e) =>
+                      updateTheme("borderRadius", e.target.value as MerchantTheme["borderRadius"])
+                    }
+                    className="input mt-1"
+                  >
+                    {RADIUS_OPTIONS.map((radius) => (
+                      <option key={radius.value} value={radius.value}>
+                        {radius.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="label">Button Style</label>
+                  <select
+                    value={formData.buttonStyle}
+                    onChange={(e) =>
+                      updateTheme("buttonStyle", e.target.value as MerchantTheme["buttonStyle"])
+                    }
+                    className="input mt-1"
+                  >
+                    {BUTTON_STYLES.map((style) => (
+                      <option key={style.value} value={style.value}>
+                        {style.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Preview */}
       <div className="card overflow-hidden">
@@ -286,9 +450,11 @@ export function DesignForm({
           {/* Products Preview */}
           {products.length > 0 && (
             <div className="mt-3">
-              <p className="text-xs opacity-60 mb-2 flex items-center gap-1">
-                <ShoppingBag className="h-3 w-3" /> Products
-              </p>
+              {formData.showSectionTitles && (
+                <p className="text-xs opacity-60 mb-2 flex items-center gap-1">
+                  <ShoppingBag className="h-3 w-3" /> Products
+                </p>
+              )}
               <div className="flex gap-2">
                 {products.slice(0, 2).map((product) => (
                   <div
@@ -351,6 +517,7 @@ export function DesignForm({
             </div>
 
             <button
+              type="button"
               className="w-full py-2 text-sm font-medium transition-colors"
               style={{
                 backgroundColor:
@@ -376,6 +543,20 @@ export function DesignForm({
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Save Button */}
+      <div className="flex items-center gap-4">
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          className="btn btn-primary btn-md"
+        >
+          {loading ? "Saving..." : "Save Design"}
+        </button>
+        {success && (
+          <span className="text-sm text-green-600">Design saved successfully!</span>
+        )}
       </div>
     </div>
   );
