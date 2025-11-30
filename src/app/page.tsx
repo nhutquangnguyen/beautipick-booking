@@ -10,6 +10,7 @@ import {
   Check,
   ArrowRight,
   Sparkles,
+  Shield,
 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { LanguageSwitcherIcon } from "@/components/language-switcher";
@@ -235,82 +236,176 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Comparison Section */}
-      <section className="py-20 sm:py-32">
+      {/* Pricing Section */}
+      <section className="py-20 sm:py-32 bg-gradient-to-b from-white via-purple-50/30 to-pink-50/30">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
-              {t("comparisonTitle")}
+            <div className="inline-flex items-center gap-2 rounded-full bg-purple-100 px-4 py-1.5 text-sm font-medium text-purple-700 mb-4">
+              <Sparkles className="h-4 w-4" />
+              {t("pricingBadge")}
+            </div>
+            <h2 className="text-3xl sm:text-5xl font-bold text-gray-900">
+              {t("pricingTitle")}
             </h2>
-            <p className="mt-4 text-lg text-gray-600">
-              {t("comparisonSubtitle")}
+            <p className="mt-4 text-xl text-gray-600 max-w-2xl mx-auto">
+              {t("pricingSubtitle")}
             </p>
           </div>
 
-          <div className="max-w-4xl mx-auto">
-            <div className="grid sm:grid-cols-2 gap-8">
-              {/* Other Tools */}
-              <div className="rounded-2xl border-2 border-gray-200 p-6 sm:p-8">
-                <h3 className="text-lg font-semibold text-gray-500 mb-6">
-                  {t("comparisonTotal")}
-                </h3>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center pb-4 border-b">
-                    <span className="text-gray-600">{t("comparisonWebsite")}</span>
-                    <span className="font-semibold">$10-15/mo</span>
-                  </div>
-                  <div className="flex justify-between items-center pb-4 border-b">
-                    <span className="text-gray-600">{t("comparisonBooking")}</span>
-                    <span className="font-semibold">$10-20/mo</span>
-                  </div>
-                  <div className="flex justify-between items-center pb-4 border-b">
-                    <span className="text-gray-600">{t("comparisonPortfolio")}</span>
-                    <span className="font-semibold">$5-10/mo</span>
-                  </div>
-                  <div className="flex justify-between items-center pt-2">
-                    <span className="font-bold text-gray-900">{t("comparisonTotal")}</span>
-                    <span className="font-bold text-2xl text-red-500">$25-45/mo</span>
+          {/* Pricing Cards */}
+          <div className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto mb-12 pt-6">
+            {/* Free Trial Card */}
+            <div className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-green-400 to-emerald-500 rounded-3xl blur opacity-25 group-hover:opacity-40 transition-opacity"></div>
+              <div className="relative bg-white rounded-3xl p-8 shadow-lg border-2 border-green-200 hover:border-green-300 transition-all">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-2xl font-bold text-gray-900">{t("pricingFreeTrialTitle")}</h3>
+                  <div className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full">
+                    {t("pricingFreeTrialDuration")}
                   </div>
                 </div>
+                <div className="mb-6">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-6xl font-bold text-gray-900">{t("pricingFreeTrialPrice")}</span>
+                  </div>
+                  <p className="text-gray-600 mt-2">{t("pricingFreeTrialDesc")}</p>
+                </div>
+                <Link
+                  href="/signup"
+                  className="block w-full text-center py-3 rounded-full bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors shadow-md"
+                >
+                  {t("startFreeTrial")}
+                </Link>
               </div>
+            </div>
 
-              {/* BeautiPick */}
-              <div className="rounded-2xl border-2 border-purple-500 bg-gradient-to-br from-purple-50 to-pink-50 p-6 sm:p-8 relative">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-medium px-4 py-1 rounded-full">
-                  {t("comparisonBeautipick")}
+            {/* Standard Plan Card */}
+            <div className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-cyan-500 rounded-3xl blur opacity-25 group-hover:opacity-40 transition-opacity"></div>
+              <div className="relative bg-white rounded-3xl p-8 shadow-lg border-2 border-blue-200 hover:border-blue-300 transition-all">
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">{t("pricingStandardTitle")}</h3>
+                <div className="mb-6">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-6xl font-bold text-gray-900">{t("pricingStandardPriceShort")}</span>
+                    <span className="text-xl text-gray-600">{t("pricingStandardPricePerMonth")}</span>
+                  </div>
+                  <p className="text-gray-600 mt-2">{t("pricingStandardDesc")}</p>
+                  <p className="text-sm text-gray-500 mt-1">{t("pricingStandardPerDay")}</p>
                 </div>
-                <div className="mt-4 text-center">
-                  <div className="text-5xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                    {t("comparisonFree")}
+                <Link
+                  href="/signup"
+                  className="block w-full text-center py-3 rounded-full bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-colors shadow-md"
+                >
+                  {t("pricingChoosePlan")}
+                </Link>
+              </div>
+            </div>
+
+            {/* Annual Plan Card - Most Popular */}
+            <div className="relative group lg:scale-105">
+              <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 rounded-3xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity animate-pulse"></div>
+              <div className="relative bg-gradient-to-br from-purple-600 to-pink-600 rounded-3xl p-8 shadow-2xl">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-orange-500 text-white text-sm font-bold px-6 py-2 rounded-full shadow-lg whitespace-nowrap">
+                  {t("pricingMostPopular")}
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-4 mt-2">{t("pricingAnnualTitle")}</h3>
+                <div className="mb-6">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-6xl font-bold text-white">{t("pricingAnnualPriceShort")}</span>
+                    <span className="text-xl text-purple-100">{t("pricingAnnualPricePerYear")}</span>
                   </div>
-                  <div className="mt-6 space-y-3">
-                    <div className="flex items-center gap-2 text-gray-700">
-                      <Check className="h-5 w-5 text-green-500" />
-                      <span>{t("featurePortfolio")}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-700">
-                      <Check className="h-5 w-5 text-green-500" />
-                      <span>{t("featureServices")}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-700">
-                      <Check className="h-5 w-5 text-green-500" />
-                      <span>{t("featureBooking")}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-700">
-                      <Check className="h-5 w-5 text-green-500" />
-                      <span>{t("featureProducts")}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-700">
-                      <Check className="h-5 w-5 text-green-500" />
-                      <span>{t("featureBranding")}</span>
-                    </div>
+                  <div className="mt-4 bg-white/20 backdrop-blur rounded-xl p-3">
+                    <p className="text-white font-semibold">{t("pricingAnnualDesc")}</p>
+                    <p className="text-purple-100 text-sm mt-1">{t("pricingAnnualEffective")}</p>
                   </div>
+                </div>
+                <Link
+                  href="/signup"
+                  className="block w-full text-center py-3 rounded-full bg-white text-purple-600 font-bold hover:bg-purple-50 transition-colors shadow-lg"
+                >
+                  {t("pricingChoosePlanArrow")}
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Rollover Note */}
+          <div className="max-w-4xl mx-auto mb-16">
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-500 to-purple-600 p-6 shadow-xl">
+              <div className="absolute inset-0 bg-grid-white/10"></div>
+              <div className="relative flex items-start gap-4">
+                <div className="flex-shrink-0 bg-white/20 backdrop-blur rounded-full p-3">
+                  <Sparkles className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h4 className="text-white font-bold text-lg mb-1">{t("pricingSpecialOffer")}</h4>
+                  <p className="text-white/90">{t("pricingRolloverNote")}</p>
                 </div>
               </div>
             </div>
-            <p className="text-center mt-8 text-lg font-medium text-gray-600">
-              {t("comparisonSave")}
-            </p>
+          </div>
+
+          {/* Features List */}
+          <div className="max-w-4xl mx-auto">
+            <h3 className="text-2xl font-bold text-center text-gray-900 mb-10">
+              {t("pricingFeatureTitle")}
+            </h3>
+            <div className="grid sm:grid-cols-2 gap-6">
+              <div className="flex items-start gap-4 bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                  <Check className="h-6 w-6 text-green-600" />
+                </div>
+                <div>
+                  <div className="font-semibold text-gray-900">{t("pricingFeatureUnlimited")}</div>
+                  <div className="text-sm text-gray-600">{t("pricingFeatureUnlimitedDesc")}</div>
+                </div>
+              </div>
+              <div className="flex items-start gap-4 bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                  <Check className="h-6 w-6 text-green-600" />
+                </div>
+                <div>
+                  <div className="font-semibold text-gray-900">{t("pricingFeatureBookings")}</div>
+                  <div className="text-sm text-gray-600">{t("pricingFeatureBookingsDesc")}</div>
+                </div>
+              </div>
+              <div className="flex items-start gap-4 bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                  <Check className="h-6 w-6 text-green-600" />
+                </div>
+                <div>
+                  <div className="font-semibold text-gray-900">{t("pricingFeatureGallery")}</div>
+                  <div className="text-sm text-gray-600">{t("pricingFeatureGalleryDesc")}</div>
+                </div>
+              </div>
+              <div className="flex items-start gap-4 bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                  <Check className="h-6 w-6 text-green-600" />
+                </div>
+                <div>
+                  <div className="font-semibold text-gray-900">{t("pricingFeatureCustomDomain")}</div>
+                  <div className="text-sm text-gray-600">{t("pricingFeatureCustomDomainDesc")}</div>
+                </div>
+              </div>
+              <div className="flex items-start gap-4 bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                  <Check className="h-6 w-6 text-green-600" />
+                </div>
+                <div>
+                  <div className="font-semibold text-gray-900">{t("pricingFeatureNoFees")}</div>
+                  <div className="text-sm text-gray-600">{t("pricingFeatureNoFeesDesc")}</div>
+                </div>
+              </div>
+              <div className="flex items-start gap-4 bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                  <Check className="h-6 w-6 text-green-600" />
+                </div>
+                <div>
+                  <div className="font-semibold text-gray-900">{t("pricingFeatureSupport")}</div>
+                  <div className="text-sm text-gray-600">{t("pricingFeatureSupportDesc")}</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
