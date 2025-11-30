@@ -12,7 +12,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import { LanguageSwitcher } from "@/components/language-switcher";
+import { LanguageSwitcherIcon } from "@/components/language-switcher";
 
 export default async function Home() {
   const t = await getTranslations("landing");
@@ -29,14 +29,8 @@ export default async function Home() {
               </div>
               <span className="text-xl font-bold text-gray-900">{t("brand")}</span>
             </div>
-            <nav className="flex items-center gap-3 sm:gap-4">
-              <LanguageSwitcher className="hidden sm:block" />
-              <Link
-                href="/login"
-                className="text-sm font-medium text-gray-600 hover:text-gray-900"
-              >
-                {t("login")}
-              </Link>
+            <nav className="flex items-center gap-2 sm:gap-3">
+              <LanguageSwitcherIcon />
               <Link
                 href="/signup"
                 className="rounded-full bg-gradient-to-r from-purple-600 to-pink-600 px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"

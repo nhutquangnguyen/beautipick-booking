@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { generateSlug } from "@/lib/utils";
 import { defaultTheme, defaultSettings } from "@/types/database";
+import { OAuthButtons } from "@/components/auth/OAuthButtons";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
@@ -77,7 +78,20 @@ export default function SignupPage() {
           <h1 className="text-2xl font-bold text-gray-900">Create your account</h1>
           <p className="mt-2 text-gray-600">Start accepting bookings in minutes</p>
 
-          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <div className="mt-6">
+            <OAuthButtons redirectTo="/dashboard/onboarding" />
+          </div>
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="bg-white px-2 text-gray-500">Or continue with email</span>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
               <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
                 {error}

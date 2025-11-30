@@ -1,8 +1,8 @@
 "use client";
 
-import { useTransition } from "react";
+import { useTransition, useState, useRef, useEffect } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Globe } from "lucide-react";
+import { Globe, Check } from "lucide-react";
 
 const locales = [
   { code: "en", label: "English", flag: "🇺🇸" },
@@ -69,6 +69,76 @@ export function LanguageSwitcherCompact({ className = "" }: { className?: string
           {loc.flag}
         </button>
       ))}
+    </div>
+  );
+}
+
+export function LanguageSwitcherIcon({ className = "" }: { className?: string }) {
+  const locale = useLocale();
+  const [isPending, startTransition] = useTransition();
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const handleChange = (newLocale: string) => {
+    setIsOpen(false);
+    startTransition(() => {
+      document.cookie = `locale=${newLocale};path=/;max-age=31536000`;
+      window.location.reload();
+    });
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+
+  return (
+    <div ref={dropdownRef} className={`relative ${className}`}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        disabled={isPending}
+        className="p-2 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50"
+        title={locale === "vi" ? "Chọn ngôn ngữ" : "Select language"}
+      >
+        <Globe className="h-5 w-5 text-gray-600" />
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+          {locales.map((loc) => (
+            <button
+              key={loc.code}
+              onClick={() => handleChange(loc.code)}
+              disabled={isPending}
+              className={`w-full flex items-center justify-between px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors disabled:opacity-50 ${
+                locale === loc.code ? "bg-purple-50" : ""
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <span className="text-lg">{loc.flag}</span>
+                <span className={locale === loc.code ? "font-medium text-purple-700" : "text-gray-700"}>
+                  {loc.label}
+                </span>
+              </span>
+              {locale === loc.code && (
+                <Check className="h-4 w-4 text-purple-600" />
+              )}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
