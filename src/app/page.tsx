@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { LanguageSwitcherIcon } from "@/components/language-switcher";
+import { MobileMenu } from "@/components/landing/mobile-menu";
 
 export default async function Home() {
   const t = await getTranslations("landing");
@@ -29,14 +30,28 @@ export default async function Home() {
               </div>
               <span className="text-xl font-bold text-gray-900">{t("brand")}</span>
             </div>
-            <nav className="flex items-center gap-2 sm:gap-3">
-              <LanguageSwitcherIcon />
-              <Link
-                href="/signup"
-                className="rounded-full bg-gradient-to-r from-purple-600 to-pink-600 px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"
-              >
-                {t("getStarted")}
-              </Link>
+            <nav className="flex items-center gap-3">
+              {/* Mobile Menu (hamburger) */}
+              <div className="md:hidden">
+                <MobileMenu loginText={t("login")} getStartedText={t("getStarted")} />
+              </div>
+
+              {/* Desktop Menu */}
+              <div className="hidden md:flex items-center gap-3">
+                <LanguageSwitcherIcon />
+                <Link
+                  href="/login"
+                  className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  {t("login")}
+                </Link>
+                <Link
+                  href="/signup"
+                  className="rounded-full bg-gradient-to-r from-purple-600 to-pink-600 px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+                >
+                  {t("getStarted")}
+                </Link>
+              </div>
             </nav>
           </div>
         </div>
