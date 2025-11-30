@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { Availability } from "@/types/database";
-import { DAYS_OF_WEEK } from "@/lib/utils";
 
 type AvailabilityFormData = {
   [key: number]: {
@@ -20,6 +20,16 @@ const DEFAULT_HOURS = {
   end_time: "17:00",
 };
 
+const DAY_KEYS = [
+  "sunday",
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+] as const;
+
 export function AvailabilityForm({
   merchantId,
   availability,
@@ -29,6 +39,7 @@ export function AvailabilityForm({
   availability: Availability[];
   staff: { id: string; name: string }[];
 }) {
+  const t = useTranslations("hoursForm");
   const router = useRouter();
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
@@ -95,15 +106,15 @@ export function AvailabilityForm({
   return (
     <div className="space-y-6">
       <div className="card p-6">
-        <h2 className="text-lg font-semibold text-gray-900">Business Hours</h2>
+        <h2 className="text-lg font-semibold text-gray-900">{t("businessHours")}</h2>
         <p className="mt-1 text-sm text-gray-600">
-          Set your general operating hours. Staff-specific schedules can override these.
+          {t("businessHoursDesc")}
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          {DAYS_OF_WEEK.map((day, index) => (
+          {DAY_KEYS.map((dayKey, index) => (
             <div
-              key={day}
+              key={dayKey}
               className="flex flex-wrap items-center gap-4 rounded-lg border border-gray-200 p-4"
             >
               <div className="w-28">
@@ -114,7 +125,7 @@ export function AvailabilityForm({
                     onChange={(e) => updateDay(index, "is_available", e.target.checked)}
                     className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
                   />
-                  <span className="font-medium text-gray-900">{day}</span>
+                  <span className="font-medium text-gray-900">{t(dayKey)}</span>
                 </label>
               </div>
 
@@ -126,7 +137,7 @@ export function AvailabilityForm({
                     onChange={(e) => updateDay(index, "start_time", e.target.value)}
                     className="input w-auto"
                   />
-                  <span className="text-gray-500">to</span>
+                  <span className="text-gray-500">{t("to")}</span>
                   <input
                     type="time"
                     value={formData[index].end_time}
@@ -135,17 +146,17 @@ export function AvailabilityForm({
                   />
                 </div>
               ) : (
-                <span className="text-gray-500">Closed</span>
+                <span className="text-gray-500">{t("closed")}</span>
               )}
             </div>
           ))}
 
           <div className="flex items-center gap-4 pt-4">
             <button type="submit" disabled={loading} className="btn btn-primary btn-md">
-              {loading ? "Saving..." : "Save Hours"}
+              {loading ? t("saving") : t("saveHours")}
             </button>
             {success && (
-              <span className="text-sm text-green-600">Hours saved successfully!</span>
+              <span className="text-sm text-green-600">{t("hoursSaved")}</span>
             )}
           </div>
         </form>
@@ -153,9 +164,9 @@ export function AvailabilityForm({
 
       {staff.length > 0 && (
         <div className="card p-6">
-          <h2 className="text-lg font-semibold text-gray-900">Staff Schedules</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t("staffSchedules")}</h2>
           <p className="mt-1 text-sm text-gray-600">
-            Configure individual schedules for each staff member (coming soon)
+            {t("staffSchedulesDesc")}
           </p>
           <div className="mt-4 space-y-2">
             {staff.map((member) => (
@@ -164,7 +175,7 @@ export function AvailabilityForm({
                 className="flex items-center justify-between rounded-lg border border-gray-200 p-3"
               >
                 <span className="font-medium text-gray-900">{member.name}</span>
-                <span className="text-sm text-gray-500">Uses business hours</span>
+                <span className="text-sm text-gray-500">{t("usesBusinessHours")}</span>
               </div>
             ))}
           </div>

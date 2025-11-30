@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { uploadToWasabi, deleteFromWasabi, getSignedImageUrl, isWasabiKey } from "@/lib/wasabi";
+
+const BUCKET_NAME = "images";
 
 export async function POST(request: NextRequest) {
   try {
-    // Check authentication
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -38,14 +38,29 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Upload to Wasabi - returns the key
-    const key = await uploadToWasabi(buffer, fileName, file.type);
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from(BUCKET_NAME)
+      .upload(fileName, buffer, {
+        contentType: file.type,
+        upsert: true,
+      });
 
-    // Generate a signed URL for immediate display
-    const signedUrl = await getSignedImageUrl(key);
+    if (error) {
+      console.error("Supabase upload error:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
-    // Return both the key (for storage) and signedUrl (for display)
-    return NextResponse.json({ key, url: signedUrl });
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from(BUCKET_NAME)
+      .getPublicUrl(data.path);
+
+    // Return both the path (for storage) and URL (for display)
+    return NextResponse.json({
+      key: data.path,
+      url: urlData.publicUrl
+    });
   } catch (error) {
     console.error("Upload error:", error);
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
@@ -54,7 +69,6 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    // Check authentication
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -68,7 +82,12 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "No key provided" }, { status: 400 });
     }
 
-    await deleteFromWasabi(key);
+    const { error } = await supabase.storage.from(BUCKET_NAME).remove([key]);
+
+    if (error) {
+      console.error("Supabase delete error:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

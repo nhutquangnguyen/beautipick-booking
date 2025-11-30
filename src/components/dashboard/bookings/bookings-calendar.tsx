@@ -15,11 +15,22 @@ import {
   parseISO,
   isToday,
 } from "date-fns";
-import { ChevronLeft, ChevronRight, X, Check, Clock, Mail, Phone } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Check, Clock, Mail, Phone, Sparkles, ShoppingBag, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
-import { Booking } from "@/types/database";
-import { formatCurrency, formatTime } from "@/lib/utils";
+import { Booking, Json } from "@/types/database";
+import { formatCurrency, formatTime, formatDuration } from "@/lib/utils";
+
+// Cart item type for display
+interface CartItemData {
+  type: "service" | "product";
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  duration_minutes?: number;
+}
 
 type BookingWithRelations = Booking & {
   services: { name: string } | null;
@@ -31,9 +42,11 @@ interface BookingsCalendarProps {
 }
 
 export function BookingsCalendar({ bookings }: BookingsCalendarProps) {
+  const t = useTranslations("bookings");
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<BookingWithRelations | null>(null);
+  const [showActionDropdown, setShowActionDropdown] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
@@ -42,6 +55,7 @@ export function BookingsCalendar({ bookings }: BookingsCalendarProps) {
     const grouped: Record<string, BookingWithRelations[]> = {};
     bookings.forEach((booking) => {
       const dateKey = booking.booking_date;
+      if (!dateKey) return; // Skip bookings without a date
       if (!grouped[dateKey]) {
         grouped[dateKey] = [];
       }
@@ -49,7 +63,7 @@ export function BookingsCalendar({ bookings }: BookingsCalendarProps) {
     });
     // Sort bookings within each day by start_time
     Object.keys(grouped).forEach((date) => {
-      grouped[date].sort((a, b) => a.start_time.localeCompare(b.start_time));
+      grouped[date].sort((a, b) => (a.start_time || "").localeCompare(b.start_time || ""));
     });
     return grouped;
   }, [bookings]);
@@ -81,6 +95,7 @@ export function BookingsCalendar({ bookings }: BookingsCalendarProps) {
     await supabase.from("bookings").update({ status }).eq("id", id);
     router.refresh();
     setSelectedBooking(null);
+    setShowActionDropdown(false);
   };
 
   const getStatusColor = (status: string) => {
@@ -125,7 +140,7 @@ export function BookingsCalendar({ bookings }: BookingsCalendarProps) {
             onClick={() => setCurrentMonth(new Date())}
             className="rounded-lg px-3 py-1.5 text-sm font-medium text-purple-600 hover:bg-purple-50"
           >
-            Today
+            {t("today")}
           </button>
           <button
             onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
@@ -228,7 +243,7 @@ export function BookingsCalendar({ bookings }: BookingsCalendarProps) {
 
           {selectedDateBookings.length === 0 ? (
             <p className="text-gray-500 text-sm py-4 text-center">
-              No bookings on this day
+              {t("noBookingsOnDay")}
             </p>
           ) : (
             <div className="space-y-3">
@@ -246,16 +261,20 @@ export function BookingsCalendar({ bookings }: BookingsCalendarProps) {
                       <div className={`w-1 h-12 rounded-full ${getStatusColor(booking.status)}`} />
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-medium text-gray-900">
-                            {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
-                          </span>
+                          {booking.start_time && booking.end_time && (
+                            <span className="font-medium text-gray-900">
+                              {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
+                            </span>
+                          )}
                           <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${getStatusBadgeStyle(booking.status)}`}>
-                            {booking.status}
+                            {t(`status.${booking.status}`)}
                           </span>
                         </div>
                         <p className="text-sm text-gray-900 mt-0.5">{booking.customer_name}</p>
                         <p className="text-sm text-gray-500">
-                          {booking.services?.name}
+                          {booking.cart_items && Array.isArray(booking.cart_items) && booking.cart_items.length > 0
+                            ? `${booking.cart_items.length} ${booking.cart_items.length > 1 ? t("items") : t("item")}`
+                            : booking.services?.name}
                           {booking.staff && ` with ${booking.staff.name}`}
                         </p>
                       </div>
@@ -275,44 +294,78 @@ export function BookingsCalendar({ bookings }: BookingsCalendarProps) {
       {selectedBooking && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900">Booking Details</h2>
-              <button
-                onClick={() => setSelectedBooking(null)}
-                className="rounded-lg p-2 text-gray-400 hover:bg-gray-100"
-              >
-                <X className="h-5 w-5" />
-              </button>
+            <div className="mb-4">
+              <h2 className="text-xl font-bold text-gray-900">{t("bookingDetails")}</h2>
             </div>
 
             <div className="space-y-4">
               {/* Status Badge */}
               <div className="flex items-center gap-2">
                 <span className={`rounded-full px-3 py-1 text-sm font-medium ${getStatusBadgeStyle(selectedBooking.status)}`}>
-                  {selectedBooking.status.charAt(0).toUpperCase() + selectedBooking.status.slice(1)}
+                  {t(`status.${selectedBooking.status}`)}
                 </span>
               </div>
 
-              {/* Time & Service */}
+              {/* Time & Items */}
               <div className="rounded-lg bg-gray-50 p-4">
-                <p className="text-sm text-gray-500">
-                  {format(parseISO(selectedBooking.booking_date), "EEEE, MMMM d, yyyy")}
-                </p>
-                <p className="text-lg font-semibold text-gray-900">
-                  {formatTime(selectedBooking.start_time)} - {formatTime(selectedBooking.end_time)}
-                </p>
-                <p className="text-gray-700 mt-1">{selectedBooking.services?.name}</p>
-                {selectedBooking.staff && (
-                  <p className="text-sm text-gray-500">with {selectedBooking.staff.name}</p>
+                {selectedBooking.booking_date && (
+                  <>
+                    <p className="text-sm text-gray-500">
+                      {format(parseISO(selectedBooking.booking_date), "EEEE, MMMM d, yyyy")}
+                    </p>
+                    {selectedBooking.start_time && selectedBooking.end_time && (
+                      <p className="text-lg font-semibold text-gray-900">
+                        {formatTime(selectedBooking.start_time)} - {formatTime(selectedBooking.end_time)}
+                      </p>
+                    )}
+                  </>
                 )}
-                <p className="text-lg font-semibold text-purple-600 mt-2">
+
+                {/* Cart Items */}
+                {selectedBooking.cart_items && Array.isArray(selectedBooking.cart_items) && selectedBooking.cart_items.length > 0 ? (
+                  <div className="mt-3 space-y-2">
+                    {(selectedBooking.cart_items as unknown as CartItemData[]).map((item, index) => (
+                      <div key={index} className="flex items-center justify-between py-2 border-b border-gray-200 last:border-0">
+                        <div className="flex items-center gap-2">
+                          {item.type === "service" ? (
+                            <Sparkles className="h-4 w-4 text-purple-500" />
+                          ) : (
+                            <ShoppingBag className="h-4 w-4 text-blue-500" />
+                          )}
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">
+                              {item.name}
+                              {item.quantity > 1 && <span className="text-gray-500"> x{item.quantity}</span>}
+                            </p>
+                            {item.type === "service" && item.duration_minutes && (
+                              <p className="text-xs text-gray-500">{formatDuration(item.duration_minutes)}</p>
+                            )}
+                          </div>
+                        </div>
+                        <span className="text-sm font-medium text-gray-700">
+                          {formatCurrency(item.price * item.quantity)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                    {/* Fallback for old bookings without cart_items */}
+                    <p className="text-gray-700 mt-1">{selectedBooking.services?.name}</p>
+                  </>
+                )}
+
+                {selectedBooking.staff && (
+                  <p className="text-sm text-gray-500 mt-2">with {selectedBooking.staff.name}</p>
+                )}
+                <p className="text-lg font-semibold text-purple-600 mt-3 pt-3 border-t border-gray-200">
                   {formatCurrency(selectedBooking.total_price)}
                 </p>
               </div>
 
               {/* Customer Info */}
               <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Customer</h3>
+                <h3 className="text-sm font-medium text-gray-500 mb-2">{t("customer")}</h3>
                 <p className="font-medium text-gray-900">{selectedBooking.customer_name}</p>
                 <div className="mt-2 space-y-1 text-sm text-gray-600">
                   <a
@@ -337,7 +390,7 @@ export function BookingsCalendar({ bookings }: BookingsCalendarProps) {
               {/* Notes */}
               {selectedBooking.notes && (
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500 mb-1">Notes</h3>
+                  <h3 className="text-sm font-medium text-gray-500 mb-1">{t("notes")}</h3>
                   <p className="text-sm text-gray-700">{selectedBooking.notes}</p>
                 </div>
               )}
@@ -346,37 +399,83 @@ export function BookingsCalendar({ bookings }: BookingsCalendarProps) {
               <div className="flex gap-2 pt-4 border-t border-gray-100">
                 {selectedBooking.status === "pending" && (
                   <>
+                    <div className="relative flex-1">
+                      <button
+                        onClick={() => setShowActionDropdown(!showActionDropdown)}
+                        className="w-full flex items-center justify-center gap-2 rounded-xl bg-green-600 py-2.5 font-medium text-white hover:bg-green-700"
+                      >
+                        <Check className="h-4 w-4" />
+                        {t("updateStatus")}
+                        <ChevronDown className="h-4 w-4" />
+                      </button>
+                      {showActionDropdown && (
+                        <div className="absolute bottom-full left-0 right-0 mb-2 rounded-xl bg-white border border-gray-200 shadow-lg overflow-hidden z-10">
+                          <button
+                            onClick={() => updateStatus(selectedBooking.id, "confirmed")}
+                            className="w-full flex items-center gap-2 px-4 py-3 text-left text-green-700 hover:bg-green-50"
+                          >
+                            <Check className="h-4 w-4" />
+                            {t("confirmOrder")}
+                          </button>
+                          <button
+                            onClick={() => updateStatus(selectedBooking.id, "cancelled")}
+                            className="w-full flex items-center gap-2 px-4 py-3 text-left text-red-700 hover:bg-red-50 border-t border-gray-100"
+                          >
+                            <X className="h-4 w-4" />
+                            {t("cancelOrder")}
+                          </button>
+                        </div>
+                      )}
+                    </div>
                     <button
-                      onClick={() => updateStatus(selectedBooking.id, "confirmed")}
-                      className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-green-600 py-2.5 font-medium text-white hover:bg-green-700"
+                      onClick={() => {
+                        setSelectedBooking(null);
+                        setShowActionDropdown(false);
+                      }}
+                      className="flex-1 rounded-xl border border-gray-200 py-2.5 font-medium text-gray-700 hover:bg-gray-50"
                     >
-                      <Check className="h-4 w-4" />
-                      Confirm
-                    </button>
-                    <button
-                      onClick={() => updateStatus(selectedBooking.id, "cancelled")}
-                      className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-red-100 py-2.5 font-medium text-red-700 hover:bg-red-200"
-                    >
-                      <X className="h-4 w-4" />
-                      Cancel
+                      {t("cancelEdit")}
                     </button>
                   </>
                 )}
                 {selectedBooking.status === "confirmed" && (
                   <>
+                    <div className="relative flex-1">
+                      <button
+                        onClick={() => setShowActionDropdown(!showActionDropdown)}
+                        className="w-full flex items-center justify-center gap-2 rounded-xl bg-blue-600 py-2.5 font-medium text-white hover:bg-blue-700"
+                      >
+                        <Clock className="h-4 w-4" />
+                        {t("updateStatus")}
+                        <ChevronDown className="h-4 w-4" />
+                      </button>
+                      {showActionDropdown && (
+                        <div className="absolute bottom-full left-0 right-0 mb-2 rounded-xl bg-white border border-gray-200 shadow-lg overflow-hidden z-10">
+                          <button
+                            onClick={() => updateStatus(selectedBooking.id, "completed")}
+                            className="w-full flex items-center gap-2 px-4 py-3 text-left text-blue-700 hover:bg-blue-50"
+                          >
+                            <Check className="h-4 w-4" />
+                            {t("markCompleted")}
+                          </button>
+                          <button
+                            onClick={() => updateStatus(selectedBooking.id, "cancelled")}
+                            className="w-full flex items-center gap-2 px-4 py-3 text-left text-red-700 hover:bg-red-50 border-t border-gray-100"
+                          >
+                            <X className="h-4 w-4" />
+                            {t("cancelOrder")}
+                          </button>
+                        </div>
+                      )}
+                    </div>
                     <button
-                      onClick={() => updateStatus(selectedBooking.id, "completed")}
-                      className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-blue-600 py-2.5 font-medium text-white hover:bg-blue-700"
+                      onClick={() => {
+                        setSelectedBooking(null);
+                        setShowActionDropdown(false);
+                      }}
+                      className="flex-1 rounded-xl border border-gray-200 py-2.5 font-medium text-gray-700 hover:bg-gray-50"
                     >
-                      <Clock className="h-4 w-4" />
-                      Complete
-                    </button>
-                    <button
-                      onClick={() => updateStatus(selectedBooking.id, "cancelled")}
-                      className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-red-100 py-2.5 font-medium text-red-700 hover:bg-red-200"
-                    >
-                      <X className="h-4 w-4" />
-                      Cancel
+                      {t("cancelEdit")}
                     </button>
                   </>
                 )}
@@ -385,7 +484,7 @@ export function BookingsCalendar({ bookings }: BookingsCalendarProps) {
                     onClick={() => setSelectedBooking(null)}
                     className="flex-1 rounded-xl border border-gray-200 py-2.5 font-medium text-gray-700 hover:bg-gray-50"
                   >
-                    Close
+                    {t("cancelEdit")}
                   </button>
                 )}
               </div>

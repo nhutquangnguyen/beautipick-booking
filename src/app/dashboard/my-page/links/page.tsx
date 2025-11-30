@@ -1,9 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { SocialLinksManager } from "@/components/dashboard/social-links/social-links-manager";
 import { SocialLink, defaultSocialLinks } from "@/types/database";
 
-export default async function SettingsLinksPage() {
+export default async function MyPageLinksPage() {
+  const t = await getTranslations("myPage.links");
   const supabase = await createClient();
   const {
     data: { user },
@@ -22,8 +24,8 @@ export default async function SettingsLinksPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-gray-900">Social Links</h2>
-        <p className="text-sm text-gray-600">Add links to your social media and other pages</p>
+        <h2 className="text-xl font-semibold text-gray-900">{t("title")}</h2>
+        <p className="text-sm text-gray-600">{t("subtitle")}</p>
       </div>
 
       <SocialLinksManager merchantId={user.id} socialLinks={socialLinks} />

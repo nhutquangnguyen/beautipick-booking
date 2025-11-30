@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { format, addDays, parseISO, isBefore, startOfDay } from "date-fns";
+import { useState, useMemo, useEffect } from "react";
+import { format, addDays, startOfDay, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, getDay } from "date-fns";
 import { useTranslations } from "next-intl";
-import { MapPin, Phone, Clock, ChevronLeft, Check, ShoppingBag, Calendar, Star, X } from "lucide-react";
+import { MapPin, Phone, Clock, ChevronLeft, Check, ShoppingBag, Calendar, Star, X, ChevronRight, Sparkles, Plus, Minus, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Merchant, Service, Staff, Availability, MerchantTheme, MerchantSettings, SocialLink, SocialLinkType, ContentSection, defaultContentOrder } from "@/types/database";
 import { formatCurrency, formatDuration, formatTime, generateTimeSlots, cn } from "@/lib/utils";
@@ -160,7 +160,24 @@ interface BookingPageProps {
   settings: MerchantSettings;
 }
 
-type Step = "service" | "staff" | "datetime" | "details" | "confirmation";
+// Cart item types
+interface CartServiceItem {
+  type: "service";
+  id: string;
+  service: Service;
+  quantity: 1; // Services always quantity 1
+}
+
+interface CartProductItem {
+  type: "product";
+  id: string;
+  product: Product;
+  quantity: number;
+}
+
+type CartItem = CartServiceItem | CartProductItem;
+
+type CheckoutStep = "cart" | "datetime" | "details" | "confirmation";
 
 export function BookingPage({
   merchant,
@@ -172,11 +189,15 @@ export function BookingPage({
   theme,
   settings,
 }: BookingPageProps) {
-  const [step, setStep] = useState<Step>("service");
-  const [selectedService, setSelectedService] = useState<Service | null>(null);
-  const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
+  // Cart state
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [showCart, setShowCart] = useState(false);
+  const [checkoutStep, setCheckoutStep] = useState<CheckoutStep>("cart");
+
+  // Booking state
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
   const [loading, setLoading] = useState(false);
   const [bookingComplete, setBookingComplete] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -190,44 +211,125 @@ export function BookingPage({
 
   const supabase = createClient();
 
-  // Get staff who can provide selected service
-  const availableStaff = useMemo(() => {
-    if (!selectedService) return [];
-    return staff.filter((s) =>
-      s.staff_services.some((ss) => ss.service_id === selectedService.id)
-    );
-  }, [selectedService, staff]);
+  // UI state
+  const [selectedGalleryImage, setSelectedGalleryImage] = useState<string | null>(null);
+  const [showFloatingHeader, setShowFloatingHeader] = useState(false);
+  const t = useTranslations("booking");
 
-  // Generate available dates
-  const availableDates = useMemo(() => {
-    const dates: Date[] = [];
-    const today = startOfDay(new Date());
+  // Show floating header on scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowFloatingHeader(window.scrollY > 200);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
-    for (let i = 0; i < settings.bookingWindow; i++) {
-      const date = addDays(today, i);
-      const dayOfWeek = date.getDay();
-      const isAvailable = availability.some((a) => a.day_of_week === dayOfWeek);
+  // Cart functions
+  const addServiceToCart = (service: Service) => {
+    // Check if service already in cart
+    const exists = cart.find(item => item.type === "service" && item.id === service.id);
+    if (exists) return; // Services can only be added once
 
-      // Check lead time
-      if (i === 0 && settings.bookingLeadTime > 0) {
-        const hoursUntilClose = 24 - new Date().getHours();
-        if (hoursUntilClose < settings.bookingLeadTime) {
-          continue;
-        }
-      }
+    setCart([...cart, { type: "service", id: service.id, service, quantity: 1 }]);
+  };
 
-      if (isAvailable) {
-        dates.push(date);
-      }
+  const addProductToCart = (product: Product) => {
+    const existingIndex = cart.findIndex(item => item.type === "product" && item.id === product.id);
+    if (existingIndex >= 0) {
+      // Increase quantity
+      const newCart = [...cart];
+      (newCart[existingIndex] as CartProductItem).quantity += 1;
+      setCart(newCart);
+    } else {
+      setCart([...cart, { type: "product", id: product.id, product, quantity: 1 }]);
     }
-    return dates;
-  }, [availability, settings.bookingWindow, settings.bookingLeadTime]);
+  };
+
+  const updateProductQuantity = (productId: string, quantity: number) => {
+    if (quantity <= 0) {
+      removeFromCart(productId);
+      return;
+    }
+    const newCart = cart.map(item => {
+      if (item.type === "product" && item.id === productId) {
+        return { ...item, quantity };
+      }
+      return item;
+    });
+    setCart(newCart);
+  };
+
+  const removeFromCart = (itemId: string) => {
+    setCart(cart.filter(item => item.id !== itemId));
+  };
+
+  const clearCart = () => {
+    setCart([]);
+  };
+
+  const isServiceInCart = (serviceId: string) => {
+    return cart.some(item => item.type === "service" && item.id === serviceId);
+  };
+
+  const getProductQuantityInCart = (productId: string) => {
+    const item = cart.find(item => item.type === "product" && item.id === productId);
+    return item ? (item as CartProductItem).quantity : 0;
+  };
+
+  // Cart totals
+  const cartTotals = useMemo(() => {
+    let totalPrice = 0;
+    let totalDuration = 0;
+    let serviceCount = 0;
+    let productCount = 0;
+
+    cart.forEach(item => {
+      if (item.type === "service") {
+        totalPrice += item.service.price;
+        totalDuration += item.service.duration_minutes;
+        serviceCount += 1;
+      } else {
+        totalPrice += item.product.price * item.quantity;
+        productCount += item.quantity;
+      }
+    });
+
+    return { totalPrice, totalDuration, serviceCount, productCount, itemCount: cart.length };
+  }, [cart]);
+
+  const hasServices = cartTotals.serviceCount > 0;
+
+  // Generate available dates for calendar
+  const getAvailableDaysOfWeek = useMemo(() => {
+    return availability.map(a => a.day_of_week);
+  }, [availability]);
+
+  const isDateAvailable = (date: Date) => {
+    const today = startOfDay(new Date());
+    if (date < today) return false;
+
+    const dayOfWeek = getDay(date);
+    if (!getAvailableDaysOfWeek.includes(dayOfWeek)) return false;
+
+    // Check booking window
+    const maxDate = addDays(today, settings.bookingWindow);
+    if (date > maxDate) return false;
+
+    // Check lead time for today
+    if (isSameDay(date, today) && settings.bookingLeadTime > 0) {
+      const hoursUntilClose = 24 - new Date().getHours();
+      if (hoursUntilClose < settings.bookingLeadTime) return false;
+    }
+
+    return true;
+  };
 
   // Generate time slots for selected date
   const timeSlots = useMemo(() => {
-    if (!selectedDate || !selectedService) return [];
+    if (!selectedDate || !hasServices) return [];
 
-    const dayOfWeek = selectedDate.getDay();
+    const dayOfWeek = getDay(selectedDate);
     const dayAvailability = availability.find((a) => a.day_of_week === dayOfWeek);
 
     if (!dayAvailability) return [];
@@ -235,60 +337,76 @@ export function BookingPage({
     return generateTimeSlots(
       dayAvailability.start_time,
       dayAvailability.end_time,
-      selectedService.duration_minutes
+      cartTotals.totalDuration || 30 // Default 30 min if only products
     );
-  }, [selectedDate, selectedService, availability]);
+  }, [selectedDate, hasServices, availability, cartTotals.totalDuration]);
 
-  const handleServiceSelect = (service: Service) => {
-    setSelectedService(service);
-    setSelectedStaff(null);
-    setSelectedDate(null);
-    setSelectedTime(null);
+  // Calendar days for current month
+  const calendarDays = useMemo(() => {
+    const start = startOfMonth(currentMonth);
+    const end = endOfMonth(currentMonth);
+    const days = eachDayOfInterval({ start, end });
 
-    // Skip staff selection if not enabled or no staff
-    if (!settings.showStaffSelection || availableStaff.length === 0) {
-      setStep("datetime");
-    } else {
-      setStep("staff");
-    }
-  };
+    // Add padding days for start of month
+    const startPadding = getDay(start);
+    const paddingDays: (Date | null)[] = Array(startPadding).fill(null);
 
-  const handleStaffSelect = (staffMember: Staff | null) => {
-    setSelectedStaff(staffMember);
-    setStep("datetime");
-  };
-
-  const handleDateTimeSelect = (date: Date, time: string) => {
-    setSelectedDate(date);
-    setSelectedTime(time);
-    setStep("details");
-  };
+    return [...paddingDays, ...days];
+  }, [currentMonth]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedService || !selectedDate || !selectedTime) return;
+    if (cart.length === 0) return;
 
     setLoading(true);
     setError(null);
 
     try {
-      const [hours, minutes] = selectedTime.split(":").map(Number);
-      const endMinutes = hours * 60 + minutes + selectedService.duration_minutes;
-      const endTime = `${Math.floor(endMinutes / 60).toString().padStart(2, "0")}:${(endMinutes % 60).toString().padStart(2, "0")}`;
+      // Calculate end time based on total service duration
+      let endTime = selectedTime;
+      if (selectedTime && cartTotals.totalDuration > 0) {
+        const [hours, minutes] = selectedTime.split(":").map(Number);
+        const endMinutes = hours * 60 + minutes + cartTotals.totalDuration;
+        endTime = `${Math.floor(endMinutes / 60).toString().padStart(2, "0")}:${(endMinutes % 60).toString().padStart(2, "0")}`;
+      }
 
+      // Prepare cart items for storage
+      const cartItemsData = cart.map(item => {
+        if (item.type === "service") {
+          return {
+            type: "service",
+            id: item.service.id,
+            name: item.service.name,
+            price: item.service.price,
+            duration_minutes: item.service.duration_minutes,
+            quantity: 1,
+          };
+        } else {
+          return {
+            type: "product",
+            id: item.product.id,
+            name: item.product.name,
+            price: item.product.price,
+            quantity: item.quantity,
+          };
+        }
+      });
+
+      // Create booking with cart items
       const { error: bookingError } = await supabase.from("bookings").insert({
         merchant_id: merchant.id,
-        service_id: selectedService.id,
-        staff_id: selectedStaff?.id ?? null,
+        service_id: cart.find(i => i.type === "service")?.id || null,
+        staff_id: null,
         customer_name: customerInfo.name,
         customer_email: customerInfo.email,
         customer_phone: customerInfo.phone || null,
-        booking_date: format(selectedDate, "yyyy-MM-dd"),
-        start_time: selectedTime,
-        end_time: endTime,
+        booking_date: selectedDate ? format(selectedDate, "yyyy-MM-dd") : null,
+        start_time: selectedTime || null,
+        end_time: endTime || null,
         notes: customerInfo.notes || null,
-        total_price: selectedService.price,
+        total_price: cartTotals.totalPrice,
         status: "pending",
+        cart_items: cartItemsData,
       });
 
       if (bookingError) {
@@ -297,7 +415,7 @@ export function BookingPage({
       }
 
       setBookingComplete(true);
-      setStep("confirmation");
+      setCheckoutStep("confirmation");
     } catch {
       setError("An unexpected error occurred. Please try again.");
     } finally {
@@ -305,31 +423,14 @@ export function BookingPage({
     }
   };
 
-  const buttonStyle = useMemo(() => {
-    const radiusMap = {
-      none: "0",
-      sm: "4px",
-      md: "8px",
-      lg: "12px",
-      full: "9999px",
-    };
-
-    return {
-      backgroundColor: theme.buttonStyle === "solid" ? theme.primaryColor : "transparent",
-      color: theme.buttonStyle === "solid" ? "#fff" : theme.primaryColor,
-      border: theme.buttonStyle === "outline" ? `2px solid ${theme.primaryColor}` : "none",
-      borderRadius: radiusMap[theme.borderRadius],
-    };
-  }, [theme]);
-
+  // Premium styling helpers
   const cardRadius = useMemo(() => {
-    const radiusMap = {
-      none: "0",
-      sm: "4px",
-      md: "8px",
-      lg: "12px",
-      full: "16px",
-    };
+    const radiusMap = { none: "0", sm: "8px", md: "16px", lg: "20px", full: "24px" };
+    return radiusMap[theme.borderRadius];
+  }, [theme.borderRadius]);
+
+  const buttonRadius = useMemo(() => {
+    const radiusMap = { none: "0", sm: "8px", md: "12px", lg: "16px", full: "9999px" };
     return radiusMap[theme.borderRadius];
   }, [theme.borderRadius]);
 
@@ -337,7 +438,7 @@ export function BookingPage({
   const servicesByCategory = useMemo(() => {
     const grouped: Record<string, Service[]> = {};
     services.forEach((service) => {
-      const category = service.category || "Other";
+      const category = service.category || "Services";
       if (!grouped[category]) {
         grouped[category] = [];
       }
@@ -346,67 +447,109 @@ export function BookingPage({
     return grouped;
   }, [services]);
 
-  const [showBookingModal, setShowBookingModal] = useState(false);
-  const [selectedGalleryImage, setSelectedGalleryImage] = useState<string | null>(null);
-  const t = useTranslations("booking");
-
   // Get content order from theme or use default
   const contentOrder = theme.contentOrder || defaultContentOrder;
   const headerStyle = theme.headerStyle || "overlay";
   const showSectionTitles = theme.showSectionTitles !== false;
 
-  // Render individual content sections
+  // Premium section title component
+  const SectionTitle = ({ children, icon }: { children: React.ReactNode; icon?: React.ReactNode }) => (
+    <div className="flex items-center gap-3 mb-6">
+      {icon && (
+        <div
+          className="p-2 rounded-xl"
+          style={{ backgroundColor: theme.primaryColor + "15" }}
+        >
+          <span style={{ color: theme.primaryColor }}>{icon}</span>
+        </div>
+      )}
+      <h2 className="text-xl sm:text-2xl font-bold tracking-tight">{children}</h2>
+    </div>
+  );
+
+  // Render individual content sections with premium styling
   const renderSection = (section: ContentSection) => {
     switch (section) {
       case "about":
         if (!merchant.description) return null;
         return (
-          <section key="about" className="mb-8">
-            {showSectionTitles && <h2 className="text-lg font-semibold mb-3">{t("aboutUs")}</h2>}
-            <p className="opacity-80 leading-relaxed">{merchant.description}</p>
+          <section key="about" className="mb-12">
+            {showSectionTitles && <SectionTitle icon={<Sparkles className="h-5 w-5" />}>{t("aboutUs")}</SectionTitle>}
+            <div
+              className="relative p-6 sm:p-8 overflow-hidden"
+              style={{
+                borderRadius: cardRadius,
+                background: `linear-gradient(135deg, ${theme.primaryColor}08 0%, ${theme.secondaryColor}05 100%)`,
+                border: `1px solid ${theme.primaryColor}12`,
+                boxShadow: `0 4px 24px ${theme.primaryColor}08`
+              }}
+            >
+              <div
+                className="absolute top-0 left-0 w-1 h-full rounded-full"
+                style={{
+                  background: `linear-gradient(to bottom, ${theme.primaryColor}, ${theme.secondaryColor})`
+                }}
+              />
+              <p className="text-base sm:text-lg leading-relaxed opacity-85 pl-4">{merchant.description}</p>
+            </div>
           </section>
         );
 
       case "contact":
         if (!merchant.address && !merchant.phone && !merchant.google_maps_url) return null;
         return (
-          <section key="contact" className="mb-8">
-            {showSectionTitles && <h2 className="text-lg font-semibold mb-3">{t("contactUs")}</h2>}
+          <section key="contact" className="mb-12">
+            {showSectionTitles && <SectionTitle icon={<Phone className="h-5 w-5" />}>{t("contactUs")}</SectionTitle>}
             <div className="flex flex-wrap gap-3">
               {merchant.google_maps_url && (
                 <a
                   href={merchant.google_maps_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all hover:scale-105"
-                  style={{ backgroundColor: theme.primaryColor, color: "#fff" }}
+                  className="group flex items-center gap-3 px-5 py-3 text-sm font-semibold transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
+                  style={{
+                    backgroundColor: theme.primaryColor,
+                    color: "#fff",
+                    borderRadius: buttonRadius,
+                    boxShadow: `0 4px 14px ${theme.primaryColor}40`
+                  }}
                 >
                   <MapPin className="h-4 w-4" />
-                  Google Maps
+                  <span>View on Maps</span>
+                  <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </a>
               )}
               {merchant.address && (
                 <div
-                  className="flex items-center gap-2 px-4 py-2 rounded-full text-sm"
-                  style={{ backgroundColor: theme.primaryColor + "15", color: theme.primaryColor }}
+                  className="flex items-center gap-3 px-5 py-3 text-sm font-medium"
+                  style={{
+                    backgroundColor: theme.primaryColor + "10",
+                    color: theme.textColor,
+                    borderRadius: buttonRadius,
+                    border: `1px solid ${theme.primaryColor}20`
+                  }}
                 >
-                  <MapPin className="h-4 w-4 flex-shrink-0" />
-                  <span>
+                  <MapPin className="h-4 w-4 flex-shrink-0" style={{ color: theme.primaryColor }} />
+                  <span className="opacity-80">
                     {merchant.address}
                     {merchant.city && `, ${merchant.city}`}
                     {merchant.state && `, ${merchant.state}`}
-                    {merchant.zip_code && ` ${merchant.zip_code}`}
                   </span>
                 </div>
               )}
               {merchant.phone && (
                 <a
                   href={`tel:${merchant.phone}`}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full text-sm transition-colors"
-                  style={{ backgroundColor: theme.primaryColor + "15", color: theme.primaryColor }}
+                  className="flex items-center gap-3 px-5 py-3 text-sm font-medium transition-all duration-300 hover:scale-[1.02]"
+                  style={{
+                    backgroundColor: theme.primaryColor + "10",
+                    color: theme.textColor,
+                    borderRadius: buttonRadius,
+                    border: `1px solid ${theme.primaryColor}20`
+                  }}
                 >
-                  <Phone className="h-4 w-4" />
-                  {merchant.phone}
+                  <Phone className="h-4 w-4" style={{ color: theme.primaryColor }} />
+                  <span>{merchant.phone}</span>
                 </a>
               )}
             </div>
@@ -416,7 +559,7 @@ export function BookingPage({
       case "social":
         if (!merchant.social_links || !Array.isArray(merchant.social_links) || merchant.social_links.length === 0) return null;
         return (
-          <section key="social" className="mb-8">
+          <section key="social" className="mb-12">
             <div className="flex flex-wrap gap-3">
               {(merchant.social_links as unknown as SocialLink[]).map((link) => {
                 const config = SOCIAL_LINK_CONFIG[link.type];
@@ -427,11 +570,16 @@ export function BookingPage({
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all hover:scale-105 hover:shadow-md"
-                    style={{ backgroundColor: config.color, color: "#fff" }}
+                    className="group flex items-center gap-2.5 px-5 py-3 text-sm font-semibold transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
+                    style={{
+                      backgroundColor: config.color,
+                      color: "#fff",
+                      borderRadius: buttonRadius,
+                      boxShadow: `0 4px 14px ${config.color}30`
+                    }}
                   >
                     <Icon className="h-4 w-4" />
-                    {link.title}
+                    <span>{link.title}</span>
                   </a>
                 );
               })}
@@ -442,14 +590,14 @@ export function BookingPage({
       case "video":
         if (!merchant.youtube_url || !getYouTubeVideoId(merchant.youtube_url)) return null;
         return (
-          <section key="video" className="mb-8">
+          <section key="video" className="mb-12">
             <div
-              className="relative w-full overflow-hidden"
+              className="relative w-full overflow-hidden shadow-2xl"
               style={{ borderRadius: cardRadius, paddingBottom: "56.25%" }}
             >
               <iframe
                 className="absolute inset-0 w-full h-full"
-                src={`https://www.youtube.com/embed/${getYouTubeVideoId(merchant.youtube_url)}`}
+                src={`https://www.youtube.com/embed/${getYouTubeVideoId(merchant.youtube_url)}?rel=0&modestbranding=1`}
                 title="YouTube video"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
@@ -461,21 +609,34 @@ export function BookingPage({
       case "gallery":
         if (gallery.length === 0) return null;
         return (
-          <section key="gallery" className="mb-8">
-            {showSectionTitles && <h2 className="text-lg font-semibold mb-4">{t("ourGallery")}</h2>}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          <section key="gallery" className="mb-12">
+            {showSectionTitles && <SectionTitle icon={<Star className="h-5 w-5" />}>{t("ourGallery")}</SectionTitle>}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
               {gallery.map((image) => (
                 <button
                   key={image.id}
                   onClick={() => setSelectedGalleryImage(image.image_url)}
-                  className="aspect-square overflow-hidden group"
-                  style={{ borderRadius: cardRadius }}
+                  className="group relative aspect-square overflow-hidden transition-all duration-500 hover:shadow-2xl hover:z-10 hover:scale-[1.02]"
+                  style={{
+                    borderRadius: cardRadius,
+                    boxShadow: `0 4px 20px ${theme.primaryColor}10`
+                  }}
                 >
+                  <div
+                    className="absolute inset-0 animate-pulse"
+                    style={{ backgroundColor: theme.primaryColor + "10" }}
+                  />
                   <img
                     src={image.image_url}
                     alt={image.caption || "Gallery image"}
-                    className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                    className="relative w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  {image.caption && (
+                    <div className="absolute bottom-0 left-0 right-0 p-3 text-white text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300 translate-y-2 group-hover:translate-y-0">
+                      {image.caption}
+                    </div>
+                  )}
                 </button>
               ))}
             </div>
@@ -485,85 +646,180 @@ export function BookingPage({
       case "products":
         if (products.length === 0) return null;
         return (
-          <section key="products" className="mb-8">
-            {showSectionTitles && (
-              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <ShoppingBag className="h-5 w-5" />
-                {t("ourProducts")}
-              </h2>
-            )}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {products.map((product) => (
-                <div
-                  key={product.id}
-                  className="p-3"
-                  style={{ borderRadius: cardRadius, border: `1px solid ${theme.primaryColor}20` }}
-                >
-                  {product.image_url ? (
-                    <img
-                      src={product.image_url}
-                      alt={product.name}
-                      className="w-full aspect-square object-cover rounded-lg mb-3"
-                    />
-                  ) : (
-                    <div
-                      className="w-full aspect-square flex items-center justify-center rounded-lg mb-3"
-                      style={{ backgroundColor: theme.primaryColor + "10" }}
-                    >
-                      <ShoppingBag className="h-10 w-10 opacity-20" />
+          <section key="products" className="mb-12">
+            {showSectionTitles && <SectionTitle icon={<ShoppingBag className="h-5 w-5" />}>{t("ourProducts")}</SectionTitle>}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              {products.map((product) => {
+                const quantityInCart = getProductQuantityInCart(product.id);
+                return (
+                  <div
+                    key={product.id}
+                    className="group p-4 transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] hover:-translate-y-1"
+                    style={{
+                      borderRadius: cardRadius,
+                      backgroundColor: theme.backgroundColor,
+                      border: `1px solid ${theme.primaryColor}12`,
+                      boxShadow: `0 4px 20px ${theme.primaryColor}08`
+                    }}
+                  >
+                    {product.image_url ? (
+                      <div className="relative overflow-hidden mb-4" style={{ borderRadius: `calc(${cardRadius} - 8px)` }}>
+                        <img
+                          src={product.image_url}
+                          alt={product.name}
+                          className="relative w-full aspect-square object-cover transition-transform duration-500 group-hover:scale-110"
+                        />
+                      </div>
+                    ) : (
+                      <div
+                        className="w-full aspect-square flex items-center justify-center mb-4"
+                        style={{
+                          background: `linear-gradient(135deg, ${theme.primaryColor}08 0%, ${theme.secondaryColor}08 100%)`,
+                          borderRadius: `calc(${cardRadius} - 8px)`
+                        }}
+                      >
+                        <ShoppingBag className="h-12 w-12 opacity-20" />
+                      </div>
+                    )}
+                    <h3 className="font-semibold text-sm sm:text-base truncate">{product.name}</h3>
+                    {product.description && (
+                      <p className="text-xs opacity-60 truncate mt-1">{product.description}</p>
+                    )}
+                    <div className="flex items-center justify-between mt-3">
+                      <p
+                        className="text-lg font-bold"
+                        style={{ color: theme.primaryColor }}
+                      >
+                        {formatCurrency(product.price, merchant.currency)}
+                      </p>
+                      {quantityInCart > 0 ? (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => updateProductQuantity(product.id, quantityInCart - 1)}
+                            className="p-1.5 rounded-full transition-colors"
+                            style={{ backgroundColor: theme.primaryColor + "15", color: theme.primaryColor }}
+                          >
+                            <Minus className="h-4 w-4" />
+                          </button>
+                          <span className="font-semibold min-w-[20px] text-center">{quantityInCart}</span>
+                          <button
+                            onClick={() => updateProductQuantity(product.id, quantityInCart + 1)}
+                            className="p-1.5 rounded-full transition-colors"
+                            style={{ backgroundColor: theme.primaryColor, color: "#fff" }}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => addProductToCart(product)}
+                          className="p-2 rounded-full transition-all duration-300 hover:scale-110"
+                          style={{ backgroundColor: theme.primaryColor, color: "#fff" }}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </button>
+                      )}
                     </div>
-                  )}
-                  <p className="font-medium text-sm truncate">{product.name}</p>
-                  {product.description && (
-                    <p className="text-xs opacity-60 truncate mt-0.5">{product.description}</p>
-                  )}
-                  <p className="text-sm font-semibold mt-1" style={{ color: theme.primaryColor }}>
-                    {formatCurrency(product.price, merchant.currency)}
-                  </p>
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           </section>
         );
 
       case "services":
         return (
-          <section key="services" className="mb-24">
-            {showSectionTitles && (
-              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <Star className="h-5 w-5" />
-                {t("ourServices")}
-              </h2>
-            )}
-            <div className="space-y-3">
+          <section key="services" className="mb-12">
+            {showSectionTitles && <SectionTitle icon={<Sparkles className="h-5 w-5" />}>{t("ourServices")}</SectionTitle>}
+            <div className="space-y-4">
               {Object.entries(servicesByCategory).map(([category, categoryServices]) => (
                 <div key={category}>
                   {Object.keys(servicesByCategory).length > 1 && (
-                    <h3 className="text-sm font-medium opacity-60 mb-2 mt-4">{category}</h3>
-                  )}
-                  {categoryServices.map((service) => (
-                    <div
-                      key={service.id}
-                      className="flex items-center justify-between p-4 mb-2"
-                      style={{ borderRadius: cardRadius, border: `1px solid ${theme.primaryColor}20` }}
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium">{service.name}</p>
-                        {service.description && (
-                          <p className="text-sm opacity-60 truncate">{service.description}</p>
-                        )}
-                        <p className="text-sm opacity-60 flex items-center gap-1 mt-1">
-                          <Clock className="h-3.5 w-3.5" />
-                          {formatDuration(service.duration_minutes)}
-                        </p>
-                      </div>
-                      <div className="ml-4 text-right">
-                        <p className="font-semibold" style={{ color: theme.primaryColor }}>
-                          {formatCurrency(service.price, merchant.currency)}
-                        </p>
-                      </div>
+                    <div className="flex items-center gap-3 mb-4 mt-8">
+                      <div
+                        className="h-1 flex-1 rounded-full"
+                        style={{
+                          background: `linear-gradient(to right, ${theme.primaryColor}30, transparent)`
+                        }}
+                      />
+                      <h3
+                        className="text-sm font-bold uppercase tracking-widest px-4"
+                        style={{ color: theme.primaryColor }}
+                      >
+                        {category}
+                      </h3>
+                      <div
+                        className="h-1 flex-1 rounded-full"
+                        style={{
+                          background: `linear-gradient(to left, ${theme.primaryColor}30, transparent)`
+                        }}
+                      />
                     </div>
-                  ))}
+                  )}
+                  <div className="space-y-3">
+                    {categoryServices.map((service) => {
+                      const inCart = isServiceInCart(service.id);
+                      return (
+                        <div
+                          key={service.id}
+                          className="group flex items-center justify-between p-5 sm:p-6 transition-all duration-300 hover:shadow-xl"
+                          style={{
+                            borderRadius: cardRadius,
+                            backgroundColor: theme.backgroundColor,
+                            border: inCart ? `2px solid ${theme.primaryColor}` : `1px solid ${theme.primaryColor}12`,
+                            boxShadow: inCart ? `0 4px 20px ${theme.primaryColor}25` : `0 4px 20px ${theme.primaryColor}06`
+                          }}
+                        >
+                          <div className="flex-1 min-w-0 pr-4">
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-semibold text-base sm:text-lg">{service.name}</h3>
+                              {inCart && (
+                                <Check className="h-5 w-5" style={{ color: theme.primaryColor }} />
+                              )}
+                            </div>
+                            {service.description && (
+                              <p className="text-sm opacity-60 mt-1 line-clamp-2">{service.description}</p>
+                            )}
+                            <div
+                              className="inline-flex items-center gap-2 mt-3 px-3 py-1.5 rounded-full text-xs font-medium"
+                              style={{
+                                backgroundColor: theme.primaryColor + "10",
+                                color: theme.primaryColor
+                              }}
+                            >
+                              <Clock className="h-3.5 w-3.5" />
+                              <span>{formatDuration(service.duration_minutes)}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <p
+                              className="text-xl sm:text-2xl font-bold"
+                              style={{ color: theme.primaryColor }}
+                            >
+                              {formatCurrency(service.price, merchant.currency)}
+                            </p>
+                            {inCart ? (
+                              <button
+                                onClick={() => removeFromCart(service.id)}
+                                className="p-3 rounded-full transition-all duration-300 hover:scale-110"
+                                style={{ backgroundColor: "#EF4444", color: "#fff" }}
+                              >
+                                <X className="h-5 w-5" />
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => addServiceToCart(service)}
+                                className="p-3 rounded-full transition-all duration-300 hover:scale-110"
+                                style={{ backgroundColor: theme.primaryColor, color: "#fff" }}
+                              >
+                                <Plus className="h-5 w-5" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               ))}
             </div>
@@ -575,36 +831,47 @@ export function BookingPage({
     }
   };
 
-  // Header components based on style
+  // Premium header component
   const renderHeader = () => {
     if (headerStyle === "minimal") {
       return (
-        <header className="border-b" style={{ borderColor: theme.primaryColor + "20" }}>
-          <div className="mx-auto max-w-4xl px-4 py-6">
-            <div className="flex items-center gap-4">
-              {merchant.logo_url ? (
-                <img
-                  src={merchant.logo_url}
-                  alt={merchant.business_name}
-                  className="h-14 w-14 rounded-xl object-cover"
-                />
-              ) : (
-                <div
-                  className="h-14 w-14 rounded-xl flex items-center justify-center text-xl font-bold text-white"
-                  style={{ backgroundColor: theme.primaryColor }}
-                >
-                  {merchant.business_name.charAt(0)}
-                </div>
-              )}
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold">{merchant.business_name}</h1>
-                {(merchant.city || merchant.state) && (
-                  <p className="text-sm opacity-60 flex items-center gap-1 mt-0.5">
-                    <MapPin className="h-3.5 w-3.5" />
-                    {merchant.city}{merchant.city && merchant.state && ", "}{merchant.state}
-                  </p>
+        <header
+          className="sticky top-0 z-40 backdrop-blur-xl border-b"
+          style={{
+            backgroundColor: theme.backgroundColor + "e6",
+            borderColor: theme.primaryColor + "15"
+          }}
+        >
+          <div className="mx-auto max-w-5xl px-4 sm:px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                {merchant.logo_url ? (
+                  <img
+                    src={merchant.logo_url}
+                    alt={merchant.business_name}
+                    className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl object-cover shadow-lg ring-2 ring-white/20"
+                  />
+                ) : (
+                  <div
+                    className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl flex items-center justify-center text-xl font-bold text-white shadow-lg"
+                    style={{
+                      background: `linear-gradient(135deg, ${theme.primaryColor} 0%, ${theme.secondaryColor} 100%)`
+                    }}
+                  >
+                    {merchant.business_name.charAt(0)}
+                  </div>
                 )}
+                <div>
+                  <h1 className="text-lg sm:text-xl font-bold tracking-tight">{merchant.business_name}</h1>
+                  {(merchant.city || merchant.state) && (
+                    <p className="text-xs sm:text-sm opacity-50 flex items-center gap-1 mt-0.5">
+                      <MapPin className="h-3 w-3" />
+                      {merchant.city}{merchant.city && merchant.state && ", "}{merchant.state}
+                    </p>
+                  )}
+                </div>
               </div>
+              <LanguageSwitcherCompact />
             </div>
           </div>
         </header>
@@ -613,10 +880,9 @@ export function BookingPage({
 
     if (headerStyle === "stacked") {
       return (
-        <section>
-          {/* Cover Image or Gradient */}
+        <section className="relative">
           {merchant.cover_image_url ? (
-            <div className="h-40 sm:h-56 w-full overflow-hidden">
+            <div className="h-48 sm:h-64 md:h-72 w-full overflow-hidden">
               <img
                 src={merchant.cover_image_url}
                 alt={merchant.business_name}
@@ -625,86 +891,102 @@ export function BookingPage({
             </div>
           ) : (
             <div
-              className="h-40 sm:h-56 w-full"
-              style={{ background: `linear-gradient(135deg, ${theme.primaryColor} 0%, ${theme.secondaryColor} 100%)` }}
+              className="h-48 sm:h-64 md:h-72 w-full"
+              style={{
+                background: `linear-gradient(135deg, ${theme.primaryColor} 0%, ${theme.secondaryColor} 50%, ${theme.accentColor} 100%)`
+              }}
             />
           )}
-          {/* Business Info Below */}
-          <div className="mx-auto max-w-4xl px-4 py-6">
-            <div className="flex items-center gap-4 -mt-12">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6">
+            <div className="relative -mt-16 sm:-mt-20 flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-6 pb-6">
               {merchant.logo_url ? (
                 <img
                   src={merchant.logo_url}
                   alt={merchant.business_name}
-                  className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl object-cover border-4 shadow-lg"
-                  style={{ borderColor: theme.backgroundColor }}
+                  className="h-28 w-28 sm:h-36 sm:w-36 rounded-3xl object-cover shadow-2xl ring-4 ring-white"
                 />
               ) : (
                 <div
-                  className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl border-4 shadow-lg flex items-center justify-center text-2xl font-bold text-white"
-                  style={{ backgroundColor: theme.primaryColor, borderColor: theme.backgroundColor }}
+                  className="h-28 w-28 sm:h-36 sm:w-36 rounded-3xl shadow-2xl ring-4 ring-white flex items-center justify-center text-4xl font-bold text-white"
+                  style={{
+                    background: `linear-gradient(135deg, ${theme.primaryColor} 0%, ${theme.secondaryColor} 100%)`
+                  }}
                 >
                   {merchant.business_name.charAt(0)}
                 </div>
               )}
-            </div>
-            <div className="mt-3">
-              <h1 className="text-2xl sm:text-3xl font-bold">{merchant.business_name}</h1>
-              {(merchant.city || merchant.state) && (
-                <p className="text-sm opacity-60 flex items-center gap-1 mt-1">
-                  <MapPin className="h-3.5 w-3.5" />
-                  {merchant.city}{merchant.city && merchant.state && ", "}{merchant.state}
-                </p>
-              )}
+              <div className="flex-1 pb-2">
+                <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">{merchant.business_name}</h1>
+                {(merchant.city || merchant.state) && (
+                  <p className="text-sm sm:text-base opacity-60 flex items-center gap-1.5 mt-2">
+                    <MapPin className="h-4 w-4" />
+                    {merchant.city}{merchant.city && merchant.state && ", "}{merchant.state}
+                  </p>
+                )}
+              </div>
+              <div className="sm:pb-2">
+                <LanguageSwitcherCompact />
+              </div>
             </div>
           </div>
         </section>
       );
     }
 
-    // Default: overlay style
+    // Default: overlay style - Premium version
     return (
       <section className="relative">
-        {/* Cover Image or Gradient */}
         {merchant.cover_image_url ? (
-          <div className="h-48 sm:h-64 md:h-80 w-full overflow-hidden">
+          <div className="h-64 sm:h-80 md:h-96 w-full overflow-hidden">
             <img
               src={merchant.cover_image_url}
               alt={merchant.business_name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover scale-105"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
           </div>
         ) : (
           <div
-            className="h-48 sm:h-64 md:h-80 w-full"
-            style={{ background: `linear-gradient(135deg, ${theme.primaryColor} 0%, ${theme.secondaryColor} 100%)` }}
-          />
+            className="h-64 sm:h-80 md:h-96 w-full relative overflow-hidden"
+            style={{
+              background: `linear-gradient(135deg, ${theme.primaryColor} 0%, ${theme.secondaryColor} 50%, ${theme.accentColor || theme.primaryColor} 100%)`
+            }}
+          >
+            <div className="absolute inset-0 opacity-30">
+              <div className="absolute top-10 left-10 w-32 h-32 rounded-full bg-white/20 blur-3xl" />
+              <div className="absolute bottom-20 right-20 w-48 h-48 rounded-full bg-white/10 blur-3xl" />
+            </div>
+          </div>
         )}
 
-        {/* Business Info Overlay */}
+        <div className="absolute top-4 right-4 z-10">
+          <LanguageSwitcherCompact />
+        </div>
+
         <div className="absolute bottom-0 left-0 right-0">
-          <div className="mx-auto max-w-4xl px-4 pb-6">
-            <div className="flex items-end gap-4">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6 pb-8">
+            <div className="flex items-end gap-5 sm:gap-6">
               {merchant.logo_url ? (
                 <img
                   src={merchant.logo_url}
                   alt={merchant.business_name}
-                  className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl object-cover border-4 border-white shadow-lg"
+                  className="h-24 w-24 sm:h-32 sm:w-32 rounded-3xl object-cover shadow-2xl ring-4 ring-white/30 backdrop-blur"
                 />
               ) : (
                 <div
-                  className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl border-4 border-white shadow-lg flex items-center justify-center text-2xl font-bold text-white"
-                  style={{ backgroundColor: theme.primaryColor }}
+                  className="h-24 w-24 sm:h-32 sm:w-32 rounded-3xl ring-4 ring-white/30 shadow-2xl backdrop-blur flex items-center justify-center text-3xl sm:text-4xl font-bold text-white"
+                  style={{ backgroundColor: theme.primaryColor + "80" }}
                 >
                   {merchant.business_name.charAt(0)}
                 </div>
               )}
-              <div className="pb-1 text-white">
-                <h1 className="text-2xl sm:text-3xl font-bold drop-shadow-lg">{merchant.business_name}</h1>
+              <div className="pb-1 sm:pb-2 text-white">
+                <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight drop-shadow-lg">
+                  {merchant.business_name}
+                </h1>
                 {(merchant.city || merchant.state) && (
-                  <p className="text-sm opacity-90 flex items-center gap-1 mt-1">
-                    <MapPin className="h-3.5 w-3.5" />
+                  <p className="text-sm sm:text-base opacity-90 flex items-center gap-1.5 mt-2 drop-shadow">
+                    <MapPin className="h-4 w-4" />
                     {merchant.city}{merchant.city && merchant.state && ", "}{merchant.state}
                   </p>
                 )}
@@ -716,497 +998,761 @@ export function BookingPage({
     );
   };
 
-  // Landing page view (when not in booking flow)
-  if (!showBookingModal) {
+  // Full Calendar Component
+  const CalendarPicker = () => (
+    <div
+      className="p-4 sm:p-6"
+      style={{
+        borderRadius: cardRadius,
+        backgroundColor: theme.backgroundColor,
+        border: `1px solid ${theme.primaryColor}15`
+      }}
+    >
+      {/* Month Navigation */}
+      <div className="flex items-center justify-between mb-6">
+        <button
+          onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+          className="p-2 rounded-full transition-colors hover:bg-gray-100"
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </button>
+        <h3 className="text-lg font-bold">
+          {format(currentMonth, "MMMM yyyy")}
+        </h3>
+        <button
+          onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+          className="p-2 rounded-full transition-colors hover:bg-gray-100"
+        >
+          <ChevronRight className="h-5 w-5" />
+        </button>
+      </div>
+
+      {/* Day Headers */}
+      <div className="grid grid-cols-7 gap-1 mb-2">
+        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+          <div
+            key={day}
+            className="text-center text-xs font-semibold py-2 opacity-60"
+          >
+            {day}
+          </div>
+        ))}
+      </div>
+
+      {/* Calendar Days */}
+      <div className="grid grid-cols-7 gap-1">
+        {calendarDays.map((day, index) => {
+          if (!day) {
+            return <div key={`empty-${index}`} className="aspect-square" />;
+          }
+
+          const isAvailable = isDateAvailable(day);
+          const isSelected = selectedDate && isSameDay(day, selectedDate);
+          const isCurrentMonth = isSameMonth(day, currentMonth);
+          const isToday = isSameDay(day, new Date());
+
+          return (
+            <button
+              key={day.toISOString()}
+              onClick={() => isAvailable && setSelectedDate(day)}
+              disabled={!isAvailable}
+              className={cn(
+                "aspect-square flex items-center justify-center rounded-xl text-sm font-medium transition-all duration-200",
+                !isCurrentMonth && "opacity-30",
+                !isAvailable && "opacity-30 cursor-not-allowed",
+                isAvailable && !isSelected && "hover:bg-gray-100",
+                isSelected && "text-white shadow-lg scale-105"
+              )}
+              style={{
+                backgroundColor: isSelected ? theme.primaryColor : undefined,
+                outline: isToday && !isSelected ? `2px solid ${theme.primaryColor}` : undefined,
+                outlineOffset: isToday && !isSelected ? "2px" : undefined,
+                boxShadow: isSelected ? `0 4px 14px ${theme.primaryColor}40` : undefined
+              }}
+            >
+              {format(day, "d")}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  // Cart/Checkout Modal
+  if (showCart) {
     return (
       <div
-        className="min-h-screen"
+        className="fixed inset-0 z-50 overflow-y-auto"
         style={{
           backgroundColor: theme.backgroundColor,
           color: theme.textColor,
           fontFamily: theme.fontFamily,
         }}
       >
-        {/* Header based on style */}
-        {renderHeader()}
+        {/* Header */}
+        <header
+          className="sticky top-0 z-10 border-b backdrop-blur-xl"
+          style={{
+            backgroundColor: theme.backgroundColor + "e6",
+            borderColor: theme.primaryColor + "15"
+          }}
+        >
+          <div className="mx-auto max-w-3xl px-4 sm:px-6 py-4">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => {
+                  if (checkoutStep === "cart") {
+                    setShowCart(false);
+                  } else if (checkoutStep === "datetime") {
+                    setCheckoutStep("cart");
+                  } else if (checkoutStep === "details") {
+                    setCheckoutStep("datetime");
+                  }
+                }}
+                className="flex items-center gap-2 text-sm font-semibold transition-colors hover:opacity-70"
+                style={{ color: theme.primaryColor }}
+              >
+                <ChevronLeft className="h-5 w-5" />
+                {checkoutStep === "cart" ? t("backToPage") : t("back")}
+              </button>
+              <h2 className="font-bold text-lg">
+                {checkoutStep === "cart" && "Your Cart"}
+                {checkoutStep === "datetime" && "Choose Date & Time"}
+                {checkoutStep === "details" && "Your Details"}
+                {checkoutStep === "confirmation" && "Confirmed!"}
+              </h2>
+              <button
+                onClick={() => setShowCart(false)}
+                className="p-2 rounded-full transition-colors hover:bg-gray-100"
+              >
+                <X className="h-5 w-5 opacity-60" />
+              </button>
+            </div>
 
-        {/* Main Content */}
-        <div className="mx-auto max-w-4xl px-4 py-8">
-          {/* Language Switcher */}
-          <div className="flex justify-end mb-4">
-            <LanguageSwitcherCompact />
+            {/* Progress Indicator */}
+            {!bookingComplete && (
+              <div className="mt-6 flex items-center justify-center gap-3">
+                {["cart", ...(hasServices ? ["datetime"] : []), "details"].map((s, i, arr) => (
+                  <div key={s} className="flex items-center gap-3">
+                    <div
+                      className={cn(
+                        "flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold transition-all duration-300",
+                        checkoutStep === s || arr.indexOf(checkoutStep) > i
+                          ? "text-white shadow-lg"
+                          : "bg-gray-100"
+                      )}
+                      style={{
+                        backgroundColor: checkoutStep === s || arr.indexOf(checkoutStep) > i ? theme.primaryColor : undefined,
+                        boxShadow: checkoutStep === s ? `0 4px 14px ${theme.primaryColor}50` : undefined
+                      }}
+                    >
+                      {arr.indexOf(checkoutStep) > i ? <Check className="h-5 w-5" /> : i + 1}
+                    </div>
+                    {i < arr.length - 1 && (
+                      <div
+                        className="h-1 w-8 sm:w-12 rounded-full transition-colors"
+                        style={{
+                          backgroundColor: arr.indexOf(checkoutStep) > i ? theme.primaryColor : theme.primaryColor + "20"
+                        }}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
+        </header>
 
-          {/* Render content sections in order */}
-          {contentOrder.map((section) => renderSection(section))}
-        </div>
+        {/* Content */}
+        <main className="mx-auto max-w-3xl px-4 sm:px-6 py-8">
+          {/* Cart Step */}
+          {checkoutStep === "cart" && (
+            <div className="space-y-6">
+              {cart.length === 0 ? (
+                <div className="text-center py-12">
+                  <ShoppingBag className="h-16 w-16 mx-auto opacity-20 mb-4" />
+                  <p className="text-lg font-medium opacity-60">Your cart is empty</p>
+                  <button
+                    onClick={() => setShowCart(false)}
+                    className="mt-4 px-6 py-2 rounded-full text-sm font-semibold"
+                    style={{ backgroundColor: theme.primaryColor + "15", color: theme.primaryColor }}
+                  >
+                    Browse Services
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {/* Cart Items */}
+                  <div className="space-y-3">
+                    {cart.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center gap-4 p-4"
+                        style={{
+                          borderRadius: cardRadius,
+                          backgroundColor: theme.primaryColor + "05",
+                          border: `1px solid ${theme.primaryColor}15`
+                        }}
+                      >
+                        {item.type === "service" ? (
+                          <>
+                            <div
+                              className="p-3 rounded-xl"
+                              style={{ backgroundColor: theme.primaryColor + "15" }}
+                            >
+                              <Sparkles className="h-5 w-5" style={{ color: theme.primaryColor }} />
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-semibold">{item.service.name}</p>
+                              <p className="text-sm opacity-60">{formatDuration(item.service.duration_minutes)}</p>
+                            </div>
+                            <p className="font-bold" style={{ color: theme.primaryColor }}>
+                              {formatCurrency(item.service.price, merchant.currency)}
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            {item.product.image_url ? (
+                              <img
+                                src={item.product.image_url}
+                                alt={item.product.name}
+                                className="h-14 w-14 rounded-xl object-cover"
+                              />
+                            ) : (
+                              <div
+                                className="h-14 w-14 rounded-xl flex items-center justify-center"
+                                style={{ backgroundColor: theme.primaryColor + "15" }}
+                              >
+                                <ShoppingBag className="h-6 w-6" style={{ color: theme.primaryColor }} />
+                              </div>
+                            )}
+                            <div className="flex-1">
+                              <p className="font-semibold">{item.product.name}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <button
+                                  onClick={() => updateProductQuantity(item.id, item.quantity - 1)}
+                                  className="p-1 rounded-full"
+                                  style={{ backgroundColor: theme.primaryColor + "15" }}
+                                >
+                                  <Minus className="h-3 w-3" />
+                                </button>
+                                <span className="text-sm font-medium">{item.quantity}</span>
+                                <button
+                                  onClick={() => updateProductQuantity(item.id, item.quantity + 1)}
+                                  className="p-1 rounded-full"
+                                  style={{ backgroundColor: theme.primaryColor + "15" }}
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </button>
+                              </div>
+                            </div>
+                            <p className="font-bold" style={{ color: theme.primaryColor }}>
+                              {formatCurrency(item.product.price * item.quantity, merchant.currency)}
+                            </p>
+                          </>
+                        )}
+                        <button
+                          onClick={() => removeFromCart(item.id)}
+                          className="p-2 rounded-full hover:bg-red-50 text-red-500 transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
 
-        {/* Fixed Book Button */}
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white via-white to-transparent">
-          <div className="mx-auto max-w-4xl">
-            <button
-              onClick={() => setShowBookingModal(true)}
-              className="w-full py-4 font-semibold text-lg flex items-center justify-center gap-2 shadow-lg transition-transform hover:scale-[1.02]"
-              style={{
-                ...buttonStyle,
-                borderRadius: cardRadius,
-              }}
-            >
-              <Calendar className="h-5 w-5" />
-              {t("bookAppointment")}
-            </button>
-          </div>
-        </div>
+                  {/* Cart Summary */}
+                  <div
+                    className="p-6"
+                    style={{
+                      borderRadius: cardRadius,
+                      background: `linear-gradient(135deg, ${theme.primaryColor}10 0%, ${theme.secondaryColor}10 100%)`,
+                      border: `1px solid ${theme.primaryColor}20`
+                    }}
+                  >
+                    {hasServices && (
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="opacity-70">Total Duration</span>
+                        <span className="font-semibold">{formatDuration(cartTotals.totalDuration)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-lg font-bold pt-2 border-t" style={{ borderColor: theme.primaryColor + "20" }}>
+                      <span>Total</span>
+                      <span style={{ color: theme.primaryColor }}>
+                        {formatCurrency(cartTotals.totalPrice, merchant.currency)}
+                      </span>
+                    </div>
+                  </div>
 
-        {/* Zalo Chat Button */}
-        {(() => {
-          if (!merchant.social_links || !Array.isArray(merchant.social_links)) return null;
-          const zaloLink = (merchant.social_links as unknown as SocialLink[]).find(
-            (link) => link.type === "zalo"
-          );
-          if (!zaloLink) return null;
-          return (
-            <a
-              href={zaloLink.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="fixed bottom-24 right-4 z-40 flex items-center gap-2 rounded-full bg-[#0068FF] px-4 py-3 text-white shadow-lg transition-all hover:scale-105 hover:shadow-xl"
-              title="Chat on Zalo"
-            >
-              <ZaloIcon className="h-6 w-6" />
-              <span className="font-medium text-sm hidden sm:inline">Chat Zalo</span>
-            </a>
-          );
-        })()}
+                  {/* Continue Button */}
+                  <button
+                    onClick={() => setCheckoutStep(hasServices ? "datetime" : "details")}
+                    className="w-full py-4 font-bold text-lg transition-all duration-300 hover:scale-[1.02]"
+                    style={{
+                      background: `linear-gradient(135deg, ${theme.primaryColor} 0%, ${theme.secondaryColor} 100%)`,
+                      color: "#fff",
+                      borderRadius: buttonRadius,
+                      boxShadow: `0 8px 32px ${theme.primaryColor}40`
+                    }}
+                  >
+                    {hasServices ? "Choose Date & Time" : "Continue to Checkout"}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
 
-        {/* Gallery Lightbox */}
-        {selectedGalleryImage && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
-            onClick={() => setSelectedGalleryImage(null)}
-          >
-            <button
-              className="absolute top-4 right-4 text-white p-2"
-              onClick={() => setSelectedGalleryImage(null)}
-            >
-              <X className="h-8 w-8" />
-            </button>
-            <img
-              src={selectedGalleryImage}
-              alt="Gallery"
-              className="max-w-full max-h-full object-contain"
-              onClick={(e) => e.stopPropagation()}
-            />
-          </div>
-        )}
+          {/* DateTime Step */}
+          {checkoutStep === "datetime" && (
+            <div className="space-y-8">
+              {/* Calendar */}
+              <CalendarPicker />
+
+              {/* Time Slots */}
+              {selectedDate && (
+                <div>
+                  <h3 className="text-lg font-bold mb-4">
+                    Available Times for {format(selectedDate, "MMMM d")}
+                  </h3>
+                  {timeSlots.length > 0 ? (
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                      {timeSlots.map((time) => (
+                        <button
+                          key={time}
+                          onClick={() => setSelectedTime(time)}
+                          className={cn(
+                            "rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-300",
+                            selectedTime === time
+                              ? "text-white shadow-lg scale-105"
+                              : "hover:bg-gray-50"
+                          )}
+                          style={{
+                            backgroundColor: selectedTime === time ? theme.primaryColor : theme.backgroundColor,
+                            border: `1px solid ${selectedTime === time ? 'transparent' : theme.primaryColor + '15'}`,
+                            boxShadow: selectedTime === time ? `0 4px 14px ${theme.primaryColor}40` : undefined
+                          }}
+                        >
+                          {formatTime(time)}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-center py-8 opacity-60">No available times for this date</p>
+                  )}
+                </div>
+              )}
+
+              {/* Continue Button */}
+              {selectedDate && selectedTime && (
+                <button
+                  onClick={() => setCheckoutStep("details")}
+                  className="w-full py-4 font-bold text-lg transition-all duration-300 hover:scale-[1.02]"
+                  style={{
+                    background: `linear-gradient(135deg, ${theme.primaryColor} 0%, ${theme.secondaryColor} 100%)`,
+                    color: "#fff",
+                    borderRadius: buttonRadius,
+                    boxShadow: `0 8px 32px ${theme.primaryColor}40`
+                  }}
+                >
+                  Continue
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Details Step */}
+          {checkoutStep === "details" && (
+            <div className="space-y-6">
+              {/* Order Summary */}
+              <div
+                className="p-6"
+                style={{
+                  borderRadius: cardRadius,
+                  background: `linear-gradient(135deg, ${theme.primaryColor}10 0%, ${theme.secondaryColor}10 100%)`,
+                  border: `1px solid ${theme.primaryColor}20`
+                }}
+              >
+                <h3 className="font-bold mb-4">Order Summary</h3>
+                <div className="space-y-2 text-sm">
+                  {cart.map((item) => (
+                    <div key={item.id} className="flex justify-between">
+                      <span className="opacity-70">
+                        {item.type === "service" ? item.service.name : `${item.product.name} x${item.quantity}`}
+                      </span>
+                      <span>
+                        {formatCurrency(
+                          item.type === "service" ? item.service.price : item.product.price * item.quantity,
+                          merchant.currency
+                        )}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                {selectedDate && selectedTime && (
+                  <div className="flex items-center gap-4 mt-4 pt-4 border-t text-sm" style={{ borderColor: theme.primaryColor + "20" }}>
+                    <span className="flex items-center gap-1.5 opacity-70">
+                      <Calendar className="h-4 w-4" />
+                      {format(selectedDate, "EEE, MMM d")}
+                    </span>
+                    <span className="flex items-center gap-1.5 opacity-70">
+                      <Clock className="h-4 w-4" />
+                      {formatTime(selectedTime)}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between text-lg font-bold mt-4 pt-4 border-t" style={{ borderColor: theme.primaryColor + "20" }}>
+                  <span>Total</span>
+                  <span style={{ color: theme.primaryColor }}>
+                    {formatCurrency(cartTotals.totalPrice, merchant.currency)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Customer Form */}
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {error && (
+                  <div
+                    className="p-4 text-sm font-medium"
+                    style={{
+                      borderRadius: buttonRadius,
+                      backgroundColor: '#FEE2E2',
+                      color: '#DC2626'
+                    }}
+                  >
+                    {error}
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-semibold mb-2">{t("name")} *</label>
+                  <input
+                    type="text"
+                    value={customerInfo.name}
+                    onChange={(e) => setCustomerInfo({ ...customerInfo, name: e.target.value })}
+                    className="w-full px-5 py-4 text-base focus:outline-none transition-shadow focus:shadow-lg"
+                    style={{
+                      borderRadius: buttonRadius,
+                      border: `1px solid ${theme.primaryColor}20`,
+                      backgroundColor: theme.backgroundColor
+                    }}
+                    placeholder={t("namePlaceholder")}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold mb-2">{t("email")} *</label>
+                  <input
+                    type="email"
+                    value={customerInfo.email}
+                    onChange={(e) => setCustomerInfo({ ...customerInfo, email: e.target.value })}
+                    className="w-full px-5 py-4 text-base focus:outline-none transition-shadow focus:shadow-lg"
+                    style={{
+                      borderRadius: buttonRadius,
+                      border: `1px solid ${theme.primaryColor}20`,
+                      backgroundColor: theme.backgroundColor
+                    }}
+                    placeholder={t("emailPlaceholder")}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold mb-2">
+                    {t("phone")} {settings.requirePhoneNumber ? "*" : ""}
+                  </label>
+                  <input
+                    type="tel"
+                    value={customerInfo.phone}
+                    onChange={(e) => setCustomerInfo({ ...customerInfo, phone: e.target.value })}
+                    className="w-full px-5 py-4 text-base focus:outline-none transition-shadow focus:shadow-lg"
+                    style={{
+                      borderRadius: buttonRadius,
+                      border: `1px solid ${theme.primaryColor}20`,
+                      backgroundColor: theme.backgroundColor
+                    }}
+                    placeholder={t("phonePlaceholder")}
+                    required={settings.requirePhoneNumber}
+                  />
+                </div>
+
+                {settings.allowNotes && (
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">{t("notes")}</label>
+                    <textarea
+                      value={customerInfo.notes}
+                      onChange={(e) => setCustomerInfo({ ...customerInfo, notes: e.target.value })}
+                      className="w-full px-5 py-4 text-base focus:outline-none transition-shadow focus:shadow-lg resize-none"
+                      style={{
+                        borderRadius: buttonRadius,
+                        border: `1px solid ${theme.primaryColor}20`,
+                        backgroundColor: theme.backgroundColor
+                      }}
+                      rows={3}
+                      placeholder={t("notesPlaceholder")}
+                    />
+                  </div>
+                )}
+
+                {settings.cancellationPolicy && (
+                  <p className="text-xs opacity-50 leading-relaxed">{settings.cancellationPolicy}</p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-5 font-bold text-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                  style={{
+                    background: `linear-gradient(135deg, ${theme.primaryColor} 0%, ${theme.secondaryColor} 100%)`,
+                    color: "#fff",
+                    borderRadius: buttonRadius,
+                    boxShadow: `0 8px 32px ${theme.primaryColor}40`
+                  }}
+                >
+                  {loading ? t("loading") : t("confirmBooking")}
+                </button>
+              </form>
+            </div>
+          )}
+
+          {/* Confirmation Step */}
+          {checkoutStep === "confirmation" && (
+            <div className="text-center py-8">
+              <div
+                className="mx-auto flex h-24 w-24 items-center justify-center rounded-full mb-6"
+                style={{
+                  background: `linear-gradient(135deg, ${theme.primaryColor}20 0%, ${theme.secondaryColor}20 100%)`
+                }}
+              >
+                <div
+                  className="flex h-16 w-16 items-center justify-center rounded-full"
+                  style={{
+                    background: `linear-gradient(135deg, ${theme.primaryColor} 0%, ${theme.secondaryColor} 100%)`,
+                    boxShadow: `0 8px 24px ${theme.primaryColor}40`
+                  }}
+                >
+                  <Check className="h-8 w-8 text-white" />
+                </div>
+              </div>
+
+              <h2 className="text-3xl sm:text-4xl font-bold">{t("bookingConfirmed")}</h2>
+              <p className="mt-3 opacity-60 text-base">{t("bookingConfirmedDesc")}</p>
+
+              <div
+                className="mx-auto mt-8 max-w-sm p-6 text-left"
+                style={{
+                  borderRadius: cardRadius,
+                  background: `linear-gradient(135deg, ${theme.primaryColor}08 0%, ${theme.secondaryColor}08 100%)`,
+                  border: `1px solid ${theme.primaryColor}15`
+                }}
+              >
+                <div className="space-y-2 text-sm">
+                  {cart.map((item) => (
+                    <div key={item.id} className="flex justify-between">
+                      <span className="opacity-70">
+                        {item.type === "service" ? item.service.name : `${item.product.name} x${item.quantity}`}
+                      </span>
+                      <span>
+                        {formatCurrency(
+                          item.type === "service" ? item.service.price : item.product.price * item.quantity,
+                          merchant.currency
+                        )}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                {selectedDate && selectedTime && (
+                  <div className="mt-4 pt-4 border-t" style={{ borderColor: theme.primaryColor + '15' }}>
+                    <p className="font-medium">{format(selectedDate, "EEEE, MMMM d, yyyy")}</p>
+                    <p className="text-sm opacity-60 mt-1">
+                      {formatTime(selectedTime)} • {formatDuration(cartTotals.totalDuration)}
+                    </p>
+                  </div>
+                )}
+                <p className="mt-4 pt-4 border-t text-2xl font-bold" style={{ borderColor: theme.primaryColor + '15', color: theme.primaryColor }}>
+                  {formatCurrency(cartTotals.totalPrice, merchant.currency)}
+                </p>
+              </div>
+
+              <div className="mt-8 space-y-3 max-w-sm mx-auto">
+                <button
+                  onClick={() => {
+                    setCart([]);
+                    setSelectedDate(null);
+                    setSelectedTime(null);
+                    setCustomerInfo({ name: "", email: "", phone: "", notes: "" });
+                    setBookingComplete(false);
+                    setCheckoutStep("cart");
+                    setShowCart(false);
+                  }}
+                  className="w-full py-4 font-bold text-base transition-all duration-300 hover:scale-[1.02]"
+                  style={{
+                    background: `linear-gradient(135deg, ${theme.primaryColor} 0%, ${theme.secondaryColor} 100%)`,
+                    color: "#fff",
+                    borderRadius: buttonRadius,
+                    boxShadow: `0 4px 14px ${theme.primaryColor}30`
+                  }}
+                >
+                  {t("backToPage")}
+                </button>
+              </div>
+            </div>
+          )}
+        </main>
       </div>
     );
   }
 
-  // Booking Modal/Flow
+  // Landing page view
   return (
     <div
-      className="fixed inset-0 z-50 overflow-y-auto"
+      className="min-h-screen"
       style={{
         backgroundColor: theme.backgroundColor,
         color: theme.textColor,
         fontFamily: theme.fontFamily,
       }}
     >
-      {/* Booking Header */}
-      <header className="sticky top-0 z-10 border-b bg-inherit" style={{ borderColor: theme.primaryColor + "20" }}>
-        <div className="mx-auto max-w-3xl px-4 py-4">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => {
-                if (step === "service") {
-                  setShowBookingModal(false);
-                } else if (step === "staff") {
-                  setStep("service");
-                } else if (step === "datetime") {
-                  setStep(settings.showStaffSelection && staff.length > 0 ? "staff" : "service");
-                } else if (step === "details") {
-                  setStep("datetime");
-                }
-              }}
-              className="flex items-center gap-2 text-sm font-medium"
-              style={{ color: theme.primaryColor }}
-            >
-              <ChevronLeft className="h-5 w-5" />
-              {step === "service" ? t("backToPage") : t("back")}
-            </button>
-            <h2 className="font-semibold">{t("bookAppointment")}</h2>
-            <button
-              onClick={() => setShowBookingModal(false)}
-              className="p-1"
-            >
-              <X className="h-5 w-5 opacity-60" />
-            </button>
-          </div>
+      {renderHeader()}
 
-          {/* Progress */}
-          {!bookingComplete && (
-            <div className="mt-4 flex items-center justify-center gap-2 text-sm">
-              {["service", ...(settings.showStaffSelection && staff.length > 0 ? ["staff"] : []), "datetime", "details"].map(
-                (s, i, arr) => (
-                  <div key={s} className="flex items-center gap-2">
-                    <span
-                      className={cn(
-                        "flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium",
-                        step === s || arr.indexOf(step) > i
-                          ? "text-white"
-                          : "bg-gray-200"
-                      )}
-                      style={{
-                        backgroundColor:
-                          step === s || arr.indexOf(step) > i ? theme.primaryColor : undefined,
-                      }}
-                    >
-                      {arr.indexOf(step) > i ? <Check className="h-3 w-3" /> : i + 1}
-                    </span>
-                    {i < arr.length - 1 && <div className="h-px w-6 bg-gray-200" />}
-                  </div>
-                )
-              )}
-            </div>
-          )}
-        </div>
-      </header>
-
-      {/* Booking Content */}
-      <main className="mx-auto max-w-3xl px-4 py-6">
-        {/* Service Selection */}
-        {step === "service" && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">{t("selectService")}</h3>
-            {Object.entries(servicesByCategory).map(([category, categoryServices]) => (
-              <div key={category}>
-                {Object.keys(servicesByCategory).length > 1 && (
-                  <h4 className="text-sm font-medium opacity-60 mb-2 mt-4">{category}</h4>
-                )}
-                <div className="space-y-2">
-                  {categoryServices.map((service) => (
-                    <button
-                      key={service.id}
-                      onClick={() => handleServiceSelect(service)}
-                      className="w-full p-4 text-left transition-all hover:shadow-md flex items-center justify-between"
-                      style={{
-                        borderRadius: cardRadius,
-                        border: `1px solid ${theme.primaryColor}30`,
-                        backgroundColor: theme.backgroundColor,
-                      }}
-                    >
-                      <div>
-                        <span className="font-medium">{service.name}</span>
-                        <div className="flex items-center gap-2 text-sm opacity-60 mt-1">
-                          <Clock className="h-3.5 w-3.5" />
-                          {formatDuration(service.duration_minutes)}
-                        </div>
-                      </div>
-                      <span className="font-semibold" style={{ color: theme.primaryColor }}>
-                        {formatCurrency(service.price, merchant.currency)}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* Floating Header - appears on scroll */}
+      <div
+        className={cn(
+          "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+          showFloatingHeader
+            ? "translate-y-0 opacity-100"
+            : "-translate-y-full opacity-0 pointer-events-none"
         )}
-
-        {/* Staff Selection */}
-        {step === "staff" && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">{t("selectStaff")}</h3>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <button
-                onClick={() => handleStaffSelect(null)}
-                className="p-4 text-left transition-all hover:shadow-md"
-                style={{
-                  borderRadius: cardRadius,
-                  border: `1px solid ${theme.primaryColor}30`,
-                }}
-              >
-                <span className="font-medium">{t("anyStaff")}</span>
-                <p className="mt-1 text-sm opacity-70">{t("anyStaff")}</p>
-              </button>
-
-              {availableStaff.map((member) => (
-                <button
-                  key={member.id}
-                  onClick={() => handleStaffSelect(member)}
-                  className="p-4 text-left transition-all hover:shadow-md"
+      >
+        <div
+          className="backdrop-blur-xl border-b"
+          style={{
+            backgroundColor: theme.backgroundColor + "f0",
+            borderColor: theme.primaryColor + "15"
+          }}
+        >
+          <div className="mx-auto max-w-5xl px-4 sm:px-6 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {merchant.logo_url ? (
+                  <img
+                    src={merchant.logo_url}
+                    alt={merchant.business_name}
+                    className="h-10 w-10 rounded-xl object-cover shadow-md"
+                  />
+                ) : (
+                  <div
+                    className="h-10 w-10 rounded-xl flex items-center justify-center text-sm font-bold text-white shadow-md"
+                    style={{
+                      background: `linear-gradient(135deg, ${theme.primaryColor} 0%, ${theme.secondaryColor} 100%)`
+                    }}
+                  >
+                    {merchant.business_name.charAt(0)}
+                  </div>
+                )}
+                <span className="font-semibold text-base truncate max-w-[150px] sm:max-w-none">
+                  {merchant.business_name}
+                </span>
+              </div>
+              {merchant.google_maps_url && (
+                <a
+                  href={merchant.google_maps_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all duration-300 hover:scale-[1.02]"
                   style={{
-                    borderRadius: cardRadius,
-                    border: `1px solid ${theme.primaryColor}30`,
+                    backgroundColor: theme.primaryColor,
+                    color: "#fff",
+                    borderRadius: buttonRadius,
+                    boxShadow: `0 4px 14px ${theme.primaryColor}30`
                   }}
                 >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium text-white"
-                      style={{ backgroundColor: theme.primaryColor }}
-                    >
-                      {member.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .toUpperCase()
-                        .slice(0, 2)}
-                    </div>
-                    <div>
-                      <span className="font-medium">{member.name}</span>
-                      {member.bio && (
-                        <p className="mt-0.5 text-sm opacity-70 line-clamp-1">{member.bio}</p>
-                      )}
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Date & Time Selection */}
-        {step === "datetime" && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">{t("selectDateTime")}</h3>
-            <div className="space-y-4">
-              <div>
-                <p className="mb-2 text-sm opacity-70">Available Dates</p>
-                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                  {availableDates.slice(0, 14).map((date) => (
-                    <button
-                      key={date.toISOString()}
-                      onClick={() => {
-                        setSelectedDate(date);
-                        setSelectedTime(null);
-                      }}
-                      className={cn(
-                        "flex min-w-[65px] flex-col items-center rounded-lg border p-2.5 transition-colors",
-                        selectedDate?.toDateString() === date.toDateString()
-                          ? "border-transparent text-white"
-                          : "hover:border-gray-300"
-                      )}
-                      style={{
-                        backgroundColor:
-                          selectedDate?.toDateString() === date.toDateString()
-                            ? theme.primaryColor
-                            : "transparent",
-                        borderColor:
-                          selectedDate?.toDateString() === date.toDateString()
-                            ? theme.primaryColor
-                            : theme.primaryColor + "30",
-                      }}
-                    >
-                      <span className="text-xs opacity-70">{format(date, "EEE")}</span>
-                      <span className="text-lg font-bold">{format(date, "d")}</span>
-                      <span className="text-xs opacity-70">{format(date, "MMM")}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {selectedDate && (
-                <div>
-                  <p className="mb-2 text-sm opacity-70">Available Times</p>
-                  <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
-                    {timeSlots.map((time) => (
-                      <button
-                        key={time}
-                        onClick={() => handleDateTimeSelect(selectedDate, time)}
-                        className={cn(
-                          "rounded-lg border px-2 py-2 text-sm font-medium transition-colors",
-                          selectedTime === time ? "border-transparent text-white" : ""
-                        )}
-                        style={{
-                          backgroundColor:
-                            selectedTime === time ? theme.primaryColor : "transparent",
-                          borderColor:
-                            selectedTime === time ? theme.primaryColor : theme.primaryColor + "30",
-                        }}
-                      >
-                        {formatTime(time)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                  <MapPin className="h-4 w-4" />
+                  <span className="hidden sm:inline">View on Maps</span>
+                </a>
               )}
             </div>
           </div>
-        )}
+        </div>
+      </div>
 
-        {/* Customer Details */}
-        {step === "details" && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">{t("yourDetails")}</h3>
+      {/* Main Content */}
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 py-10 sm:py-12 pb-32 sm:pb-36">
+        {contentOrder.map((section) => renderSection(section))}
+      </div>
 
-            {/* Booking Summary */}
-            <div
-              className="p-4"
-              style={{
-                borderRadius: cardRadius,
-                backgroundColor: theme.primaryColor + "10",
-              }}
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="font-medium">{selectedService?.name}</p>
-                  {selectedStaff && <p className="text-sm opacity-70">with {selectedStaff.name}</p>}
-                  <p className="text-sm opacity-70 mt-1">
-                    {selectedDate && format(selectedDate, "EEE, MMM d")} at {selectedTime && formatTime(selectedTime)}
-                  </p>
-                </div>
-                <p className="font-semibold" style={{ color: theme.primaryColor }}>
-                  {selectedService && formatCurrency(selectedService.price, merchant.currency)}
-                </p>
-              </div>
-            </div>
+      {/* Fixed Cart Button */}
+      <div
+        className="fixed bottom-0 left-0 right-0 p-4 sm:p-6 z-50"
+        style={{
+          background: `linear-gradient(to top, ${theme.backgroundColor} 60%, transparent)`
+        }}
+      >
+        <div className="mx-auto max-w-5xl">
+          <button
+            onClick={() => setShowCart(true)}
+            className="w-full py-4 sm:py-5 font-bold text-lg sm:text-xl flex items-center justify-center gap-3 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+            style={{
+              background: `linear-gradient(135deg, ${theme.primaryColor} 0%, ${theme.secondaryColor} 100%)`,
+              color: "#fff",
+              borderRadius: buttonRadius,
+              boxShadow: `0 8px 32px ${theme.primaryColor}50`
+            }}
+          >
+            <ShoppingBag className="h-5 w-5 sm:h-6 sm:w-6" />
+            {cart.length > 0 ? (
+              <>
+                View Cart ({cart.length}) • {formatCurrency(cartTotals.totalPrice, merchant.currency)}
+              </>
+            ) : (
+              t("bookAppointment")
+            )}
+          </button>
+        </div>
+      </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {error && (
-                <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>
-              )}
+      {/* Zalo Chat Button */}
+      {(() => {
+        if (!merchant.social_links || !Array.isArray(merchant.social_links)) return null;
+        const zaloLink = (merchant.social_links as unknown as SocialLink[]).find(
+          (link) => link.type === "zalo"
+        );
+        if (!zaloLink) return null;
+        return (
+          <a
+            href={zaloLink.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="fixed bottom-28 sm:bottom-32 right-4 sm:right-6 z-40 flex items-center gap-2 rounded-full bg-[#0068FF] px-5 py-3.5 text-white shadow-xl transition-all duration-300 hover:scale-105"
+            style={{ boxShadow: '0 8px 24px rgba(0, 104, 255, 0.4)' }}
+            title="Chat on Zalo"
+          >
+            <ZaloIcon className="h-6 w-6" />
+            <span className="font-semibold text-sm hidden sm:inline">Chat Zalo</span>
+          </a>
+        );
+      })()}
 
-              <div>
-                <label className="block text-sm font-medium mb-1">{t("name")} *</label>
-                <input
-                  type="text"
-                  value={customerInfo.name}
-                  onChange={(e) => setCustomerInfo({ ...customerInfo, name: e.target.value })}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:outline-none"
-                  style={{ borderRadius: cardRadius }}
-                  placeholder={t("namePlaceholder")}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">{t("email")} *</label>
-                <input
-                  type="email"
-                  value={customerInfo.email}
-                  onChange={(e) => setCustomerInfo({ ...customerInfo, email: e.target.value })}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:outline-none"
-                  style={{ borderRadius: cardRadius }}
-                  placeholder={t("emailPlaceholder")}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  {t("phone")} {settings.requirePhoneNumber ? "*" : ""}
-                </label>
-                <input
-                  type="tel"
-                  value={customerInfo.phone}
-                  onChange={(e) => setCustomerInfo({ ...customerInfo, phone: e.target.value })}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:outline-none"
-                  style={{ borderRadius: cardRadius }}
-                  placeholder={t("phonePlaceholder")}
-                  required={settings.requirePhoneNumber}
-                />
-              </div>
-
-              {settings.allowNotes && (
-                <div>
-                  <label className="block text-sm font-medium mb-1">{t("notes")}</label>
-                  <textarea
-                    value={customerInfo.notes}
-                    onChange={(e) => setCustomerInfo({ ...customerInfo, notes: e.target.value })}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:outline-none"
-                    style={{ borderRadius: cardRadius }}
-                    rows={2}
-                    placeholder={t("notesPlaceholder")}
-                  />
-                </div>
-              )}
-
-              {settings.cancellationPolicy && (
-                <p className="text-xs opacity-60">{settings.cancellationPolicy}</p>
-              )}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3 font-semibold transition-colors disabled:opacity-50"
-                style={{ ...buttonStyle, borderRadius: cardRadius }}
-              >
-                {loading ? t("loading") : t("confirmBooking")}
-              </button>
-            </form>
-          </div>
-        )}
-
-        {/* Confirmation */}
-        {step === "confirmation" && (
-          <div className="text-center py-8">
-            <div
-              className="mx-auto flex h-16 w-16 items-center justify-center rounded-full"
-              style={{ backgroundColor: theme.primaryColor + "20" }}
-            >
-              <Check className="h-8 w-8" style={{ color: theme.primaryColor }} />
-            </div>
-            <h2 className="mt-4 text-2xl font-bold">{t("bookingConfirmed")}</h2>
-            <p className="mt-2 opacity-70">
-              {t("bookingConfirmedDesc")}
-            </p>
-
-            <div
-              className="mx-auto mt-6 max-w-sm p-4 text-left"
-              style={{
-                borderRadius: cardRadius,
-                backgroundColor: theme.primaryColor + "10",
-              }}
-            >
-              <p className="font-semibold">{selectedService?.name}</p>
-              {selectedStaff && <p className="text-sm opacity-70">with {selectedStaff.name}</p>}
-              <p className="mt-2">
-                {selectedDate && format(selectedDate, "EEEE, MMMM d, yyyy")}
-              </p>
-              <p className="text-sm opacity-70">
-                {selectedTime && formatTime(selectedTime)} • {selectedService && formatDuration(selectedService.duration_minutes)}
-              </p>
-              <p className="mt-2 font-semibold" style={{ color: theme.primaryColor }}>
-                {selectedService && formatCurrency(selectedService.price, merchant.currency)}
-              </p>
-            </div>
-
-            <div className="mt-6 space-y-3">
-              <button
-                onClick={() => {
-                  setStep("service");
-                  setSelectedService(null);
-                  setSelectedStaff(null);
-                  setSelectedDate(null);
-                  setSelectedTime(null);
-                  setCustomerInfo({ name: "", email: "", phone: "", notes: "" });
-                  setBookingComplete(false);
-                }}
-                className="w-full py-3 font-medium"
-                style={{ ...buttonStyle, borderRadius: cardRadius }}
-              >
-                {t("bookAnother")}
-              </button>
-              <button
-                onClick={() => {
-                  setShowBookingModal(false);
-                  setStep("service");
-                  setSelectedService(null);
-                  setSelectedStaff(null);
-                  setSelectedDate(null);
-                  setSelectedTime(null);
-                  setCustomerInfo({ name: "", email: "", phone: "", notes: "" });
-                  setBookingComplete(false);
-                }}
-                className="w-full py-3 font-medium opacity-70"
-              >
-                {t("backToPage")}
-              </button>
-            </div>
-          </div>
-        )}
-      </main>
+      {/* Gallery Lightbox */}
+      {selectedGalleryImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm p-4"
+          onClick={() => setSelectedGalleryImage(null)}
+        >
+          <button
+            className="absolute top-4 right-4 text-white/80 hover:text-white p-3 rounded-full bg-white/10 backdrop-blur transition-colors"
+            onClick={() => setSelectedGalleryImage(null)}
+          >
+            <X className="h-6 w-6" />
+          </button>
+          <img
+            src={selectedGalleryImage}
+            alt="Gallery"
+            className="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 }

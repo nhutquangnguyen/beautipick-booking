@@ -17,6 +17,7 @@ import {
   Link as LinkIcon,
   ExternalLink,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { SocialLink, SocialLinkType } from "@/types/database";
 
@@ -138,6 +139,7 @@ export function SocialLinksManager({
   merchantId: string;
   socialLinks: SocialLink[];
 }) {
+  const t = useTranslations("linksForm");
   const router = useRouter();
   const supabase = createClient();
   const [links, setLinks] = useState<SocialLink[]>(socialLinks);
@@ -231,23 +233,23 @@ export function SocialLinksManager({
       <div className="card p-4 sm:p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-base sm:text-lg font-semibold text-gray-900">Your Links</h2>
-            <p className="text-sm text-gray-500">Add social media and custom links to your booking page</p>
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900">{t("yourLinks")}</h2>
+            <p className="text-sm text-gray-500">{t("yourLinksDesc")}</p>
           </div>
           <button
             onClick={() => setShowAddModal(true)}
             className="btn btn-primary btn-sm flex items-center gap-2"
           >
             <Plus className="h-4 w-4" />
-            Add Link
+            {t("addLink")}
           </button>
         </div>
 
         {links.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <LinkIcon className="h-12 w-12 mx-auto mb-3 opacity-30" />
-            <p>No links added yet</p>
-            <p className="text-sm">Add your social media and other links</p>
+            <p>{t("noLinks")}</p>
+            <p className="text-sm">{t("addYourLinks")}</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -306,9 +308,9 @@ export function SocialLinksManager({
               disabled={loading}
               className="btn btn-primary btn-md"
             >
-              {loading ? "Saving..." : "Save Changes"}
+              {loading ? t("saving") : t("saveChanges")}
             </button>
-            {success && <span className="text-sm text-green-600">Saved!</span>}
+            {success && <span className="text-sm text-green-600">{t("saved")}</span>}
           </div>
         )}
       </div>
@@ -318,13 +320,13 @@ export function SocialLinksManager({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-md p-6">
             <h3 className="text-lg font-semibold mb-4">
-              {editingLink ? "Edit Link" : "Add New Link"}
+              {editingLink ? t("editLink") : t("addNewLink")}
             </h3>
 
             <div className="space-y-4">
               {/* Link Type Selection */}
               <div>
-                <label className="label mb-2">Link Type</label>
+                <label className="label mb-2">{t("linkType")}</label>
                 <div className="grid grid-cols-4 gap-2">
                   {SOCIAL_LINK_OPTIONS.map((option) => (
                     <button
@@ -358,25 +360,25 @@ export function SocialLinksManager({
 
               {/* Title */}
               <div>
-                <label className="label">Button Title</label>
+                <label className="label">{t("buttonTitle")}</label>
                 <input
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   className="input mt-1"
-                  placeholder={currentOption?.label || "Enter title"}
+                  placeholder={currentOption?.label || t("linkTitlePlaceholder")}
                 />
               </div>
 
               {/* URL */}
               <div>
-                <label className="label">URL</label>
+                <label className="label">{t("url")}</label>
                 <input
                   type="url"
                   value={formData.url}
                   onChange={(e) => setFormData({ ...formData, url: e.target.value })}
                   className="input mt-1"
-                  placeholder={currentOption?.placeholder || "https://..."}
+                  placeholder={currentOption?.placeholder || t("linkUrlPlaceholder")}
                   required
                 />
               </div>
@@ -391,14 +393,14 @@ export function SocialLinksManager({
                 }}
                 className="btn btn-outline btn-md flex-1"
               >
-                Cancel
+                {t("cancel")}
               </button>
               <button
                 onClick={editingLink ? handleUpdateLink : handleAddLink}
                 disabled={!formData.url}
                 className="btn btn-primary btn-md flex-1"
               >
-                {editingLink ? "Update" : "Add Link"}
+                {editingLink ? t("update") : t("addLink")}
               </button>
             </div>
           </div>

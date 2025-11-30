@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Download, QrCode } from "lucide-react";
+import { useTranslations } from "next-intl";
 import QRCode from "qrcode";
 
 type QRLayout = "logo-inside" | "logo-left" | "logo-right" | "qr-only";
@@ -17,6 +18,7 @@ export function QRCodeGenerator({
   businessName,
   logoUrl,
 }: QRCodeGeneratorProps) {
+  const t = useTranslations("qrCode");
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [layout, setLayout] = useState<QRLayout>("logo-inside");
   const [loading, setLoading] = useState(true);
@@ -279,26 +281,26 @@ export function QRCodeGenerator({
     link.click();
   };
 
-  const layouts: { value: QRLayout; label: string; description: string }[] = [
-    { value: "logo-inside", label: "Logo Inside", description: "Logo centered in QR" },
-    { value: "logo-left", label: "Logo Left", description: "Logo on left side" },
-    { value: "logo-right", label: "Logo Right", description: "Logo on right side" },
-    { value: "qr-only", label: "QR Only", description: "No logo" },
+  const layouts: { value: QRLayout; labelKey: string; descKey: string }[] = [
+    { value: "logo-inside", labelKey: "logoInside", descKey: "logoInsideDesc" },
+    { value: "logo-left", labelKey: "logoLeft", descKey: "logoLeftDesc" },
+    { value: "logo-right", labelKey: "logoRight", descKey: "logoRightDesc" },
+    { value: "qr-only", labelKey: "qrOnly", descKey: "qrOnlyDesc" },
   ];
 
   return (
     <div className="card p-4 sm:p-6">
       <div className="flex items-center gap-2 mb-4">
         <QrCode className="h-5 w-5 text-purple-600" />
-        <h3 className="text-base font-semibold text-gray-900">QR Code</h3>
+        <h3 className="text-base font-semibold text-gray-900">{t("title")}</h3>
       </div>
       <p className="text-sm text-gray-500 mb-4">
-        Download a QR code for your booking page. Print and display in your salon.
+        {t("description")}
       </p>
 
       {/* Layout Options */}
       <div className="mb-6">
-        <label className="label mb-2">Layout Style</label>
+        <label className="label mb-2">{t("layoutStyle")}</label>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {layouts.map((l) => (
             <button
@@ -310,8 +312,8 @@ export function QRCodeGenerator({
                   : "border-gray-200 hover:border-gray-300"
               }`}
             >
-              <p className="text-sm font-medium text-gray-900">{l.label}</p>
-              <p className="text-xs text-gray-500">{l.description}</p>
+              <p className="text-sm font-medium text-gray-900">{t(l.labelKey)}</p>
+              <p className="text-xs text-gray-500">{t(l.descKey)}</p>
             </button>
           ))}
         </div>
@@ -334,7 +336,7 @@ export function QRCodeGenerator({
           className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-3 text-white font-medium hover:opacity-90 transition-opacity"
         >
           <Download className="h-5 w-5" />
-          Download QR Code
+          {t("download")}
         </button>
       </div>
     </div>

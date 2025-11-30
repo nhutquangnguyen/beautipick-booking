@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 
 const PRESET_SERVICES = [
@@ -21,6 +22,7 @@ export function AddServiceModal({
   merchantId: string;
   isEmptyState?: boolean;
 }) {
+  const t = useTranslations("servicesForm");
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showCustom, setShowCustom] = useState(false);
@@ -73,7 +75,7 @@ export function AddServiceModal({
         }
       >
         <Plus className="h-5 w-5" />
-        Add Service
+        {t("addService")}
       </button>
 
       {isOpen && (
@@ -81,7 +83,7 @@ export function AddServiceModal({
           <div className="w-full max-w-md rounded-2xl bg-white p-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold text-gray-900">
-                {showCustom ? "Custom Service" : "Add Service"}
+                {showCustom ? t("customService") : t("addService")}
               </h2>
               <button
                 onClick={() => {
@@ -97,7 +99,7 @@ export function AddServiceModal({
             {!showCustom ? (
               <>
                 <p className="mt-2 text-sm text-gray-600">
-                  Choose a common service or create your own
+                  {t("chooseOrCreate")}
                 </p>
 
                 <div className="mt-6 space-y-2">
@@ -125,14 +127,14 @@ export function AddServiceModal({
                   onClick={() => setShowCustom(true)}
                   className="mt-4 w-full rounded-xl border-2 border-dashed border-gray-200 py-3 text-center font-medium text-gray-600 hover:border-gray-300 hover:text-gray-900"
                 >
-                  + Create Custom Service
+                  {t("createCustomService")}
                 </button>
               </>
             ) : (
               <form onSubmit={handleCustomSubmit} className="mt-6 space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Service Name
+                    {t("serviceName")}
                   </label>
                   <input
                     type="text"
@@ -141,7 +143,7 @@ export function AddServiceModal({
                       setFormData({ ...formData, name: e.target.value })
                     }
                     className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 focus:border-purple-500 focus:outline-none"
-                    placeholder="e.g., Deep Conditioning"
+                    placeholder={t("serviceNamePlaceholder")}
                     required
                   />
                 </div>
@@ -149,7 +151,7 @@ export function AddServiceModal({
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Duration (mins)
+                      {t("durationMins")}
                     </label>
                     <input
                       type="number"
@@ -168,7 +170,7 @@ export function AddServiceModal({
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Price ($)
+                      {t("price")} ($)
                     </label>
                     <input
                       type="number"
@@ -189,7 +191,7 @@ export function AddServiceModal({
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Category (optional)
+                    {t("categoryOptional")}
                   </label>
                   <input
                     type="text"
@@ -198,7 +200,7 @@ export function AddServiceModal({
                       setFormData({ ...formData, category: e.target.value })
                     }
                     className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 focus:border-purple-500 focus:outline-none"
-                    placeholder="e.g., Hair, Nails, Skincare"
+                    placeholder={t("categoryPlaceholder")}
                   />
                 </div>
 
@@ -208,14 +210,14 @@ export function AddServiceModal({
                     onClick={() => setShowCustom(false)}
                     className="flex-1 rounded-xl border border-gray-200 py-3 font-medium text-gray-700 hover:bg-gray-50"
                   >
-                    Back
+                    {t("back")}
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
                     className="flex-1 rounded-xl bg-purple-600 py-3 font-medium text-white hover:bg-purple-700"
                   >
-                    {loading ? "Adding..." : "Add Service"}
+                    {loading ? t("adding") : t("addService")}
                   </button>
                 </div>
               </form>

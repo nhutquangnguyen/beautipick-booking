@@ -2,21 +2,16 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { BookingPage } from "@/components/booking/booking-page";
 import { MerchantTheme, MerchantSettings, defaultTheme, defaultSettings } from "@/types/database";
-import { getSignedImageUrl } from "@/lib/wasabi";
 
-// Disable caching to ensure fresh signed URLs
-export const dynamic = "force-dynamic";
+const BUCKET_NAME = "images";
 
-// Helper to get signed URL if value is a key (not already a URL)
-async function getImageUrl(value: string | null): Promise<string | null> {
+// Helper to get public URL if value is a storage path (not already a URL)
+function getImageUrl(supabase: Awaited<ReturnType<typeof createClient>>, value: string | null): string | null {
   if (!value) return null;
   if (value.startsWith("http")) return value; // Already a URL (legacy)
-  try {
-    return await getSignedImageUrl(value, 3600); // Generate signed URL for key
-  } catch (error) {
-    console.error("Failed to generate signed URL for:", value, error);
-    return null;
-  }
+
+  const { data } = supabase.storage.from(BUCKET_NAME).getPublicUrl(value);
+  return data.publicUrl;
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
@@ -90,33 +85,27 @@ export default async function PublicBookingPage({
       .order("created_at", { ascending: false }),
   ]);
 
-  // Generate signed URLs for merchant images
-  const [logoUrl, coverImageUrl] = await Promise.all([
-    getImageUrl(merchant.logo_url),
-    getImageUrl(merchant.cover_image_url),
-  ]);
+  // Generate public URLs for merchant images
+  const logoUrl = getImageUrl(supabase, merchant.logo_url);
+  const coverImageUrl = getImageUrl(supabase, merchant.cover_image_url);
 
-  // Generate signed URLs for gallery images
-  const galleryWithSignedUrls = await Promise.all(
-    (galleryResult.data ?? []).map(async (image) => ({
-      ...image,
-      image_url: await getImageUrl(image.image_url) ?? image.image_url,
-    }))
-  );
+  // Generate public URLs for gallery images
+  const galleryWithUrls = (galleryResult.data ?? []).map((image) => ({
+    ...image,
+    image_url: getImageUrl(supabase, image.image_url) ?? image.image_url,
+  }));
 
-  // Generate signed URLs for product images
-  const productsWithSignedUrls = await Promise.all(
-    (productsResult.data ?? []).map(async (product) => ({
-      ...product,
-      image_url: await getImageUrl(product.image_url),
-    }))
-  );
+  // Generate public URLs for product images
+  const productsWithUrls = (productsResult.data ?? []).map((product) => ({
+    ...product,
+    image_url: getImageUrl(supabase, product.image_url),
+  }));
 
   const theme = (merchant.theme as MerchantTheme) ?? defaultTheme;
   const settings = (merchant.settings as MerchantSettings) ?? defaultSettings;
 
-  // Pass merchant with signed URLs
-  const merchantWithSignedUrls = {
+  // Pass merchant with public URLs
+  const merchantWithUrls = {
     ...merchant,
     logo_url: logoUrl,
     cover_image_url: coverImageUrl,
@@ -124,12 +113,12 @@ export default async function PublicBookingPage({
 
   return (
     <BookingPage
-      merchant={merchantWithSignedUrls}
+      merchant={merchantWithUrls}
       services={servicesResult.data ?? []}
       staff={staffResult.data ?? []}
       availability={availabilityResult.data ?? []}
-      gallery={galleryWithSignedUrls}
-      products={productsWithSignedUrls}
+      gallery={galleryWithUrls}
+      products={productsWithUrls}
       theme={theme}
       settings={settings}
     />

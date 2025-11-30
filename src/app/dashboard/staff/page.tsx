@@ -1,8 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
+import { getTranslations } from "next-intl/server";
 import { StaffList } from "@/components/dashboard/staff/staff-list";
 import { StaffForm } from "@/components/dashboard/staff/staff-form";
 
 export default async function StaffPage() {
+  const t = await getTranslations("staffForm");
   const supabase = await createClient();
   const {
     data: { user },
@@ -24,8 +26,8 @@ export default async function StaffPage() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Staff</h1>
-          <p className="text-gray-600">Manage your team members</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
+          <p className="text-gray-600">{t("subtitle")}</p>
         </div>
         <StaffForm merchantId={user!.id} services={services ?? []} />
       </div>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 
 export function StaffForm({
@@ -12,6 +13,7 @@ export function StaffForm({
   merchantId: string;
   services: { id: string; name: string }[];
 }) {
+  const t = useTranslations("staffForm");
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -82,7 +84,7 @@ export function StaffForm({
     return (
       <button onClick={() => setIsOpen(true)} className="btn btn-primary btn-md">
         <Plus className="mr-2 h-4 w-4" />
-        Add Staff
+        {t("addStaff")}
       </button>
     );
   }
@@ -91,7 +93,7 @@ export function StaffForm({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="card w-full max-w-lg p-6">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Add Staff Member</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t("addStaffMember")}</h2>
           <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-gray-600">
             <X className="h-5 w-5" />
           </button>
@@ -104,7 +106,7 @@ export function StaffForm({
 
           <div>
             <label htmlFor="name" className="label">
-              Name *
+              {t("name")} *
             </label>
             <input
               id="name"
@@ -112,7 +114,7 @@ export function StaffForm({
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="input mt-1"
-              placeholder="Full name"
+              placeholder={t("namePlaceholder")}
               required
             />
           </div>
@@ -120,7 +122,7 @@ export function StaffForm({
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="email" className="label">
-                Email
+                {t("email")}
               </label>
               <input
                 id="email"
@@ -128,13 +130,13 @@ export function StaffForm({
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="input mt-1"
-                placeholder="email@example.com"
+                placeholder={t("emailPlaceholder")}
               />
             </div>
 
             <div>
               <label htmlFor="phone" className="label">
-                Phone
+                {t("phone")}
               </label>
               <input
                 id="phone"
@@ -142,14 +144,14 @@ export function StaffForm({
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 className="input mt-1"
-                placeholder="(555) 123-4567"
+                placeholder={t("phonePlaceholder")}
               />
             </div>
           </div>
 
           <div>
             <label htmlFor="bio" className="label">
-              Bio
+              {t("bio")}
             </label>
             <textarea
               id="bio"
@@ -157,15 +159,15 @@ export function StaffForm({
               onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
               className="input mt-1"
               rows={2}
-              placeholder="Brief description..."
+              placeholder={t("bioPlaceholder")}
             />
           </div>
 
           {services.length > 0 && (
             <div>
-              <label className="label">Services</label>
+              <label className="label">{t("services")}</label>
               <p className="mb-2 text-xs text-gray-500">
-                Select services this staff member can provide
+                {t("servicesDesc")}
               </p>
               <div className="flex flex-wrap gap-2">
                 {services.map((service) => (
@@ -192,10 +194,10 @@ export function StaffForm({
               onClick={() => setIsOpen(false)}
               className="btn btn-secondary btn-md"
             >
-              Cancel
+              {t("cancel")}
             </button>
             <button type="submit" disabled={loading} className="btn btn-primary btn-md">
-              {loading ? "Adding..." : "Add Staff"}
+              {loading ? t("adding") : t("addStaff")}
             </button>
           </div>
         </form>

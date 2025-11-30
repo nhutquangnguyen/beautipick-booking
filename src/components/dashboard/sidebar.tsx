@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -24,6 +24,10 @@ import {
   Copy,
   Check,
   Link as LinkIcon,
+  Users,
+  Sparkles,
+  QrCode,
+  ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Merchant } from "@/types/database";
@@ -37,20 +41,51 @@ interface NavItem {
   icon: React.ElementType;
   exact?: boolean;
   children?: NavItem[];
+  separator?: boolean;
 }
 
 export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [expandedItems, setExpandedItems] = useState<string[]>(["/dashboard/settings"]);
+  const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [copied, setCopied] = useState(false);
+  const [logoDisplayUrl, setLogoDisplayUrl] = useState<string | null>(null);
   const pathname = usePathname();
   const t = useTranslations("nav");
-  const tSettings = useTranslations("settings");
   const tDashboard = useTranslations("dashboard");
+  const tSidebar = useTranslations("sidebar");
   const router = useRouter();
   const supabase = createClient();
 
   const bookingPageUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/${merchant.slug}`;
+
+  // Fetch signed URL for logo if it's a storage key
+  useEffect(() => {
+    if (!merchant.logo_url) {
+      setLogoDisplayUrl(null);
+      return;
+    }
+
+    // If it's already a full URL, use it directly
+    if (merchant.logo_url.startsWith("http")) {
+      setLogoDisplayUrl(merchant.logo_url);
+      return;
+    }
+
+    // Otherwise, fetch a signed URL
+    const fetchSignedUrl = async () => {
+      try {
+        const response = await fetch(`/api/signed-url?key=${encodeURIComponent(merchant.logo_url!)}`);
+        const data = await response.json();
+        if (response.ok && data.url) {
+          setLogoDisplayUrl(data.url);
+        }
+      } catch (err) {
+        console.error("Failed to fetch logo signed URL:", err);
+      }
+    };
+
+    fetchSignedUrl();
+  }, [merchant.logo_url]);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(bookingPageUrl);
@@ -61,18 +96,29 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
   const navItems: NavItem[] = [
     { href: "/dashboard", label: t("home"), icon: LayoutDashboard, exact: true },
     { href: "/dashboard/bookings", label: t("bookings"), icon: Calendar },
+    { href: "/dashboard/services", label: t("services"), icon: Scissors },
+    { href: "/dashboard/products", label: t("products"), icon: ShoppingBag },
+    { href: "/dashboard/staff", label: t("staff"), icon: Users },
+    {
+      href: "/dashboard/my-page",
+      label: t("myPage"),
+      icon: Sparkles,
+      children: [
+        { href: "/dashboard/my-page", label: t("design"), icon: Palette, exact: true },
+        { href: "/dashboard/my-page/gallery", label: t("gallery"), icon: Images },
+        { href: "/dashboard/my-page/links", label: t("links"), icon: LinkIcon },
+        { href: "/dashboard/my-page/qr-code", label: t("qrCode"), icon: QrCode },
+      ],
+    },
     {
       href: "/dashboard/settings",
       label: t("settings"),
       icon: Settings,
       children: [
-        { href: "/dashboard/settings", label: tSettings("business"), icon: Store, exact: true },
-        { href: "/dashboard/settings/services", label: tSettings("services"), icon: Scissors },
-        { href: "/dashboard/settings/hours", label: tSettings("hours"), icon: Clock },
-        { href: "/dashboard/settings/gallery", label: tSettings("gallery"), icon: Images },
-        { href: "/dashboard/settings/products", label: tSettings("products"), icon: ShoppingBag },
-        { href: "/dashboard/settings/links", label: tSettings("links"), icon: LinkIcon },
-        { href: "/dashboard/settings/design", label: tSettings("design"), icon: Palette },
+        { href: "/dashboard/settings", label: t("businessInfo"), icon: Store, exact: true },
+        { href: "/dashboard/settings/contact", label: t("contactLocation"), icon: Store },
+        { href: "/dashboard/settings/hours", label: t("hours"), icon: Clock },
+        { href: "/dashboard/settings/booking-rules", label: t("bookingRules"), icon: ClipboardList },
       ],
     },
   ];
@@ -153,9 +199,9 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
     <>
       {/* Logo */}
       <div className="flex h-16 items-center gap-3 px-4">
-        {merchant.logo_url ? (
+        {logoDisplayUrl ? (
           <img
-            src={merchant.logo_url}
+            src={logoDisplayUrl}
             alt={merchant.business_name}
             className="h-10 w-10 rounded-xl object-cover shadow-sm"
           />
@@ -184,12 +230,12 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
             {copied ? (
               <>
                 <Check className="h-3.5 w-3.5" />
-                Copied!
+                {tSidebar("copied")}
               </>
             ) : (
               <>
                 <Copy className="h-3.5 w-3.5" />
-                Copy Link
+                {tSidebar("copyLink")}
               </>
             )}
           </button>
@@ -215,7 +261,7 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
       <div className="px-3 pb-4 space-y-2">
         {/* Language Switcher */}
         <div className="flex items-center justify-between rounded-lg px-3 py-2.5 bg-gray-50">
-          <span className="text-sm text-gray-500">Language</span>
+          <span className="text-sm text-gray-500">{tSidebar("language")}</span>
           <LanguageSwitcherCompact />
         </div>
 
@@ -246,9 +292,9 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
       {/* Mobile Header */}
       <header className="sticky top-0 z-50 flex h-16 items-center justify-between border-b bg-white px-4 lg:hidden">
         <div className="flex items-center gap-3">
-          {merchant.logo_url ? (
+          {logoDisplayUrl ? (
             <img
-              src={merchant.logo_url}
+              src={logoDisplayUrl}
               alt={merchant.business_name}
               className="h-8 w-8 rounded-lg object-cover"
             />

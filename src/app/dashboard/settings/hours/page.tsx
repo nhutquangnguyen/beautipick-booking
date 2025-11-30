@@ -1,8 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { AvailabilityForm } from "@/components/dashboard/availability/availability-form";
 
-export default async function SettingsHoursPage() {
+export default async function HoursPage() {
+  const t = await getTranslations("settingsPages.hours");
   const supabase = await createClient();
   const {
     data: { user },
@@ -26,8 +28,8 @@ export default async function SettingsHoursPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-gray-900">Working Hours</h2>
-        <p className="text-sm text-gray-600">Set your business hours and staff schedules</p>
+        <h2 className="text-xl font-semibold text-gray-900">{t("title")}</h2>
+        <p className="text-sm text-gray-600">{t("subtitle")}</p>
       </div>
 
       <AvailabilityForm

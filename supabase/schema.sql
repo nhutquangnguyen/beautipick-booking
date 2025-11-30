@@ -274,3 +274,45 @@ CREATE TRIGGER update_products_updated_at
     BEFORE UPDATE ON products
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
+
+-- Migration: Add cart_items column and make some booking fields nullable for product-only orders
+-- Run this if you already have the bookings table:
+-- ALTER TABLE bookings ADD COLUMN IF NOT EXISTS cart_items JSONB;
+-- ALTER TABLE bookings ALTER COLUMN service_id DROP NOT NULL;
+-- ALTER TABLE bookings ALTER COLUMN booking_date DROP NOT NULL;
+-- ALTER TABLE bookings ALTER COLUMN start_time DROP NOT NULL;
+-- ALTER TABLE bookings ALTER COLUMN end_time DROP NOT NULL;
+
+-- =============================================
+-- STORAGE BUCKET SETUP
+-- =============================================
+-- Run this in the Supabase Dashboard SQL Editor
+
+-- Create the images bucket (public access)
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('images', 'images', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Allow authenticated users to upload images
+CREATE POLICY "Authenticated users can upload images"
+    ON storage.objects FOR INSERT
+    TO authenticated
+    WITH CHECK (bucket_id = 'images');
+
+-- Allow authenticated users to update their images
+CREATE POLICY "Authenticated users can update images"
+    ON storage.objects FOR UPDATE
+    TO authenticated
+    USING (bucket_id = 'images');
+
+-- Allow authenticated users to delete images
+CREATE POLICY "Authenticated users can delete images"
+    ON storage.objects FOR DELETE
+    TO authenticated
+    USING (bucket_id = 'images');
+
+-- Allow public access to view images
+CREATE POLICY "Public can view images"
+    ON storage.objects FOR SELECT
+    TO public
+    USING (bucket_id = 'images');

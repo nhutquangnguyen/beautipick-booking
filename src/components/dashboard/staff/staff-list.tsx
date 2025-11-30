@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil, Trash2, Mail, Phone } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { Staff } from "@/types/database";
 import { StaffEditForm } from "./staff-edit-form";
@@ -18,13 +19,14 @@ export function StaffList({
   staff: StaffWithServices[];
   services: { id: string; name: string }[];
 }) {
+  const t = useTranslations("staffForm");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this staff member?")) return;
+    if (!confirm(t("confirmDelete"))) return;
 
     setDeleting(id);
     await supabase.from("staff_services").delete().eq("staff_id", id);
@@ -42,7 +44,7 @@ export function StaffList({
     return (
       <div className="card p-8 text-center">
         <p className="text-gray-600">
-          No staff members yet. Add your first team member to get started.
+          {t("noStaff")}
         </p>
       </div>
     );
@@ -74,7 +76,7 @@ export function StaffList({
                     <h3 className="font-medium text-gray-900">{member.name}</h3>
                     {!member.is_active && (
                       <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600">
-                        Inactive
+                        {t("inactive")}
                       </span>
                     )}
                   </div>
@@ -112,7 +114,7 @@ export function StaffList({
                   })}
                   {member.staff_services.length > 3 && (
                     <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
-                      +{member.staff_services.length - 3} more
+                      +{member.staff_services.length - 3} {t("moreServices")}
                     </span>
                   )}
                 </div>

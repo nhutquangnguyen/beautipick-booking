@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSignedImageUrl } from "@/lib/wasabi";
+import { createClient } from "@/lib/supabase/server";
+
+const BUCKET_NAME = "images";
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,12 +12,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Key is required" }, { status: 400 });
     }
 
-    // Generate a signed URL valid for 1 hour
-    const signedUrl = await getSignedImageUrl(key, 3600);
+    const supabase = await createClient();
 
-    return NextResponse.json({ url: signedUrl });
+    // Get public URL from Supabase Storage
+    const { data } = supabase.storage.from(BUCKET_NAME).getPublicUrl(key);
+
+    return NextResponse.json({ url: data.publicUrl });
   } catch (error) {
     console.error("Signed URL error:", error);
-    return NextResponse.json({ error: "Failed to generate signed URL" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to generate URL" }, { status: 500 });
   }
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, X, ShoppingBag, MoreVertical, Pencil, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { formatCurrency } from "@/lib/utils";
 
@@ -25,6 +26,7 @@ export function ProductsManager({
   merchantId: string;
   products: Product[];
 }) {
+  const t = useTranslations("productsForm");
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
@@ -78,7 +80,7 @@ export function ProductsManager({
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this product?")) return;
+    if (!confirm(t("confirmDelete"))) return;
     await supabase.from("products").delete().eq("id", id);
     router.refresh();
   };
@@ -98,7 +100,7 @@ export function ProductsManager({
               className="flex items-center gap-2 rounded-xl bg-purple-600 px-4 py-2 font-medium text-white hover:bg-purple-700"
             >
               <Plus className="h-5 w-5" />
-              Add Product
+              {t("addProduct")}
             </button>
           </div>
 
@@ -129,7 +131,7 @@ export function ProductsManager({
                       </h3>
                       {!product.is_active && (
                         <span className="rounded bg-gray-200 px-2 py-0.5 text-xs text-gray-600">
-                          Hidden
+                          {t("hidden")}
                         </span>
                       )}
                     </div>
@@ -159,7 +161,7 @@ export function ProductsManager({
                             className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
                           >
                             <Pencil className="h-4 w-4" />
-                            Edit
+                            {t("edit")}
                           </button>
                           <button
                             onClick={() => {
@@ -171,12 +173,12 @@ export function ProductsManager({
                             {product.is_active ? (
                               <>
                                 <ToggleLeft className="h-4 w-4" />
-                                Hide
+                                {t("hide")}
                               </>
                             ) : (
                               <>
                                 <ToggleRight className="h-4 w-4" />
-                                Show
+                                {t("show")}
                               </>
                             )}
                           </button>
@@ -188,7 +190,7 @@ export function ProductsManager({
                             className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
                           >
                             <Trash2 className="h-4 w-4" />
-                            Delete
+                            {t("delete")}
                           </button>
                         </div>
                       </>
@@ -204,16 +206,16 @@ export function ProductsManager({
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-purple-100">
             <ShoppingBag className="h-6 w-6 text-purple-600" />
           </div>
-          <h3 className="mt-4 text-lg font-medium text-gray-900">No products yet</h3>
+          <h3 className="mt-4 text-lg font-medium text-gray-900">{t("noProducts")}</h3>
           <p className="mt-2 text-gray-500">
-            Sell products like hair care, skincare, or gift cards
+            {t("noProductsDesc")}
           </p>
           <button
             onClick={() => setShowAddModal(true)}
             className="mt-4 inline-flex items-center gap-2 rounded-xl bg-purple-600 px-4 py-2 font-medium text-white hover:bg-purple-700"
           >
             <Plus className="h-5 w-5" />
-            Add Product
+            {t("addProduct")}
           </button>
         </div>
       )}
@@ -221,8 +223,7 @@ export function ProductsManager({
       {/* Tips */}
       <div className="rounded-xl bg-blue-50 p-4">
         <p className="text-sm text-blue-800">
-          <strong>Tip:</strong> Add products that complement your services, like professional
-          hair care products or skincare items your customers can purchase.
+          <strong>{t("tip")}</strong> {t("tipText")}
         </p>
       </div>
 
@@ -231,7 +232,7 @@ export function ProductsManager({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-900">Add Product</h2>
+              <h2 className="text-xl font-bold text-gray-900">{t("addProduct")}</h2>
               <button
                 onClick={() => {
                   setShowAddModal(false);
@@ -246,21 +247,21 @@ export function ProductsManager({
             <form onSubmit={handleAdd} className="mt-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Product Name
+                  {t("productName")}
                 </label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 focus:border-purple-500 focus:outline-none"
-                  placeholder="e.g., Moroccan Oil Treatment"
+                  placeholder={t("productNamePlaceholder")}
                   required
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Price ($)
+                  {t("price")} ($)
                 </label>
                 <input
                   type="number"
@@ -275,27 +276,27 @@ export function ProductsManager({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Description (optional)
+                  {t("description")}
                 </label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 focus:border-purple-500 focus:outline-none"
                   rows={2}
-                  placeholder="Brief description of the product"
+                  placeholder={t("descriptionPlaceholder")}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Image URL (optional)
+                  {t("imageUrl")}
                 </label>
                 <input
                   type="url"
                   value={formData.image_url}
                   onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
                   className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 focus:border-purple-500 focus:outline-none"
-                  placeholder="https://example.com/product.jpg"
+                  placeholder={t("imageUrlPlaceholder")}
                 />
               </div>
 
@@ -308,14 +309,14 @@ export function ProductsManager({
                   }}
                   className="flex-1 rounded-xl border border-gray-200 py-3 font-medium text-gray-700 hover:bg-gray-50"
                 >
-                  Cancel
+                  {t("cancel")}
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
                   className="flex-1 rounded-xl bg-purple-600 py-3 font-medium text-white hover:bg-purple-700"
                 >
-                  {loading ? "Adding..." : "Add Product"}
+                  {loading ? t("adding") : t("addProduct")}
                 </button>
               </div>
             </form>
@@ -328,7 +329,7 @@ export function ProductsManager({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-900">Edit Product</h2>
+              <h2 className="text-xl font-bold text-gray-900">{t("editProduct")}</h2>
               <button
                 onClick={() => setEditingProduct(null)}
                 className="rounded-lg p-2 text-gray-400 hover:bg-gray-100"
@@ -340,7 +341,7 @@ export function ProductsManager({
             <form onSubmit={handleUpdate} className="mt-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Product Name
+                  {t("productName")}
                 </label>
                 <input
                   type="text"
@@ -353,7 +354,7 @@ export function ProductsManager({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Price ($)
+                  {t("price")} ($)
                 </label>
                 <input
                   type="number"
@@ -368,7 +369,7 @@ export function ProductsManager({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Description (optional)
+                  {t("description")}
                 </label>
                 <textarea
                   value={editingProduct.description || ""}
@@ -380,7 +381,7 @@ export function ProductsManager({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Image URL (optional)
+                  {t("imageUrl")}
                 </label>
                 <input
                   type="url"
@@ -396,14 +397,14 @@ export function ProductsManager({
                   onClick={() => setEditingProduct(null)}
                   className="flex-1 rounded-xl border border-gray-200 py-3 font-medium text-gray-700 hover:bg-gray-50"
                 >
-                  Cancel
+                  {t("cancel")}
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
                   className="flex-1 rounded-xl bg-purple-600 py-3 font-medium text-white hover:bg-purple-700"
                 >
-                  {loading ? "Saving..." : "Save Changes"}
+                  {loading ? t("saving") : t("saveChanges")}
                 </button>
               </div>
             </form>

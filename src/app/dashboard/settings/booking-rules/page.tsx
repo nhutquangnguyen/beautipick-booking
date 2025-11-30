@@ -1,10 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { BusinessInfoForm } from "@/components/dashboard/settings/business-info-form";
+import { BookingRulesForm } from "@/components/dashboard/bookings/booking-rules-form";
+import { MerchantSettings, defaultSettings } from "@/types/database";
 
-export default async function SettingsPage() {
-  const t = await getTranslations("settingsPages.businessInfo");
+export default async function BookingRulesPage() {
+  const t = await getTranslations("settingsPages.bookingRules");
   const supabase = await createClient();
   const {
     data: { user },
@@ -14,11 +15,11 @@ export default async function SettingsPage() {
 
   const { data: merchant } = await supabase
     .from("merchants")
-    .select("*")
+    .select("settings")
     .eq("id", user.id)
     .single();
 
-  if (!merchant) redirect("/login");
+  const settings = (merchant?.settings as MerchantSettings) ?? defaultSettings;
 
   return (
     <div className="space-y-6">
@@ -27,7 +28,7 @@ export default async function SettingsPage() {
         <p className="text-sm text-gray-600">{t("subtitle")}</p>
       </div>
 
-      <BusinessInfoForm merchant={merchant} />
+      <BookingRulesForm merchantId={user.id} settings={settings} />
     </div>
   );
 }

@@ -1,13 +1,16 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
-import { getSignedImageUrl } from "@/lib/wasabi";
 
-// Helper to get signed URL if value is a key (not already a URL)
-async function getImageUrl(value: string | null): Promise<string | null> {
+const BUCKET_NAME = "images";
+
+// Helper to get public URL if value is a storage path (not already a URL)
+function getImageUrl(supabase: Awaited<ReturnType<typeof createClient>>, value: string | null): string | null {
   if (!value) return null;
   if (value.startsWith("http")) return value; // Already a URL (legacy)
-  return getSignedImageUrl(value, 3600); // Generate signed URL for key
+
+  const { data } = supabase.storage.from(BUCKET_NAME).getPublicUrl(value);
+  return data.publicUrl;
 }
 
 export default async function DashboardLayout({
@@ -34,16 +37,16 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  // Generate signed URL for merchant logo
-  const logoUrl = await getImageUrl(merchant.logo_url);
-  const merchantWithSignedUrl = {
+  // Generate public URL for merchant logo
+  const logoUrl = getImageUrl(supabase, merchant.logo_url);
+  const merchantWithUrl = {
     ...merchant,
     logo_url: logoUrl,
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <DashboardSidebar merchant={merchantWithSignedUrl} />
+      <DashboardSidebar merchant={merchantWithUrl} />
       {/* Main content area - offset by sidebar width on desktop */}
       <main className="lg:pl-64">
         <div className="px-4 py-6 sm:px-6 lg:px-8">

@@ -1,10 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { BusinessInfoForm } from "@/components/dashboard/settings/business-info-form";
+import { ContactLocationForm } from "@/components/dashboard/settings/contact-location-form";
 
-export default async function SettingsPage() {
-  const t = await getTranslations("settingsPages.businessInfo");
+export default async function SettingsContactPage() {
+  const t = await getTranslations("settingsPages.contact");
   const supabase = await createClient();
   const {
     data: { user },
@@ -27,7 +27,7 @@ export default async function SettingsPage() {
         <p className="text-sm text-gray-600">{t("subtitle")}</p>
       </div>
 
-      <BusinessInfoForm merchant={merchant} />
+      <ContactLocationForm merchant={merchant} />
     </div>
   );
 }

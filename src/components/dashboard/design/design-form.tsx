@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ExternalLink, ShoppingBag, GripVertical, Check, ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import {
   MerchantTheme,
@@ -12,6 +13,7 @@ import {
   defaultContentOrder,
   defaultTheme
 } from "@/types/database";
+import { ImageUpload } from "@/components/ui/image-upload";
 
 interface GalleryImage {
   id: string;
@@ -54,19 +56,19 @@ const BUTTON_STYLES = [
 ];
 
 const HEADER_STYLES = [
-  { value: "overlay", label: "Overlay", description: "Logo and name over cover image" },
-  { value: "stacked", label: "Stacked", description: "Cover image above, info below" },
-  { value: "minimal", label: "Minimal", description: "Simple header without cover" },
+  { value: "overlay", labelKey: "headerOverlay", descKey: "headerOverlayDesc" },
+  { value: "stacked", labelKey: "headerStacked", descKey: "headerStackedDesc" },
+  { value: "minimal", labelKey: "headerMinimal", descKey: "headerMinimalDesc" },
 ];
 
-const SECTION_LABELS: Record<ContentSection, string> = {
-  about: "About",
-  contact: "Contact Info",
-  social: "Social Links",
-  video: "YouTube Video",
-  gallery: "Gallery",
-  products: "Products",
-  services: "Services",
+const SECTION_LABEL_KEYS: Record<ContentSection, string> = {
+  about: "sectionAbout",
+  contact: "sectionContact",
+  social: "sectionSocial",
+  video: "sectionVideo",
+  gallery: "sectionGallery",
+  products: "sectionProducts",
+  services: "sectionServices",
 };
 
 // Helper to ensure theme has all required fields
@@ -84,37 +86,81 @@ export function DesignForm({
   slug,
   gallery,
   products,
+  logoUrl: initialLogoUrl,
+  coverUrl: initialCoverUrl,
 }: {
   merchantId: string;
   theme: MerchantTheme;
   slug: string;
   gallery: GalleryImage[];
   products: Product[];
+  logoUrl: string | null;
+  coverUrl: string | null;
 }) {
+  const t = useTranslations("designForm");
   const router = useRouter();
   const supabase = createClient();
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [showCustomization, setShowCustomization] = useState(false);
   const [formData, setFormData] = useState<MerchantTheme>(ensureCompleteTheme(theme));
+  const [logoUrl, setLogoUrl] = useState<string | null>(initialLogoUrl);
+  const [coverUrl, setCoverUrl] = useState<string | null>(initialCoverUrl);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setSuccess(false);
+  // Track if this is the initial render to prevent auto-save on mount
+  const isInitialMount = useRef(true);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Auto-save function
+  const autoSave = useCallback(async () => {
+    setSaving(true);
+    setSaved(false);
 
     try {
       await supabase
         .from("merchants")
-        .update({ theme: formData })
+        .update({
+          theme: formData,
+          logo_url: logoUrl,
+          cover_image_url: coverUrl,
+        })
         .eq("id", merchantId);
 
-      setSuccess(true);
+      setSaved(true);
       router.refresh();
+
+      // Hide "Saved" message after 2 seconds
+      setTimeout(() => setSaved(false), 2000);
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
-  };
+  }, [formData, logoUrl, coverUrl, merchantId, supabase, router]);
+
+  // Auto-save with debounce when formData, logoUrl, or coverUrl changes
+  useEffect(() => {
+    // Skip auto-save on initial mount
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    // Clear existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    // Set new timeout for auto-save (debounce 1 second)
+    saveTimeoutRef.current = setTimeout(() => {
+      autoSave();
+    }, 1000);
+
+    // Cleanup on unmount
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [formData, logoUrl, coverUrl, autoSave]);
 
   const updateTheme = <K extends keyof MerchantTheme>(field: K, value: MerchantTheme[K]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -123,10 +169,20 @@ export function DesignForm({
   const selectPreset = (presetId: string) => {
     const preset = themePresets.find((p) => p.id === presetId);
     if (preset) {
-      setFormData({
+      // Only apply colors and styles, preserve content order
+      setFormData((prev) => ({
+        ...prev,
         themeId: presetId,
-        ...preset.theme,
-      });
+        primaryColor: preset.theme.primaryColor,
+        secondaryColor: preset.theme.secondaryColor,
+        accentColor: preset.theme.accentColor,
+        backgroundColor: preset.theme.backgroundColor,
+        textColor: preset.theme.textColor,
+        fontFamily: preset.theme.fontFamily,
+        borderRadius: preset.theme.borderRadius,
+        buttonStyle: preset.theme.buttonStyle,
+        // Keep existing contentOrder, headerStyle, and showSectionTitles
+      }));
     }
   };
 
@@ -141,9 +197,43 @@ export function DesignForm({
 
   return (
     <div className="space-y-6">
+      {/* Logo & Cover Images */}
+      <div className="card p-4 sm:p-6">
+        <h3 className="font-semibold text-gray-900">{t("logoCover")}</h3>
+        <p className="mt-1 text-sm text-gray-500">{t("logoCoverDesc")}</p>
+
+        <div className="mt-6 space-y-6">
+          {/* Cover Image */}
+          <div>
+            <label className="label mb-2">{t("coverImage")}</label>
+            <ImageUpload
+              value={coverUrl}
+              onChange={setCoverUrl}
+              folder={`merchants/${merchantId}/cover`}
+              aspectRatio="cover"
+              placeholder="Upload cover image"
+            />
+            <p className="mt-2 text-xs text-gray-500">{t("coverImageRec")}</p>
+          </div>
+
+          {/* Logo */}
+          <div>
+            <label className="label mb-2">{t("logoAvatar")}</label>
+            <ImageUpload
+              value={logoUrl}
+              onChange={setLogoUrl}
+              folder={`merchants/${merchantId}/logo`}
+              aspectRatio="square"
+              placeholder="Upload logo"
+            />
+            <p className="mt-2 text-xs text-gray-500">{t("logoRec")}</p>
+          </div>
+        </div>
+      </div>
+
       {/* Theme Presets */}
       <div className="card p-4 sm:p-6">
-        <h3 className="font-semibold text-gray-900 mb-4">Choose a Theme</h3>
+        <h3 className="font-semibold text-gray-900 mb-4">{t("chooseTheme")}</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {themePresets.map((preset) => (
             <button
@@ -174,8 +264,8 @@ export function DesignForm({
 
       {/* Content Order */}
       <div className="card p-4 sm:p-6">
-        <h3 className="font-semibold text-gray-900 mb-2">Content Order</h3>
-        <p className="text-sm text-gray-500 mb-4">Drag to reorder sections on your booking page</p>
+        <h3 className="font-semibold text-gray-900 mb-2">{t("contentOrder")}</h3>
+        <p className="text-sm text-gray-500 mb-4">{t("contentOrderDesc")}</p>
         <div className="space-y-2">
           {formData.contentOrder.map((section, index) => (
             <div
@@ -184,7 +274,7 @@ export function DesignForm({
             >
               <GripVertical className="h-4 w-4 text-gray-400" />
               <span className="flex-1 text-sm font-medium text-gray-700">
-                {SECTION_LABELS[section]}
+                {t(SECTION_LABEL_KEYS[section])}
               </span>
               <div className="flex gap-1">
                 <button
@@ -211,7 +301,7 @@ export function DesignForm({
 
       {/* Header Style */}
       <div className="card p-4 sm:p-6">
-        <h3 className="font-semibold text-gray-900 mb-4">Header Style</h3>
+        <h3 className="font-semibold text-gray-900 mb-4">{t("headerStyle")}</h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {HEADER_STYLES.map((style) => (
             <button
@@ -224,8 +314,8 @@ export function DesignForm({
                   : "border-gray-200 hover:border-gray-300"
               }`}
             >
-              <p className="font-medium text-sm text-gray-900">{style.label}</p>
-              <p className="text-xs text-gray-500 mt-1">{style.description}</p>
+              <p className="font-medium text-sm text-gray-900">{t(style.labelKey)}</p>
+              <p className="text-xs text-gray-500 mt-1">{t(style.descKey)}</p>
             </button>
           ))}
         </div>
@@ -238,8 +328,8 @@ export function DesignForm({
             className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
           />
           <div>
-            <p className="text-sm font-medium text-gray-700">Show Section Titles</p>
-            <p className="text-xs text-gray-500">Display titles like "Our Services", "Gallery", etc.</p>
+            <p className="text-sm font-medium text-gray-700">{t("showSectionTitles")}</p>
+            <p className="text-xs text-gray-500">{t("showSectionTitlesDesc")}</p>
           </div>
         </label>
       </div>
@@ -251,8 +341,8 @@ export function DesignForm({
         className="w-full card p-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
       >
         <div>
-          <h3 className="font-semibold text-gray-900">Customize Colors & Fonts</h3>
-          <p className="text-sm text-gray-500">Fine-tune colors, fonts, and button styles</p>
+          <h3 className="font-semibold text-gray-900">{t("customizeColorsAndFonts")}</h3>
+          <p className="text-sm text-gray-500">{t("customizeColorsAndFontsDesc")}</p>
         </div>
         <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform ${showCustomization ? "rotate-180" : ""}`} />
       </button>
@@ -260,12 +350,12 @@ export function DesignForm({
       {/* Custom Theme Options */}
       {showCustomization && (
         <div className="card p-4 sm:p-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-6">
             <div>
-              <h3 className="font-semibold text-gray-900">Colors</h3>
+              <h3 className="font-semibold text-gray-900">{t("colors")}</h3>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="label">Primary Color</label>
+                  <label className="label">{t("primaryColor")}</label>
                   <div className="mt-1 flex items-center gap-2">
                     <input
                       type="color"
@@ -282,7 +372,7 @@ export function DesignForm({
                   </div>
                 </div>
                 <div>
-                  <label className="label">Secondary Color</label>
+                  <label className="label">{t("secondaryColor")}</label>
                   <div className="mt-1 flex items-center gap-2">
                     <input
                       type="color"
@@ -299,7 +389,7 @@ export function DesignForm({
                   </div>
                 </div>
                 <div>
-                  <label className="label">Background</label>
+                  <label className="label">{t("backgroundColor")}</label>
                   <div className="mt-1 flex items-center gap-2">
                     <input
                       type="color"
@@ -316,7 +406,7 @@ export function DesignForm({
                   </div>
                 </div>
                 <div>
-                  <label className="label">Text Color</label>
+                  <label className="label">{t("textColor")}</label>
                   <div className="mt-1 flex items-center gap-2">
                     <input
                       type="color"
@@ -336,9 +426,9 @@ export function DesignForm({
             </div>
 
             <div>
-              <h3 className="font-semibold text-gray-900">Typography</h3>
+              <h3 className="font-semibold text-gray-900">{t("typography")}</h3>
               <div className="mt-4">
-                <label className="label">Font Family</label>
+                <label className="label">{t("fontFamily")}</label>
                 <select
                   value={formData.fontFamily}
                   onChange={(e) => updateTheme("fontFamily", e.target.value)}
@@ -354,10 +444,10 @@ export function DesignForm({
             </div>
 
             <div>
-              <h3 className="font-semibold text-gray-900">Buttons</h3>
+              <h3 className="font-semibold text-gray-900">{t("buttons")}</h3>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="label">Corner Radius</label>
+                  <label className="label">{t("cornerRadius")}</label>
                   <select
                     value={formData.borderRadius}
                     onChange={(e) =>
@@ -373,7 +463,7 @@ export function DesignForm({
                   </select>
                 </div>
                 <div>
-                  <label className="label">Button Style</label>
+                  <label className="label">{t("buttonStyle")}</label>
                   <select
                     value={formData.buttonStyle}
                     onChange={(e) =>
@@ -390,7 +480,7 @@ export function DesignForm({
                 </div>
               </div>
             </div>
-          </form>
+          </div>
         </div>
       )}
 
@@ -398,13 +488,13 @@ export function DesignForm({
       <div className="card overflow-hidden">
         <div className="border-b bg-gray-50 px-4 py-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-700">Preview</span>
+            <span className="text-sm font-medium text-gray-700">{t("preview")}</span>
             <Link
               href={`/${slug}`}
               target="_blank"
               className="flex items-center gap-1 text-sm text-purple-600 hover:text-purple-500"
             >
-              Open page <ExternalLink className="h-3 w-3" />
+              {t("openPage")} <ExternalLink className="h-3 w-3" />
             </Link>
           </div>
         </div>
@@ -545,17 +635,22 @@ export function DesignForm({
         </div>
       </div>
 
-      {/* Save Button */}
-      <div className="flex items-center gap-4">
-        <button
-          onClick={handleSubmit}
-          disabled={loading}
-          className="btn btn-primary btn-md"
-        >
-          {loading ? "Saving..." : "Save Design"}
-        </button>
-        {success && (
-          <span className="text-sm text-green-600">Design saved successfully!</span>
+      {/* Auto-save Status */}
+      <div className="flex items-center justify-center gap-2 py-4 text-sm text-gray-500">
+        {saving && (
+          <>
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-purple-600" />
+            <span>{t("saving")}</span>
+          </>
+        )}
+        {saved && !saving && (
+          <>
+            <Check className="h-4 w-4 text-green-600" />
+            <span className="text-green-600">{t("saved")}</span>
+          </>
+        )}
+        {!saving && !saved && (
+          <span className="text-gray-400">{t("autoSave")}</span>
         )}
       </div>
     </div>
