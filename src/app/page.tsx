@@ -329,22 +329,6 @@ export default async function Home() {
             </div>
           </div>
 
-          {/* Rollover Note */}
-          <div className="max-w-4xl mx-auto mb-16">
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-500 to-purple-600 p-6 shadow-xl">
-              <div className="absolute inset-0 bg-grid-white/10"></div>
-              <div className="relative flex items-start gap-4">
-                <div className="flex-shrink-0 bg-white/20 backdrop-blur rounded-full p-3">
-                  <Sparkles className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h4 className="text-white font-bold text-lg mb-1">{t("pricingSpecialOffer")}</h4>
-                  <p className="text-white/90">{t("pricingRolloverNote")}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* Features List */}
           <div className="max-w-4xl mx-auto">
             <h3 className="text-2xl font-bold text-center text-gray-900 mb-10">
