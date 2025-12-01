@@ -24,7 +24,6 @@ import {
   Copy,
   Check,
   Link as LinkIcon,
-  Users,
   Sparkles,
   QrCode,
   ClipboardList,
@@ -95,10 +94,9 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
 
   const navItems: NavItem[] = [
     { href: "/dashboard", label: t("home"), icon: LayoutDashboard, exact: true },
-    { href: "/dashboard/bookings", label: t("bookings"), icon: Calendar },
+    { href: "/dashboard/bookings", label: t("orders"), icon: Calendar },
     { href: "/dashboard/services", label: t("services"), icon: Scissors },
     { href: "/dashboard/products", label: t("products"), icon: ShoppingBag },
-    { href: "/dashboard/staff", label: t("staff"), icon: Users },
     {
       href: "/dashboard/my-page",
       label: t("myPage"),

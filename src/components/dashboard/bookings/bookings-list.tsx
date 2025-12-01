@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { format, parseISO, isToday, isTomorrow, isPast } from "date-fns";
-import { Check, X, Clock, Mail, Phone, Sparkles, ShoppingBag, ChevronDown, Search } from "lucide-react";
+import { format, parseISO } from "date-fns";
+import { Check, X, Clock, Mail, Phone, Sparkles, ShoppingBag, ChevronDown, Search, ArrowUp, ArrowDown, Calendar, User, Package, DollarSign } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { Booking } from "@/types/database";
@@ -26,37 +26,87 @@ type BookingWithRelations = Booking & {
 
 export function BookingsList({ bookings }: { bookings: BookingWithRelations[] }) {
   const t = useTranslations("bookings");
-  const [filter, setFilter] = useState<"all" | "upcoming" | "past">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBooking, setSelectedBooking] = useState<BookingWithRelations | null>(null);
   const [showActionDropdown, setShowActionDropdown] = useState(false);
+
+  // Filters
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  // Sorting
+  const [sortBy, setSortBy] = useState<"created_at" | "booking_date" | "total_price">("created_at");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+
   const router = useRouter();
   const supabase = createClient();
 
-  const filteredBookings = bookings.filter((booking) => {
-    // Search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      const matchesName = booking.customer_name.toLowerCase().includes(query);
-      const matchesEmail = booking.customer_email.toLowerCase().includes(query);
-      const matchesPhone = booking.customer_phone?.toLowerCase().includes(query);
-      const matchesService = booking.services?.name.toLowerCase().includes(query);
-      if (!matchesName && !matchesEmail && !matchesPhone && !matchesService) {
+  const filteredBookings = useMemo(() => {
+    return bookings.filter((booking) => {
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesName = booking.customer_name.toLowerCase().includes(query);
+        const matchesEmail = booking.customer_email.toLowerCase().includes(query);
+        const matchesPhone = booking.customer_phone?.toLowerCase().includes(query);
+        const matchesService = booking.services?.name.toLowerCase().includes(query);
+        const matchesId = booking.id.toLowerCase().includes(query);
+        if (!matchesName && !matchesEmail && !matchesPhone && !matchesService && !matchesId) {
+          return false;
+        }
+      }
+
+      // Status filter
+      if (statusFilter !== "all" && booking.status !== statusFilter) {
         return false;
       }
-    }
 
-    // Date filter
-    if (!booking.booking_date) return filter === "all";
-    const bookingDate = parseISO(booking.booking_date);
-    if (filter === "upcoming") {
-      return !isPast(bookingDate) || isToday(bookingDate);
-    }
-    if (filter === "past") {
-      return isPast(bookingDate) && !isToday(bookingDate);
-    }
-    return true;
-  });
+      return true;
+    });
+  }, [bookings, searchQuery, statusFilter]);
+
+  // Apply sorting
+  const sortedBookings = useMemo(() => {
+    const sorted = [...filteredBookings];
+
+    sorted.sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (sortBy) {
+        case "created_at":
+          aValue = new Date(a.created_at).getTime();
+          bValue = new Date(b.created_at).getTime();
+          break;
+        case "booking_date":
+          // For booking date, use booking_date + start_time, or created_at for product orders
+          if (a.booking_date && a.start_time) {
+            aValue = new Date(`${a.booking_date}T${a.start_time}`).getTime();
+          } else {
+            aValue = new Date(a.created_at).getTime();
+          }
+          if (b.booking_date && b.start_time) {
+            bValue = new Date(`${b.booking_date}T${b.start_time}`).getTime();
+          } else {
+            bValue = new Date(b.created_at).getTime();
+          }
+          break;
+        case "total_price":
+          aValue = a.total_price;
+          bValue = b.total_price;
+          break;
+        default:
+          return 0;
+      }
+
+      if (sortDirection === "asc") {
+        return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+      } else {
+        return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+      }
+    });
+
+    return sorted;
+  }, [filteredBookings, sortBy, sortDirection]);
 
   const updateStatus = async (id: string, status: Booking["status"]) => {
     await supabase.from("bookings").update({ status }).eq("id", id);
@@ -78,13 +128,6 @@ export function BookingsList({ bookings }: { bookings: BookingWithRelations[] })
       default:
         return "bg-gray-50 text-gray-600 ring-1 ring-gray-500/20";
     }
-  };
-
-  const formatBookingDate = (dateStr: string) => {
-    const date = parseISO(dateStr);
-    if (isToday(date)) return t("today");
-    if (isTomorrow(date)) return "Tomorrow";
-    return format(date, "EEE, MMM d");
   };
 
   if (bookings.length === 0) {
@@ -113,91 +156,153 @@ export function BookingsList({ bookings }: { bookings: BookingWithRelations[] })
           />
         </div>
 
-        {/* Filters */}
-        <div className="flex gap-2">
-          {(["all", "upcoming", "past"] as const).map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-                filter === f
-                  ? "bg-purple-600 text-white"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              {t(f)}
-            </button>
-          ))}
+        {/* Status Filter */}
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+        >
+          <option value="all">All Statuses</option>
+          <option value="pending">{t("status.pending")}</option>
+          <option value="confirmed">{t("status.confirmed")}</option>
+          <option value="completed">{t("status.completed")}</option>
+          <option value="cancelled">{t("status.cancelled")}</option>
+        </select>
+      </div>
+
+      {/* Sort Controls */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <span className="text-sm text-gray-600">Showing {sortedBookings.length} of {bookings.length} orders</span>
+
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-600">Sort by:</span>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as any)}
+            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+          >
+            <option value="created_at">Created Time</option>
+            <option value="booking_date">Booking Time</option>
+            <option value="total_price">Total Money</option>
+          </select>
+          <button
+            onClick={() => setSortDirection(sortDirection === "asc" ? "desc" : "asc")}
+            className="flex items-center justify-center rounded-lg border border-gray-200 bg-white p-2 hover:bg-gray-50 transition-colors"
+            title={sortDirection === "asc" ? "Ascending" : "Descending"}
+          >
+            {sortDirection === "asc" ? (
+              <ArrowUp className="h-4 w-4 text-gray-600" />
+            ) : (
+              <ArrowDown className="h-4 w-4 text-gray-600" />
+            )}
+          </button>
         </div>
       </div>
 
       {/* Bookings */}
       <div className="space-y-3">
-        {filteredBookings.length === 0 ? (
+        {sortedBookings.length === 0 ? (
           <div className="card p-8 text-center text-gray-500">
             {t("noBookings")}
           </div>
         ) : (
-          filteredBookings.map((booking) => (
+          sortedBookings.map((booking) => (
             <div
               key={booking.id}
               onClick={() => setSelectedBooking(booking)}
-              className="card p-4 cursor-pointer hover:border-purple-300 hover:shadow-sm transition-all"
+              className="card overflow-hidden cursor-pointer hover:shadow-md hover:border-purple-300 transition-all"
             >
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3">
-                    <div>
-                      {booking.booking_date ? (
-                        <>
-                          <span className="text-sm font-medium text-gray-500">
-                            {formatBookingDate(booking.booking_date)}
-                          </span>
-                          {booking.start_time && booking.end_time && (
-                            <>
-                              <span className="mx-2 text-gray-300">•</span>
-                              <span className="text-sm text-gray-500">
-                                {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
-                              </span>
-                            </>
-                          )}
-                        </>
-                      ) : (
-                        <span className="text-sm text-gray-500">{t("productOrder")}</span>
-                      )}
+              {/* Header Section */}
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 px-4 py-3 border-b border-gray-100">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-medium text-gray-500">Order ID</span>
+                    <p className="text-sm font-mono font-semibold text-gray-900">#{booking.id.substring(0, 8)}</p>
+                  </div>
+                  <span className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusBadgeStyle(booking.status)}`}>
+                    {t(`status.${booking.status}`)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Content Section */}
+              <div className="p-4 space-y-3">
+                {/* Customer Info */}
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+                    <User className="h-4 w-4 text-purple-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900">{booking.customer_name}</p>
+                    <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
+                      <Mail className="h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">{booking.customer_email}</span>
                     </div>
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${getStatusBadgeStyle(booking.status)}`}>
-                      {t(`status.${booking.status}`)}
-                    </span>
-                  </div>
-
-                  <h3 className="mt-2 font-medium text-gray-900">
-                    {booking.customer_name}
-                  </h3>
-
-                  <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600">
-                    {booking.cart_items && Array.isArray(booking.cart_items) && booking.cart_items.length > 0
-                      ? <span>{booking.cart_items.length} {booking.cart_items.length > 1 ? t("items") : t("item")}</span>
-                      : <span>{booking.services?.name}</span>
-                    }
-                    {booking.staff && <span>with {booking.staff.name}</span>}
-                    <span className="font-medium text-gray-900">
-                      {formatCurrency(booking.total_price)}
-                    </span>
-                  </div>
-
-                  <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-gray-500">
-                    <span className="flex items-center gap-1">
-                      <Mail className="h-3.5 w-3.5" />
-                      {booking.customer_email}
-                    </span>
                     {booking.customer_phone && (
-                      <span className="flex items-center gap-1">
-                        <Phone className="h-3.5 w-3.5" />
-                        {booking.customer_phone}
-                      </span>
+                      <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
+                        <Phone className="h-3 w-3 flex-shrink-0" />
+                        <span>{booking.customer_phone}</span>
+                      </div>
                     )}
                   </div>
+                </div>
+
+                {/* Time Information */}
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                    <Calendar className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs font-medium text-gray-500 mb-1">Created</p>
+                    <p className="text-sm text-gray-900">
+                      {format(parseISO(booking.created_at), "MMM d, yyyy")} • {format(parseISO(booking.created_at), "h:mm a")}
+                    </p>
+                    {booking.booking_date && (
+                      <>
+                        <p className="text-xs font-medium text-gray-500 mt-2 mb-1">Booking Time</p>
+                        <p className="text-sm text-gray-900">
+                          {format(parseISO(booking.booking_date), "MMM d, yyyy")}
+                          {booking.start_time && booking.end_time && (
+                            <> • {formatTime(booking.start_time)} - {formatTime(booking.end_time)}</>
+                          )}
+                        </p>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Items/Service Info */}
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                    <Package className="h-4 w-4 text-green-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs font-medium text-gray-500 mb-1">
+                      {booking.booking_date ? "Service" : "Products"}
+                    </p>
+                    <p className="text-sm text-gray-900">
+                      {booking.cart_items && Array.isArray(booking.cart_items) && booking.cart_items.length > 0
+                        ? `${booking.cart_items.length} ${booking.cart_items.length > 1 ? t("items") : t("item")}`
+                        : booking.services?.name
+                      }
+                    </p>
+                    {booking.staff && (
+                      <p className="text-xs text-gray-500 mt-1">with {booking.staff.name}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Total Price */}
+                <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+                      <DollarSign className="h-4 w-4 text-purple-600" />
+                    </div>
+                    <span className="text-sm font-medium text-gray-700">Total</span>
+                  </div>
+                  <span className="text-lg font-bold text-purple-600">
+                    {formatCurrency(booking.total_price)}
+                  </span>
                 </div>
               </div>
             </div>

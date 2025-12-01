@@ -515,7 +515,7 @@ export function BookingPage({
                   }}
                 >
                   <MapPin className="h-4 w-4" />
-                  <span>View on Maps</span>
+                  <span>{t("viewOnMaps")}</span>
                   <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </a>
               )}
@@ -1116,10 +1116,10 @@ export function BookingPage({
                 {checkoutStep === "cart" ? t("backToPage") : t("back")}
               </button>
               <h2 className="font-bold text-lg">
-                {checkoutStep === "cart" && "Your Cart"}
-                {checkoutStep === "datetime" && "Choose Date & Time"}
-                {checkoutStep === "details" && "Your Details"}
-                {checkoutStep === "confirmation" && "Confirmed!"}
+                {checkoutStep === "cart" && t("yourCart")}
+                {checkoutStep === "datetime" && t("chooseDateAndTime")}
+                {checkoutStep === "details" && t("yourDetails")}
+                {checkoutStep === "confirmation" && t("confirmed")}
               </h2>
               <button
                 onClick={() => setShowCart(false)}
@@ -1171,13 +1171,13 @@ export function BookingPage({
               {cart.length === 0 ? (
                 <div className="text-center py-12">
                   <ShoppingBag className="h-16 w-16 mx-auto opacity-20 mb-4" />
-                  <p className="text-lg font-medium opacity-60">Your cart is empty</p>
+                  <p className="text-lg font-medium opacity-60">{t("yourCartIsEmpty")}</p>
                   <button
                     onClick={() => setShowCart(false)}
                     className="mt-4 px-6 py-2 rounded-full text-sm font-semibold"
                     style={{ backgroundColor: theme.primaryColor + "15", color: theme.primaryColor }}
                   >
-                    Browse Services
+                    {t("browseServices")}
                   </button>
                 </div>
               ) : (
@@ -1272,12 +1272,12 @@ export function BookingPage({
                   >
                     {hasServices && (
                       <div className="flex justify-between text-sm mb-2">
-                        <span className="opacity-70">Total Duration</span>
+                        <span className="opacity-70">{t("totalDuration")}</span>
                         <span className="font-semibold">{formatDuration(cartTotals.totalDuration)}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-lg font-bold pt-2 border-t" style={{ borderColor: theme.primaryColor + "20" }}>
-                      <span>Total</span>
+                      <span>{t("total")}</span>
                       <span style={{ color: theme.primaryColor }}>
                         {formatCurrency(cartTotals.totalPrice, merchant.currency)}
                       </span>
@@ -1295,7 +1295,7 @@ export function BookingPage({
                       boxShadow: `0 8px 32px ${theme.primaryColor}40`
                     }}
                   >
-                    {hasServices ? "Choose Date & Time" : "Continue to Checkout"}
+                    {hasServices ? t("chooseDateAndTime") : t("continueToDetails")}
                   </button>
                 </>
               )}
@@ -1312,7 +1312,7 @@ export function BookingPage({
               {selectedDate && (
                 <div>
                   <h3 className="text-lg font-bold mb-4">
-                    Available Times for {format(selectedDate, "MMMM d")}
+                    {t("availableTimesFor")} {format(selectedDate, "MMMM d")}
                   </h3>
                   {timeSlots.length > 0 ? (
                     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
@@ -1354,7 +1354,7 @@ export function BookingPage({
                     boxShadow: `0 8px 32px ${theme.primaryColor}40`
                   }}
                 >
-                  Continue
+                  {t("continue")}
                 </button>
               )}
             </div>
@@ -1372,7 +1372,7 @@ export function BookingPage({
                   border: `1px solid ${theme.primaryColor}20`
                 }}
               >
-                <h3 className="font-bold mb-4">Order Summary</h3>
+                <h3 className="font-bold mb-4">{t("orderSummary")}</h3>
                 <div className="space-y-2 text-sm">
                   {cart.map((item) => (
                     <div key={item.id} className="flex justify-between">
@@ -1401,7 +1401,7 @@ export function BookingPage({
                   </div>
                 )}
                 <div className="flex justify-between text-lg font-bold mt-4 pt-4 border-t" style={{ borderColor: theme.primaryColor + "20" }}>
-                  <span>Total</span>
+                  <span>{t("total")}</span>
                   <span style={{ color: theme.primaryColor }}>
                     {formatCurrency(cartTotals.totalPrice, merchant.currency)}
                   </span>
@@ -1706,7 +1706,7 @@ export function BookingPage({
                   }}
                 >
                   <MapPin className="h-4 w-4" />
-                  <span className="hidden sm:inline">View on Maps</span>
+                  <span className="hidden sm:inline">{t("viewOnMaps")}</span>
                 </a>
               )}
             </div>
@@ -1740,7 +1740,7 @@ export function BookingPage({
             <ShoppingBag className="h-5 w-5 sm:h-6 sm:w-6" />
             {cart.length > 0 ? (
               <>
-                View Cart ({cart.length}) • {formatCurrency(cartTotals.totalPrice, merchant.currency)}
+                {t("viewCart")} ({cart.length}) • {formatCurrency(cartTotals.totalPrice, merchant.currency)}
               </>
             ) : (
               t("bookAppointment")

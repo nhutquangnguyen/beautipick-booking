@@ -26,6 +26,15 @@ export async function GET(request: Request) {
         const businessName = data.user.user_metadata?.full_name || email.split("@")[0];
         const slug = generateSlug(businessName);
 
+        // Get locale from cookie or default to 'en'
+        const cookieHeader = request.headers.get('cookie') || '';
+        const localeCookie = cookieHeader.split(';').find(c => c.trim().startsWith('NEXT_LOCALE='));
+        const locale = localeCookie ? localeCookie.split('=')[1] : 'en';
+
+        // Set timezone and currency based on locale
+        const timezone = locale === 'vi' ? 'Asia/Ho_Chi_Minh' : 'America/New_York';
+        const currency = locale === 'vi' ? 'VND' : 'USD';
+
         await supabase.from("merchants").insert({
           id: data.user.id,
           email,
@@ -33,6 +42,8 @@ export async function GET(request: Request) {
           slug,
           theme: defaultTheme,
           settings: defaultSettings,
+          timezone,
+          currency,
         });
 
         // Redirect new OAuth users to onboarding

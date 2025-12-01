@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useLocale } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { generateSlug } from "@/lib/utils";
 import { defaultTheme, defaultSettings } from "@/types/database";
@@ -15,7 +16,12 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const locale = useLocale();
   const supabase = createClient();
+
+  // Set timezone and currency based on locale
+  const timezone = locale === "vi" ? "Asia/Ho_Chi_Minh" : "America/New_York";
+  const currency = locale === "vi" ? "VND" : "USD";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +54,8 @@ export default function SignupPage() {
         slug,
         theme: defaultTheme,
         settings: defaultSettings,
+        timezone,
+        currency,
       });
 
       if (merchantError) {
