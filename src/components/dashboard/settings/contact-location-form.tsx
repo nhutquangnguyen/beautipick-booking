@@ -20,8 +20,6 @@ export function ContactLocationForm({ merchant }: { merchant: Merchant }) {
     city: merchant.city ?? "",
     state: merchant.state ?? "",
     zip_code: merchant.zip_code ?? "",
-    timezone: merchant.timezone,
-    currency: merchant.currency,
     google_maps_url: merchant.google_maps_url ?? "",
   });
 
@@ -39,8 +37,6 @@ export function ContactLocationForm({ merchant }: { merchant: Merchant }) {
           city: formData.city || null,
           state: formData.state || null,
           zip_code: formData.zip_code || null,
-          timezone: formData.timezone,
-          currency: formData.currency,
           google_maps_url: formData.google_maps_url || null,
         })
         .eq("id", merchant.id);
@@ -53,11 +49,11 @@ export function ContactLocationForm({ merchant }: { merchant: Merchant }) {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Contact Information */}
-      <div className="card p-4 sm:p-6">
-        <h3 className="text-base font-semibold text-gray-900">{t("contactInfo")}</h3>
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+    <div className="card p-4 sm:p-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Contact Information Section */}
+        <div className="space-y-4">
+          <h3 className="text-base font-semibold text-gray-900">{t("contactInfo")}</h3>
           <div>
             <label className="label">{t("phone")}</label>
             <input
@@ -68,42 +64,10 @@ export function ContactLocationForm({ merchant }: { merchant: Merchant }) {
               placeholder={t("phonePlaceholder")}
             />
           </div>
+        </div>
 
-          <div className="grid gap-4 grid-cols-2">
-            <div>
-              <label className="label">{t("timezone")}</label>
-              <select
-                value={formData.timezone}
-                onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
-                className="input mt-1"
-              >
-                <option value="Asia/Ho_Chi_Minh">Việt Nam (GMT+7)</option>
-                <option value="America/New_York">Eastern (US)</option>
-                <option value="America/Chicago">Central (US)</option>
-                <option value="America/Denver">Mountain (US)</option>
-                <option value="America/Los_Angeles">Pacific (US)</option>
-                <option value="Europe/London">London (GMT)</option>
-                <option value="Asia/Singapore">Singapore (GMT+8)</option>
-              </select>
-            </div>
-            <div>
-              <label className="label">{t("currency")}</label>
-              <select
-                value={formData.currency}
-                onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                className="input mt-1"
-              >
-                <option value="USD">USD ($)</option>
-                <option value="VND">VND (₫)</option>
-                <option value="EUR">EUR (€)</option>
-                <option value="GBP">GBP (£)</option>
-                <option value="CAD">CAD ($)</option>
-              </select>
-            </div>
-          </div>
-
-          <hr className="my-4" />
-
+        {/* Location Section */}
+        <div className="space-y-4">
           <h3 className="text-base font-semibold text-gray-900">{t("location")}</h3>
 
           <div>
@@ -163,15 +127,16 @@ export function ContactLocationForm({ merchant }: { merchant: Merchant }) {
               {t("googleMapsUrlDesc")}
             </p>
           </div>
+        </div>
 
-          <div className="flex items-center gap-3 pt-2">
-            <button type="submit" disabled={loading} className="btn btn-primary btn-md">
-              {loading ? t("saving") : t("saveChanges")}
-            </button>
-            {success && <span className="text-sm text-green-600">{t("saved")}</span>}
-          </div>
-        </form>
-      </div>
+        {/* Save Button */}
+        <div className="flex items-center gap-3 pt-2">
+          <button type="submit" disabled={loading} className="btn btn-primary btn-md">
+            {loading ? t("saving") : t("saveChanges")}
+          </button>
+          {success && <span className="text-sm text-green-600">{t("saved")}</span>}
+        </div>
+      </form>
     </div>
   );
 }

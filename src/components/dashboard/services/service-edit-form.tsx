@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Service } from "@/types/database";
+import { ImageUpload } from "@/components/ui/image-upload";
 
 export function ServiceEditForm({
   service,
@@ -23,6 +24,7 @@ export function ServiceEditForm({
     duration_minutes: service.duration_minutes,
     price: service.price,
     category: service.category ?? "",
+    image_url: service.image_url ?? "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -136,6 +138,19 @@ export function ServiceEditForm({
             required
           />
         </div>
+      </div>
+
+      <div>
+        <label className="label mb-2 block">
+          Image
+        </label>
+        <ImageUpload
+          value={formData.image_url}
+          onChange={(key) => setFormData({ ...formData, image_url: key || "" })}
+          folder="services"
+          aspectRatio="square"
+          placeholder="Upload image"
+        />
       </div>
 
       <div className="flex justify-end gap-3">

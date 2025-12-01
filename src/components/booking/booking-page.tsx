@@ -7,7 +7,7 @@ import { MapPin, Phone, Clock, ChevronLeft, Check, ShoppingBag, Calendar, Star, 
 import { createClient } from "@/lib/supabase/client";
 import { Merchant, Service, Staff, Availability, MerchantTheme, MerchantSettings, SocialLink, SocialLinkType, ContentSection, defaultContentOrder } from "@/types/database";
 import { formatCurrency, formatDuration, formatTime, generateTimeSlots, cn } from "@/lib/utils";
-import { LanguageSwitcherCompact } from "@/components/language-switcher";
+import { LanguageSwitcherIcon } from "@/components/language-switcher";
 
 // Social link icons
 function InstagramIcon({ className }: { className?: string }) {
@@ -609,7 +609,7 @@ export function BookingPage({
       case "gallery":
         if (gallery.length === 0) return null;
         return (
-          <section key="gallery" className="mb-12">
+          <section id="section-gallery" key="gallery" className="mb-12 scroll-mt-20">
             {showSectionTitles && <SectionTitle icon={<Star className="h-5 w-5" />}>{t("ourGallery")}</SectionTitle>}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
               {gallery.map((image) => (
@@ -646,7 +646,7 @@ export function BookingPage({
       case "products":
         if (products.length === 0) return null;
         return (
-          <section key="products" className="mb-12">
+          <section id="section-products" key="products" className="mb-12 scroll-mt-20">
             {showSectionTitles && <SectionTitle icon={<ShoppingBag className="h-5 w-5" />}>{t("ourProducts")}</SectionTitle>}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {products.map((product) => {
@@ -729,7 +729,7 @@ export function BookingPage({
 
       case "services":
         return (
-          <section key="services" className="mb-12">
+          <section id="section-services" key="services" className="mb-12 scroll-mt-20">
             {showSectionTitles && <SectionTitle icon={<Sparkles className="h-5 w-5" />}>{t("ourServices")}</SectionTitle>}
             <div className="space-y-4">
               {Object.entries(servicesByCategory).map(([category, categoryServices]) => (
@@ -871,7 +871,7 @@ export function BookingPage({
                   )}
                 </div>
               </div>
-              <LanguageSwitcherCompact />
+              <LanguageSwitcherIcon />
             </div>
           </div>
         </header>
@@ -925,7 +925,7 @@ export function BookingPage({
                 )}
               </div>
               <div className="sm:pb-2">
-                <LanguageSwitcherCompact />
+                <LanguageSwitcherIcon />
               </div>
             </div>
           </div>
@@ -960,7 +960,7 @@ export function BookingPage({
         )}
 
         <div className="absolute top-4 right-4 z-10">
-          <LanguageSwitcherCompact />
+          <LanguageSwitcherIcon />
         </div>
 
         <div className="absolute bottom-0 left-0 right-0">
@@ -1632,7 +1632,7 @@ export function BookingPage({
           }}
         >
           <div className="mx-auto max-w-5xl px-4 sm:px-6 py-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 {merchant.logo_url ? (
                   <img
@@ -1650,16 +1650,55 @@ export function BookingPage({
                     {merchant.business_name.charAt(0)}
                   </div>
                 )}
-                <span className="font-semibold text-base truncate max-w-[150px] sm:max-w-none">
+                <span className="font-semibold text-base truncate max-w-[120px] sm:max-w-none">
                   {merchant.business_name}
                 </span>
               </div>
+
+              {/* Navigation Shortcuts */}
+              <div className="hidden md:flex items-center gap-2">
+                {contentOrder.map((section) => {
+                  let label = "";
+                  let visible = false;
+
+                  if (section === "services" && services.length > 0) {
+                    label = t("ourServices");
+                    visible = true;
+                  } else if (section === "gallery" && gallery.length > 0) {
+                    label = t("ourGallery");
+                    visible = true;
+                  } else if (section === "products" && products.length > 0) {
+                    label = t("ourProducts");
+                    visible = true;
+                  }
+
+                  if (!visible) return null;
+
+                  return (
+                    <button
+                      key={section}
+                      onClick={() => {
+                        const element = document.getElementById(`section-${section}`);
+                        element?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      }}
+                      className="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors hover:opacity-80"
+                      style={{
+                        color: theme.primaryColor,
+                        backgroundColor: theme.primaryColor + "10"
+                      }}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+
               {merchant.google_maps_url && (
                 <a
                   href={merchant.google_maps_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all duration-300 hover:scale-[1.02]"
+                  className="flex items-center gap-2 px-3 sm:px-4 py-2 text-sm font-semibold transition-all duration-300 hover:scale-[1.02]"
                   style={{
                     backgroundColor: theme.primaryColor,
                     color: "#fff",

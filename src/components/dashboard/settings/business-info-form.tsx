@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Youtube } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -14,13 +14,20 @@ export function BusinessInfoForm({ merchant }: { merchant: Merchant }) {
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [origin, setOrigin] = useState("");
 
   const [businessInfo, setBusinessInfo] = useState({
     business_name: merchant.business_name,
     slug: merchant.slug,
     description: merchant.description ?? "",
     youtube_url: merchant.youtube_url ?? "",
+    timezone: merchant.timezone ?? "Asia/Ho_Chi_Minh",
+    currency: merchant.currency ?? "VND",
   });
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,6 +42,8 @@ export function BusinessInfoForm({ merchant }: { merchant: Merchant }) {
           slug: businessInfo.slug,
           description: businessInfo.description || null,
           youtube_url: businessInfo.youtube_url || null,
+          timezone: businessInfo.timezone,
+          currency: businessInfo.currency,
         })
         .eq("id", merchant.id);
 
@@ -72,7 +81,7 @@ export function BusinessInfoForm({ merchant }: { merchant: Merchant }) {
             <label className="label">{t("bookingPageUrl")}</label>
             <div className="mt-1 flex flex-col sm:flex-row">
               <span className="flex items-center rounded-t-md sm:rounded-l-md sm:rounded-tr-none border border-b-0 sm:border-b sm:border-r-0 border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-500">
-                {typeof window !== 'undefined' ? window.location.origin : ''}/
+                {origin}/
               </span>
               <input
                 type="text"
@@ -91,10 +100,15 @@ export function BusinessInfoForm({ merchant }: { merchant: Merchant }) {
             <textarea
               value={businessInfo.description}
               onChange={(e) => setBusinessInfo({ ...businessInfo, description: e.target.value })}
-              className="input mt-1"
-              rows={4}
+              className="input mt-1 min-h-[200px] resize-y"
+              rows={8}
               placeholder={t("descriptionPlaceholder")}
             />
+            <div className="mt-2 flex items-center justify-between">
+              <p className="text-xs text-gray-500">
+                {businessInfo.description.length} characters
+              </p>
+            </div>
           </div>
 
           <div>
@@ -112,6 +126,54 @@ export function BusinessInfoForm({ merchant }: { merchant: Merchant }) {
             <p className="mt-2 text-xs text-gray-500">
               {t("youtubeVideoDesc")}
             </p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="label">{t("timezone")}</label>
+              <select
+                value={businessInfo.timezone}
+                onChange={(e) => setBusinessInfo({ ...businessInfo, timezone: e.target.value })}
+                className="input mt-1"
+              >
+                <option value="Asia/Ho_Chi_Minh">Vietnam (GMT+7)</option>
+                <option value="Asia/Bangkok">Thailand (GMT+7)</option>
+                <option value="Asia/Singapore">Singapore (GMT+8)</option>
+                <option value="Asia/Jakarta">Indonesia (GMT+7)</option>
+                <option value="Asia/Manila">Philippines (GMT+8)</option>
+                <option value="Asia/Kuala_Lumpur">Malaysia (GMT+8)</option>
+                <option value="America/New_York">New York (GMT-5)</option>
+                <option value="America/Los_Angeles">Los Angeles (GMT-8)</option>
+                <option value="Europe/London">London (GMT+0)</option>
+                <option value="Australia/Sydney">Sydney (GMT+11)</option>
+              </select>
+              <p className="mt-1 text-xs text-gray-500">
+                {t("timezoneDesc")}
+              </p>
+            </div>
+
+            <div>
+              <label className="label">{t("currency")}</label>
+              <select
+                value={businessInfo.currency}
+                onChange={(e) => setBusinessInfo({ ...businessInfo, currency: e.target.value })}
+                className="input mt-1"
+              >
+                <option value="VND">₫ Vietnamese Dong (VND)</option>
+                <option value="THB">฿ Thai Baht (THB)</option>
+                <option value="SGD">$ Singapore Dollar (SGD)</option>
+                <option value="IDR">Rp Indonesian Rupiah (IDR)</option>
+                <option value="PHP">₱ Philippine Peso (PHP)</option>
+                <option value="MYR">RM Malaysian Ringgit (MYR)</option>
+                <option value="USD">$ US Dollar (USD)</option>
+                <option value="EUR">€ Euro (EUR)</option>
+                <option value="GBP">£ British Pound (GBP)</option>
+                <option value="AUD">$ Australian Dollar (AUD)</option>
+              </select>
+              <p className="mt-1 text-xs text-gray-500">
+                {t("currencyDesc")}
+              </p>
+            </div>
           </div>
 
           <div className="flex items-center gap-3 pt-2">

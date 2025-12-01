@@ -6,6 +6,7 @@ import { MoreVertical, Pencil, Trash2, ToggleLeft, ToggleRight } from "lucide-re
 import { createClient } from "@/lib/supabase/client";
 import { Service } from "@/types/database";
 import { formatCurrency, formatDuration } from "@/lib/utils";
+import { ImageUpload } from "@/components/ui/image-upload";
 
 export function SimpleServiceList({ services }: { services: Service[] }) {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
@@ -36,6 +37,7 @@ export function SimpleServiceList({ services }: { services: Service[] }) {
         duration_minutes: editingService.duration_minutes,
         description: editingService.description,
         category: editingService.category,
+        image_url: editingService.image_url,
       })
       .eq("id", editingService.id);
 
@@ -218,6 +220,36 @@ export function SimpleServiceList({ services }: { services: Service[] }) {
                   }
                   className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 focus:border-purple-500 focus:outline-none"
                   placeholder="e.g., Hair, Nails"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Description (optional)
+                </label>
+                <textarea
+                  value={editingService.description || ""}
+                  onChange={(e) =>
+                    setEditingService({ ...editingService, description: e.target.value })
+                  }
+                  className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 focus:border-purple-500 focus:outline-none resize-y"
+                  rows={3}
+                  placeholder="Describe this service..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Image (optional)
+                </label>
+                <ImageUpload
+                  value={editingService.image_url}
+                  onChange={(key) =>
+                    setEditingService({ ...editingService, image_url: key })
+                  }
+                  folder="services"
+                  aspectRatio="square"
+                  placeholder="Upload image"
                 />
               </div>
 

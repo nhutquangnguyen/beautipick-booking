@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { ImageUpload } from "@/components/ui/image-upload";
 
 export function ServiceForm({ merchantId }: { merchantId: string }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,6 +19,7 @@ export function ServiceForm({ merchantId }: { merchantId: string }) {
     duration_minutes: 60,
     price: 0,
     category: "",
+    image_url: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -44,6 +46,7 @@ export function ServiceForm({ merchantId }: { merchantId: string }) {
         duration_minutes: 60,
         price: 0,
         category: "",
+        image_url: "",
       });
       setIsOpen(false);
       router.refresh();
@@ -154,6 +157,19 @@ export function ServiceForm({ merchantId }: { merchantId: string }) {
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
               className="input mt-1"
               placeholder="e.g., Hair, Nails, Skincare"
+            />
+          </div>
+
+          <div>
+            <label className="label mb-2 block">
+              Image
+            </label>
+            <ImageUpload
+              value={formData.image_url}
+              onChange={(key) => setFormData({ ...formData, image_url: key || "" })}
+              folder="services"
+              aspectRatio="square"
+              placeholder="Upload image"
             />
           </div>
 

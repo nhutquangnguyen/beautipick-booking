@@ -5,8 +5,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { Globe, Check } from "lucide-react";
 
 const locales = [
-  { code: "en", label: "English", flag: "🇺🇸" },
   { code: "vi", label: "Tiếng Việt", flag: "🇻🇳" },
+  { code: "en", label: "English", flag: "🇺🇸" },
 ];
 
 export function LanguageSwitcher({ className = "" }: { className?: string }) {

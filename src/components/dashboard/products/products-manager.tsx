@@ -6,6 +6,7 @@ import { Plus, X, ShoppingBag, MoreVertical, Pencil, Trash2, ToggleLeft, ToggleR
 import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { formatCurrency } from "@/lib/utils";
+import { ImageUpload } from "@/components/ui/image-upload";
 
 interface Product {
   id: string;
@@ -288,15 +289,15 @@ export function ProductsManager({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  {t("imageUrl")}
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {t("image")}
                 </label>
-                <input
-                  type="url"
+                <ImageUpload
                   value={formData.image_url}
-                  onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                  className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 focus:border-purple-500 focus:outline-none"
-                  placeholder={t("imageUrlPlaceholder")}
+                  onChange={(key) => setFormData({ ...formData, image_url: key || "" })}
+                  folder="products"
+                  aspectRatio="square"
+                  placeholder={t("uploadImage")}
                 />
               </div>
 
@@ -380,14 +381,15 @@ export function ProductsManager({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  {t("imageUrl")}
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {t("image")}
                 </label>
-                <input
-                  type="url"
-                  value={editingProduct.image_url || ""}
-                  onChange={(e) => setEditingProduct({ ...editingProduct, image_url: e.target.value })}
-                  className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 focus:border-purple-500 focus:outline-none"
+                <ImageUpload
+                  value={editingProduct.image_url}
+                  onChange={(key) => setEditingProduct({ ...editingProduct, image_url: key })}
+                  folder="products"
+                  aspectRatio="square"
+                  placeholder={t("uploadImage")}
                 />
               </div>
 
