@@ -1441,25 +1441,8 @@ export function BookingPage({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold mb-2">{t("email")} *</label>
-                  <input
-                    type="email"
-                    value={customerInfo.email}
-                    onChange={(e) => setCustomerInfo({ ...customerInfo, email: e.target.value })}
-                    className="w-full px-5 py-4 text-base focus:outline-none transition-shadow focus:shadow-lg"
-                    style={{
-                      borderRadius: buttonRadius,
-                      border: `1px solid ${theme.primaryColor}20`,
-                      backgroundColor: theme.backgroundColor
-                    }}
-                    placeholder={t("emailPlaceholder")}
-                    required
-                  />
-                </div>
-
-                <div>
                   <label className="block text-sm font-semibold mb-2">
-                    {t("phone")} {settings.requirePhoneNumber ? "*" : ""}
+                    {t("phone")} *
                   </label>
                   <input
                     type="tel"
@@ -1472,7 +1455,23 @@ export function BookingPage({
                       backgroundColor: theme.backgroundColor
                     }}
                     placeholder={t("phonePlaceholder")}
-                    required={settings.requirePhoneNumber}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold mb-2">{t("email")}</label>
+                  <input
+                    type="email"
+                    value={customerInfo.email}
+                    onChange={(e) => setCustomerInfo({ ...customerInfo, email: e.target.value })}
+                    className="w-full px-5 py-4 text-base focus:outline-none transition-shadow focus:shadow-lg"
+                    style={{
+                      borderRadius: buttonRadius,
+                      border: `1px solid ${theme.primaryColor}20`,
+                      backgroundColor: theme.backgroundColor
+                    }}
+                    placeholder={t("emailPlaceholder")}
                   />
                 </div>
 
