@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import {
   LayoutDashboard,
   Calendar,
+  Users,
   Settings,
   Menu,
   X,
@@ -23,6 +24,7 @@ export function DashboardNav({ merchant }: { merchant: Merchant }) {
   const navItems = [
     { href: "/dashboard", label: t("home"), icon: LayoutDashboard },
     { href: "/dashboard/bookings", label: t("bookings"), icon: Calendar },
+    { href: "/dashboard/customers", label: t("customers"), icon: Users },
   ];
 
   return (

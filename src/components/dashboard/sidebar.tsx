@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import {
   LayoutDashboard,
   Calendar,
+  Users,
   Settings,
   Menu,
   X,
@@ -27,6 +28,7 @@ import {
   Sparkles,
   QrCode,
   ClipboardList,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Merchant } from "@/types/database";
@@ -48,6 +50,7 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [copied, setCopied] = useState(false);
   const [logoDisplayUrl, setLogoDisplayUrl] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const pathname = usePathname();
   const t = useTranslations("nav");
   const tDashboard = useTranslations("dashboard");
@@ -56,6 +59,19 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
   const supabase = createClient();
 
   const bookingPageUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/${merchant.slug}`;
+
+  // Check if user is admin
+  useEffect(() => {
+    const checkAdmin = async () => {
+      const { data } = await supabase
+        .from("admins")
+        .select("user_id")
+        .eq("user_id", merchant.id)
+        .maybeSingle();
+      setIsAdmin(!!data);
+    };
+    checkAdmin();
+  }, [merchant.id, supabase]);
 
   // Fetch signed URL for logo if it's a storage key
   useEffect(() => {
@@ -95,6 +111,7 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
   const navItems: NavItem[] = [
     { href: "/dashboard", label: t("home"), icon: LayoutDashboard, exact: true },
     { href: "/dashboard/bookings", label: t("orders"), icon: Calendar },
+    { href: "/dashboard/customers", label: t("customers"), icon: Users },
     { href: "/dashboard/services", label: t("services"), icon: Scissors },
     { href: "/dashboard/products", label: t("products"), icon: ShoppingBag },
     {
@@ -119,6 +136,8 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
         { href: "/dashboard/settings/booking-rules", label: t("bookingRules"), icon: ClipboardList },
       ],
     },
+    // Add admin link if user is admin
+    ...(isAdmin ? [{ href: "/admin", label: "Admin", icon: Shield }] : []),
   ];
 
   const toggleExpanded = (href: string) => {

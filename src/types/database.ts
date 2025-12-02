@@ -220,6 +220,73 @@ export type Database = {
           is_available?: boolean;
         };
       };
+      customers: {
+        Row: {
+          id: string;
+          created_at: string;
+          updated_at: string;
+          merchant_id: string;
+          email: string;
+          name: string;
+          phone: string; // Changed from string | null to string (NOT NULL)
+          notes: string | null;
+          tags: string[] | null;
+          total_bookings: number;
+          total_spent: number;
+          last_booking_date: string | null;
+          is_active: boolean;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+          merchant_id: string;
+          email: string;
+          name: string;
+          phone: string; // Changed from optional to required
+          notes?: string | null;
+          tags?: string[] | null;
+          total_bookings?: number;
+          total_spent?: number;
+          last_booking_date?: string | null;
+          is_active?: boolean;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+          merchant_id?: string;
+          email?: string;
+          name?: string;
+          phone?: string; // Can be updated
+          notes?: string | null;
+          tags?: string[] | null;
+          total_bookings?: number;
+          total_spent?: number;
+          last_booking_date?: string | null;
+          is_active?: boolean;
+        };
+      };
+      admins: {
+        Row: {
+          user_id: string;
+          created_at: string;
+          created_by: string | null;
+          notes: string | null;
+        };
+        Insert: {
+          user_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          notes?: string | null;
+        };
+        Update: {
+          user_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          notes?: string | null;
+        };
+      };
       bookings: {
         Row: {
           id: string;
@@ -228,6 +295,7 @@ export type Database = {
           merchant_id: string;
           service_id: string | null;
           staff_id: string | null;
+          customer_id: string | null;
           customer_name: string;
           customer_email: string;
           customer_phone: string | null;
@@ -246,6 +314,7 @@ export type Database = {
           merchant_id: string;
           service_id?: string | null;
           staff_id?: string | null;
+          customer_id?: string | null;
           customer_name: string;
           customer_email: string;
           customer_phone?: string | null;
@@ -264,6 +333,7 @@ export type Database = {
           merchant_id?: string;
           service_id?: string | null;
           staff_id?: string | null;
+          customer_id?: string | null;
           customer_name?: string;
           customer_email?: string;
           customer_phone?: string | null;
@@ -297,11 +367,15 @@ export type Merchant = Database["public"]["Tables"]["merchants"]["Row"];
 export type Service = Database["public"]["Tables"]["services"]["Row"];
 export type Staff = Database["public"]["Tables"]["staff"]["Row"];
 export type Availability = Database["public"]["Tables"]["availability"]["Row"];
+export type Customer = Database["public"]["Tables"]["customers"]["Row"];
+export type Admin = Database["public"]["Tables"]["admins"]["Row"];
 export type Booking = Database["public"]["Tables"]["bookings"]["Row"];
 
 export type MerchantInsert = Database["public"]["Tables"]["merchants"]["Insert"];
 export type ServiceInsert = Database["public"]["Tables"]["services"]["Insert"];
 export type StaffInsert = Database["public"]["Tables"]["staff"]["Insert"];
+export type CustomerInsert = Database["public"]["Tables"]["customers"]["Insert"];
+export type AdminInsert = Database["public"]["Tables"]["admins"]["Insert"];
 export type BookingInsert = Database["public"]["Tables"]["bookings"]["Insert"];
 
 // Content section order types

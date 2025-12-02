@@ -1,14 +1,16 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server-admin";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 
 const BUCKET_NAME = "images";
 
 // Helper to get public URL if value is a storage path (not already a URL)
-function getImageUrl(supabase: Awaited<ReturnType<typeof createClient>>, value: string | null): string | null {
+function getImageUrl(value: string | null): string | null {
   if (!value) return null;
   if (value.startsWith("http")) return value; // Already a URL (legacy)
 
+  const supabase = createAdminClient();
   const { data } = supabase.storage.from(BUCKET_NAME).getPublicUrl(value);
   return data.publicUrl;
 }
@@ -18,6 +20,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Check authentication using anon client
   const supabase = await createClient();
   const {
     data: { user },
@@ -27,7 +30,9 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  const { data: merchant } = await supabase
+  // Fetch merchant data using admin client (bypasses RLS)
+  const adminClient = createAdminClient();
+  const { data: merchant } = await adminClient
     .from("merchants")
     .select("*")
     .eq("id", user.id)
@@ -38,7 +43,7 @@ export default async function DashboardLayout({
   }
 
   // Generate public URL for merchant logo
-  const logoUrl = getImageUrl(supabase, merchant.logo_url);
+  const logoUrl = getImageUrl(merchant.logo_url);
   const merchantWithUrl = {
     ...merchant,
     logo_url: logoUrl,

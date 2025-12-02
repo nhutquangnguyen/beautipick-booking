@@ -2,17 +2,32 @@ import { createClient } from "@/lib/supabase/server";
 import { getTranslations } from "next-intl/server";
 import { BookingsView } from "@/components/dashboard/bookings/bookings-view";
 
-export default async function BookingsPage() {
+interface BookingsPageProps {
+  searchParams: Promise<{ customer?: string }>;
+}
+
+export default async function BookingsPage({ searchParams }: BookingsPageProps) {
   const t = await getTranslations("bookings");
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: bookings } = await supabase
+  const params = await searchParams;
+  const customerPhone = params.customer;
+
+  // Build query
+  let query = supabase
     .from("bookings")
-    .select("*, services(name), staff(name)")
-    .eq("merchant_id", user!.id)
+    .select("*, services(name), staff(name), customers(name, phone)")
+    .eq("merchant_id", user!.id);
+
+  // Filter by customer phone if provided
+  if (customerPhone) {
+    query = query.eq("customer_phone", customerPhone);
+  }
+
+  const { data: bookings } = await query
     .order("booking_date", { ascending: false, nullsFirst: false })
     .order("start_time", { ascending: false });
 
@@ -23,7 +38,7 @@ export default async function BookingsPage() {
         <p className="text-gray-600">{t("subtitle")}</p>
       </div>
 
-      <BookingsView bookings={bookings ?? []} />
+      <BookingsView bookings={bookings ?? []} customerFilter={customerPhone} />
     </div>
   );
 }
