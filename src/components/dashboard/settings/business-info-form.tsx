@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Youtube } from "lucide-react";
+import { Youtube, Globe, Info } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { Merchant } from "@/types/database";
@@ -23,6 +23,7 @@ export function BusinessInfoForm({ merchant }: { merchant: Merchant }) {
     youtube_url: merchant.youtube_url ?? "",
     timezone: merchant.timezone ?? "Asia/Ho_Chi_Minh",
     currency: merchant.currency ?? "VND",
+    custom_domain: merchant.custom_domain ?? "",
   });
 
   useEffect(() => {
@@ -44,6 +45,7 @@ export function BusinessInfoForm({ merchant }: { merchant: Merchant }) {
           youtube_url: businessInfo.youtube_url || null,
           timezone: businessInfo.timezone,
           currency: businessInfo.currency,
+          custom_domain: businessInfo.custom_domain || null,
         })
         .eq("id", merchant.id);
 
@@ -92,6 +94,50 @@ export function BusinessInfoForm({ merchant }: { merchant: Merchant }) {
                 className="input rounded-t-none sm:rounded-l-none sm:rounded-tr-md"
                 required
               />
+            </div>
+          </div>
+
+          <div>
+            <label className="label flex items-center gap-2">
+              <Globe className="h-4 w-4" />
+              {t("customDomain")}
+            </label>
+            <input
+              type="text"
+              value={businessInfo.custom_domain}
+              onChange={(e) =>
+                setBusinessInfo({ ...businessInfo, custom_domain: e.target.value })
+              }
+              className="input mt-1"
+              placeholder="yourdomain.com"
+            />
+            <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+              <div className="flex gap-2">
+                <Info className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div className="text-xs text-blue-800 space-y-3">
+                  <p className="font-medium">{t("customDomainSetup")}</p>
+                  <ol className="list-decimal ml-4 space-y-2">
+                    <li>{t("customDomainStep1")}</li>
+                    <li>{t("customDomainStep2")}</li>
+                    <li>{t("customDomainStep3")}</li>
+                  </ol>
+                  <div className="space-y-2 p-2 bg-white rounded border border-blue-300">
+                    <p className="font-semibold text-blue-900">{t("dnsRecords")}:</p>
+                    <div className="space-y-1.5">
+                      <div className="font-mono text-[11px]">
+                        <span className="font-semibold">Host:</span> @ <span className="mx-2">|</span>
+                        <span className="font-semibold">Type:</span> A <span className="mx-2">|</span>
+                        <span className="font-semibold">Value:</span> 216.198.79.1
+                      </div>
+                      <div className="font-mono text-[11px]">
+                        <span className="font-semibold">Host:</span> www <span className="mx-2">|</span>
+                        <span className="font-semibold">Type:</span> CNAME <span className="mx-2">|</span>
+                        <span className="font-semibold">Value:</span> d05236ba666bbb6a.vercel-dns-017.com.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 

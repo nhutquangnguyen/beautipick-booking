@@ -30,6 +30,7 @@ export type Database = {
           currency: string;
           google_maps_url: string | null;
           youtube_url: string | null;
+          custom_domain: string | null;
           social_links: Json;
           theme: Json;
           settings: Json;
@@ -55,6 +56,7 @@ export type Database = {
           currency?: string;
           google_maps_url?: string | null;
           youtube_url?: string | null;
+          custom_domain?: string | null;
           social_links?: Json;
           theme?: Json;
           settings?: Json;
@@ -80,6 +82,7 @@ export type Database = {
           currency?: string;
           google_maps_url?: string | null;
           youtube_url?: string | null;
+          custom_domain?: string | null;
           social_links?: Json;
           theme?: Json;
           settings?: Json;
