@@ -287,6 +287,62 @@ export type Database = {
           notes?: string | null;
         };
       };
+      blog_posts: {
+        Row: {
+          id: string;
+          created_at: string;
+          updated_at: string;
+          title: string;
+          slug: string;
+          excerpt: string | null;
+          content: string;
+          cover_image: string | null;
+          author_id: string | null;
+          published: boolean;
+          published_at: string | null;
+          meta_title: string | null;
+          meta_description: string | null;
+          meta_keywords: string[] | null;
+          tags: string[] | null;
+          view_count: number;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+          title: string;
+          slug: string;
+          excerpt?: string | null;
+          content: string;
+          cover_image?: string | null;
+          author_id?: string | null;
+          published?: boolean;
+          published_at?: string | null;
+          meta_title?: string | null;
+          meta_description?: string | null;
+          meta_keywords?: string[] | null;
+          tags?: string[] | null;
+          view_count?: number;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+          title?: string;
+          slug?: string;
+          excerpt?: string | null;
+          content?: string;
+          cover_image?: string | null;
+          author_id?: string | null;
+          published?: boolean;
+          published_at?: string | null;
+          meta_title?: string | null;
+          meta_description?: string | null;
+          meta_keywords?: string[] | null;
+          tags?: string[] | null;
+          view_count?: number;
+        };
+      };
       bookings: {
         Row: {
           id: string;
@@ -369,6 +425,7 @@ export type Staff = Database["public"]["Tables"]["staff"]["Row"];
 export type Availability = Database["public"]["Tables"]["availability"]["Row"];
 export type Customer = Database["public"]["Tables"]["customers"]["Row"];
 export type Admin = Database["public"]["Tables"]["admins"]["Row"];
+export type BlogPost = Database["public"]["Tables"]["blog_posts"]["Row"];
 export type Booking = Database["public"]["Tables"]["bookings"]["Row"];
 
 export type MerchantInsert = Database["public"]["Tables"]["merchants"]["Insert"];
@@ -376,6 +433,8 @@ export type ServiceInsert = Database["public"]["Tables"]["services"]["Insert"];
 export type StaffInsert = Database["public"]["Tables"]["staff"]["Insert"];
 export type CustomerInsert = Database["public"]["Tables"]["customers"]["Insert"];
 export type AdminInsert = Database["public"]["Tables"]["admins"]["Insert"];
+export type BlogPostInsert = Database["public"]["Tables"]["blog_posts"]["Insert"];
+export type BlogPostUpdate = Database["public"]["Tables"]["blog_posts"]["Update"];
 export type BookingInsert = Database["public"]["Tables"]["bookings"]["Insert"];
 
 // Content section order types

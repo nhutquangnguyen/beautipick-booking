@@ -2,15 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
+import { Menu, X, BookOpen } from "lucide-react";
 import { LanguageSwitcherIcon } from "@/components/language-switcher";
 
 interface MobileMenuProps {
   loginText: string;
   getStartedText: string;
+  languageText: string;
 }
 
-export function MobileMenu({ loginText, getStartedText }: MobileMenuProps) {
+export function MobileMenu({ loginText, getStartedText, languageText }: MobileMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -38,22 +39,35 @@ export function MobileMenu({ loginText, getStartedText }: MobileMenuProps) {
           />
 
           {/* Menu Panel */}
-          <div className="fixed top-16 right-0 left-0 bg-white border-t border-gray-200 shadow-lg z-50 md:hidden">
-            <div className="px-4 py-4 space-y-3">
+          <div className="fixed top-16 right-0 left-0 bg-white border-t border-gray-200 shadow-xl z-50 md:hidden animate-in slide-in-from-top duration-200">
+            <div className="px-6 py-6 space-y-2">
+              {/* Blog Link */}
+              <Link
+                href="/blog"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-3 w-full px-4 py-3 text-base font-medium text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-all duration-200"
+              >
+                <BookOpen className="h-5 w-5" />
+                <span>Blog</span>
+              </Link>
+
+              {/* Divider */}
+              <div className="border-t border-gray-100 my-3" />
+
               {/* Language Switcher */}
-              <div className="flex items-center justify-between py-2">
-                <span className="text-sm font-medium text-gray-700">Language</span>
+              <div className="flex items-center justify-between px-4 py-3 bg-gray-50 rounded-xl">
+                <span className="text-sm font-medium text-gray-700">{languageText}</span>
                 <LanguageSwitcherIcon />
               </div>
 
               {/* Divider */}
-              <div className="border-t border-gray-200" />
+              <div className="border-t border-gray-100 my-3" />
 
               {/* Login Button */}
               <Link
                 href="/login"
                 onClick={() => setIsOpen(false)}
-                className="block w-full text-center px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                className="block w-full text-center px-6 py-3 text-base font-medium text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-all duration-200"
               >
                 {loginText}
               </Link>
@@ -62,7 +76,7 @@ export function MobileMenu({ loginText, getStartedText }: MobileMenuProps) {
               <Link
                 href="/signup"
                 onClick={() => setIsOpen(false)}
-                className="block w-full text-center rounded-full bg-gradient-to-r from-purple-600 to-pink-600 px-4 py-2.5 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+                className="block w-full text-center rounded-full bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-3.5 text-base font-semibold text-white hover:shadow-lg hover:scale-[1.02] transition-all duration-200 shadow-md mt-2"
               >
                 {getStartedText}
               </Link>

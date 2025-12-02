@@ -12,7 +12,8 @@ import {
   Scissors,
   UserCheck,
   Globe,
-  ArrowUpRight
+  ArrowUpRight,
+  BookOpen
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
@@ -62,9 +63,18 @@ export function AdminDashboard({ merchants }: AdminDashboardProps) {
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-        <p className="text-gray-600">Manage all registered merchants</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          <p className="text-gray-600">Manage all registered merchants</p>
+        </div>
+        <Link
+          href="/admin/blog"
+          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:opacity-90 transition-opacity"
+        >
+          <BookOpen className="h-5 w-5" />
+          Manage Blog
+        </Link>
       </div>
 
       {/* Stats Overview */}
