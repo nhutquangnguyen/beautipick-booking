@@ -30,12 +30,32 @@ export function BusinessInfoForm({ merchant }: { merchant: Merchant }) {
     setOrigin(window.location.origin);
   }, []);
 
+  const normalizeCustomDomain = (domain: string): string | null => {
+    if (!domain) return null;
+
+    // Remove whitespace
+    let normalized = domain.trim().toLowerCase();
+
+    // Remove protocol if present
+    normalized = normalized.replace(/^https?:\/\//, '');
+
+    // Remove www. prefix if present
+    normalized = normalized.replace(/^www\./, '');
+
+    // Remove trailing slash if present
+    normalized = normalized.replace(/\/$/, '');
+
+    return normalized || null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setSuccess(false);
 
     try {
+      const normalizedDomain = normalizeCustomDomain(businessInfo.custom_domain);
+
       await supabase
         .from("merchants")
         .update({
@@ -45,9 +65,14 @@ export function BusinessInfoForm({ merchant }: { merchant: Merchant }) {
           youtube_url: businessInfo.youtube_url || null,
           timezone: businessInfo.timezone,
           currency: businessInfo.currency,
-          custom_domain: businessInfo.custom_domain || null,
+          custom_domain: normalizedDomain,
         })
         .eq("id", merchant.id);
+
+      // Update the local state with normalized domain
+      if (normalizedDomain) {
+        setBusinessInfo(prev => ({ ...prev, custom_domain: normalizedDomain }));
+      }
 
       setSuccess(true);
       router.refresh();
@@ -109,8 +134,11 @@ export function BusinessInfoForm({ merchant }: { merchant: Merchant }) {
                 setBusinessInfo({ ...businessInfo, custom_domain: e.target.value })
               }
               className="input mt-1"
-              placeholder="yourdomain.com"
+              placeholder="yourdomain.com or www.yourdomain.com"
             />
+            <p className="mt-1 text-xs text-gray-500">
+              {t("customDomainNote")}
+            </p>
             <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
               <div className="flex gap-2">
                 <Info className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />

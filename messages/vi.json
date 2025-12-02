@@ -167,6 +167,7 @@
     "slug": "Đường dẫn trang",
     "slugDesc": "Đây sẽ là đường dẫn trang đặt lịch công khai",
     "customDomain": "Tên miền riêng (Tùy chọn)",
+    "customDomainNote": "Bạn có thể nhập có hoặc không có 'www.' - chúng tôi sẽ tự động lưu đúng định dạng",
     "customDomainSetup": "Cách thiết lập tên miền riêng:",
     "customDomainStep1": "Nhập tên miền của bạn (vd: salon-cua-ban.com) ở trên và lưu lại",
     "customDomainStep2": "Truy cập cài đặt DNS của nhà cung cấp tên miền (vd: GoDaddy, Namecheap, Cloudflare)",

@@ -167,6 +167,7 @@
     "slug": "Page URL",
     "slugDesc": "This will be your public booking page URL",
     "customDomain": "Custom Domain (Optional)",
+    "customDomainNote": "You can enter with or without 'www.' - we'll save it in the correct format",
     "customDomainSetup": "How to set up your custom domain:",
     "customDomainStep1": "Enter your domain name (e.g., yoursalon.com) above and save",
     "customDomainStep2": "Go to your domain provider's DNS settings (e.g., GoDaddy, Namecheap, Cloudflare)",
