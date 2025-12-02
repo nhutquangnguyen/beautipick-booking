@@ -32,7 +32,7 @@ export default async function DashboardLayout({
 
   // Fetch merchant data using admin client (bypasses RLS)
   const adminClient = createAdminClient();
-  const { data: merchant } = await adminClient
+  const { data: merchant } = await (adminClient as any)
     .from("merchants")
     .select("*")
     .eq("id", user.id)

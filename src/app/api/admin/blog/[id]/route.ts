@@ -57,7 +57,7 @@ export async function PUT(
     if (body.tags !== undefined) updateData.tags = body.tags;
 
     // Update blog post
-    const { data, error } = await adminClient
+    const { data, error } = await (adminClient as any)
       .from("blog_posts")
       .update(updateData)
       .eq("id", id)

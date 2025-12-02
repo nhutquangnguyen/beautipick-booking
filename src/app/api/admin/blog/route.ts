@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     // Create blog post
-    const { data, error } = await adminClient
+    const { data, error } = await (adminClient as any)
       .from("blog_posts")
       .insert({
         title: body.title,

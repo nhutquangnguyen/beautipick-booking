@@ -26,7 +26,7 @@ export default async function Home() {
 
   // Fetch latest published blog posts
   const supabase = await createClient();
-  const { data: blogPosts } = await supabase
+  const { data: blogPosts } = await (supabase as any)
     .from("blog_posts")
     .select("id, title, excerpt, cover_image, published_at, slug, tags")
     .eq("published", true)
@@ -467,7 +467,7 @@ export default async function Home() {
             </div>
 
             <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-              {blogPosts.map((post) => (
+              {blogPosts.map((post: any) => (
                 <Link
                   key={post.id}
                   href={`/blog/${post.slug}`}
@@ -489,7 +489,7 @@ export default async function Home() {
                   <div className="p-6">
                     {post.tags && post.tags.length > 0 && (
                       <div className="flex flex-wrap gap-2 mb-3">
-                        {post.tags.slice(0, 2).map((tag, i) => (
+                        {post.tags.slice(0, 2).map((tag: string, i: number) => (
                           <span
                             key={i}
                             className="text-xs font-medium px-2 py-1 bg-purple-100 text-purple-700 rounded-full"

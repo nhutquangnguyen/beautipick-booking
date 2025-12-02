@@ -28,7 +28,7 @@ export default async function AdminBlogPage() {
   }
 
   // Fetch all blog posts using admin client
-  const { data: blogPosts } = await adminClient
+  const { data: blogPosts } = await (adminClient as any)
     .from("blog_posts")
     .select("*")
     .order("created_at", { ascending: false });

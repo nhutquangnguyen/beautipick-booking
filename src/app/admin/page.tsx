@@ -3,6 +3,17 @@ import { createAdminClient } from "@/lib/supabase/server-admin";
 import { redirect } from "next/navigation";
 import { AdminDashboard } from "@/components/admin/admin-dashboard";
 
+interface MerchantData {
+  id: string;
+  email: string;
+  business_name: string;
+  slug: string;
+  phone: string | null;
+  created_at: string;
+  is_active: boolean;
+  custom_domain: string | null;
+}
+
 export default async function AdminPage() {
   // Check authentication
   const supabase = await createClient();
@@ -44,7 +55,7 @@ export default async function AdminPage() {
 
   // Fetch statistics for each merchant using admin client
   const merchantsWithStats = await Promise.all(
-    (merchants || []).map(async (merchant: NonNullable<typeof merchants>[number]) => {
+    (merchants as MerchantData[] || []).map(async (merchant: MerchantData) => {
       const [bookings, customers, services, staff, settings] = await Promise.all([
         adminClient
           .from("bookings")
@@ -67,7 +78,7 @@ export default async function AdminPage() {
           .select("settings")
           .eq("id", merchant.id)
           .single(),
-      ]);
+      ]) as any[];
 
       // Count gallery images from settings
       const gallery = (settings.data?.settings as any)?.gallery || [];
@@ -75,7 +86,7 @@ export default async function AdminPage() {
 
       // Calculate total revenue
       const totalRevenue = bookings.data?.reduce(
-        (sum, booking) => sum + (booking.total_price || 0),
+        (sum: number, booking: any) => sum + (booking.total_price || 0),
         0
       ) || 0;
 

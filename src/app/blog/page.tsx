@@ -19,18 +19,18 @@ export default async function BlogListPage() {
   const tNav = await getTranslations("nav");
 
   // Fetch all published blog posts
-  const { data: blogPosts } = await supabase
+  const { data: blogPosts } = await (supabase as any)
     .from("blog_posts")
     .select("*")
     .eq("published", true)
     .order("published_at", { ascending: false });
 
   // Get all unique tags
-  const allTags = Array.from(
+  const allTags: string[] = Array.from(
     new Set(
-      blogPosts?.flatMap((post) => post.tags || []) || []
+      blogPosts?.flatMap((post: any) => post.tags || []) || []
     )
-  );
+  ) as string[];
 
   return (
     <div className="min-h-screen bg-white">
@@ -111,7 +111,7 @@ export default async function BlogListPage() {
             <div className="flex items-center gap-2 flex-wrap">
               <Tag className="h-4 w-4 text-gray-500" />
               <span className="text-sm font-medium text-gray-700">Topics:</span>
-              {allTags.map((tag) => (
+              {allTags.map((tag: string) => (
                 <span
                   key={tag}
                   className="px-3 py-1 text-sm font-medium bg-white border border-gray-200 text-gray-700 rounded-full hover:border-purple-300 hover:bg-purple-50 transition-colors cursor-pointer"
@@ -135,7 +135,7 @@ export default async function BlogListPage() {
             </div>
           ) : (
             <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-              {blogPosts.map((post) => (
+              {blogPosts.map((post: any) => (
                 <Link
                   key={post.id}
                   href={`/blog/${post.slug}`}
@@ -157,7 +157,7 @@ export default async function BlogListPage() {
                   <div className="p-6">
                     {post.tags && post.tags.length > 0 && (
                       <div className="flex flex-wrap gap-2 mb-3">
-                        {post.tags.slice(0, 3).map((tag, i) => (
+                        {post.tags.slice(0, 3).map((tag: string, i: number) => (
                           <span
                             key={i}
                             className="text-xs font-medium px-2 py-1 bg-purple-100 text-purple-700 rounded-full"

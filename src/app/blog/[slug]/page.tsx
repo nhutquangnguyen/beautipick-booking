@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
   const { slug } = await params;
   const supabase = await createClient();
 
-  const { data: post } = await supabase
+  const { data: post } = await (supabase as any)
     .from("blog_posts")
     .select("*")
     .eq("slug", slug)
@@ -59,7 +59,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const tNav = await getTranslations("nav");
 
   // Fetch blog post
-  const { data: post } = await supabase
+  const { data: post } = await (supabase as any)
     .from("blog_posts")
     .select("*")
     .eq("slug", slug)
@@ -72,13 +72,13 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
   // Increment view count using admin client (bypasses RLS)
   const adminClient = createAdminClient();
-  await adminClient
+  await (adminClient as any)
     .from("blog_posts")
     .update({ view_count: (post.view_count || 0) + 1 })
     .eq("id", post.id);
 
   // Fetch related posts (same tags)
-  const { data: relatedPosts } = await supabase
+  const { data: relatedPosts } = await (supabase as any)
     .from("blog_posts")
     .select("id, title, slug, excerpt, cover_image, published_at")
     .eq("published", true)
@@ -169,7 +169,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           {/* Tags */}
           {post.tags && post.tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-6">
-              {post.tags.map((tag, i) => (
+              {post.tags.map((tag: string, i: number) => (
                 <span
                   key={i}
                   className="inline-flex items-center gap-1 px-3 py-1 text-sm font-medium bg-purple-100 text-purple-700 rounded-full"
@@ -224,7 +224,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
               <h2 className="text-3xl font-bold text-gray-900 mb-8">Related Posts</h2>
               <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-                {relatedPosts.map((relatedPost) => (
+                {relatedPosts.map((relatedPost: any) => (
                   <Link
                     key={relatedPost.id}
                     href={`/blog/${relatedPost.slug}`}
