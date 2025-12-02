@@ -44,7 +44,7 @@ export default async function AdminPage() {
 
   // Fetch statistics for each merchant using admin client
   const merchantsWithStats = await Promise.all(
-    (merchants || []).map(async (merchant) => {
+    (merchants || []).map(async (merchant: NonNullable<typeof merchants>[number]) => {
       const [bookings, customers, services, staff, settings] = await Promise.all([
         adminClient
           .from("bookings")
