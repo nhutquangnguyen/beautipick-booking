@@ -8,6 +8,7 @@ import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { LanguageSwitcherIcon } from "@/components/language-switcher";
 import { MobileMenu } from "@/components/landing/mobile-menu";
+import { marked } from "marked";
 
 interface BlogPostPageProps {
   params: Promise<{ slug: string }>;
@@ -199,8 +200,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           {/* Content */}
           <div className="prose prose-lg prose-purple max-w-none">
             <div
-              className="whitespace-pre-wrap leading-relaxed text-gray-700"
-              dangerouslySetInnerHTML={{ __html: post.content.replace(/\n/g, '<br/>') }}
+              className="leading-relaxed text-gray-700"
+              dangerouslySetInnerHTML={{ __html: marked(post.content) }}
             />
           </div>
 
