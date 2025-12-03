@@ -114,28 +114,10 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
     { href: "/dashboard/customers", label: t("customers"), icon: Users },
     { href: "/dashboard/services", label: t("services"), icon: Scissors },
     { href: "/dashboard/products", label: t("products"), icon: ShoppingBag },
-    {
-      href: "/dashboard/my-page",
-      label: t("myPage"),
-      icon: Sparkles,
-      children: [
-        { href: "/dashboard/my-page", label: t("design"), icon: Palette, exact: true },
-        { href: "/dashboard/my-page/gallery", label: t("gallery"), icon: Images },
-        { href: "/dashboard/my-page/links", label: t("links"), icon: LinkIcon },
-        { href: "/dashboard/my-page/qr-code", label: t("qrCode"), icon: QrCode },
-      ],
-    },
-    {
-      href: "/dashboard/settings",
-      label: t("settings"),
-      icon: Settings,
-      children: [
-        { href: "/dashboard/settings", label: t("businessInfo"), icon: Store, exact: true },
-        { href: "/dashboard/settings/contact", label: t("contactLocation"), icon: Store },
-        { href: "/dashboard/settings/hours", label: t("hours"), icon: Clock },
-        { href: "/dashboard/settings/booking-rules", label: t("bookingRules"), icon: ClipboardList },
-      ],
-    },
+    { href: "/dashboard/themes/gallery", label: t("gallery"), icon: Images },
+    { href: "/dashboard/themes", label: "Themes", icon: Palette },
+    { href: "/dashboard/business-info", label: "Business Info", icon: Store },
+    { href: "/dashboard/settings", label: t("settings"), icon: Settings },
     // Add admin link if user is admin
     ...(isAdmin ? [{ href: "/admin", label: "Admin", icon: Shield }] : []),
   ];

@@ -4,9 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
-import { Check, ChevronRight, Clock, Scissors, Store } from "lucide-react";
+import { Check, ChevronRight, Clock, Scissors, Store, Palette } from "lucide-react";
+import { themePresets, ThemePreset } from "@/types/database";
+import { ThemeGallery } from "@/components/dashboard/design/theme-gallery";
+import { ThemePreviewModal } from "@/components/dashboard/design/theme-preview-modal";
 
-type Step = "business" | "services" | "hours" | "complete";
+type Step = "theme" | "business" | "services" | "hours" | "complete";
 
 const COMMON_SERVICES = [
   { name: "Haircut", translationKey: "haircut", duration: 45, price: 35, category: "Hair", categoryKey: "hair" },
@@ -32,7 +35,7 @@ const DEFAULT_HOURS = [
 ];
 
 export default function OnboardingPage() {
-  const [step, setStep] = useState<Step>("business");
+  const [step, setStep] = useState<Step>("theme");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const locale = useLocale();
@@ -48,6 +51,10 @@ export default function OnboardingPage() {
     ...service,
     price: Math.round(service.price * priceMultiplier)
   }));
+
+  // Theme selection
+  const [selectedThemeId, setSelectedThemeId] = useState<string>("modern");
+  const [previewTheme, setPreviewTheme] = useState<ThemePreset | null>(null);
 
   // Business info
   const [businessInfo, setBusinessInfo] = useState({
@@ -67,6 +74,26 @@ export default function OnboardingPage() {
         ? prev.filter((s) => s.name !== service.name)
         : [...prev, service]
     );
+  };
+
+  const handleThemeSubmit = async () => {
+    setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (user) {
+      const selectedPreset = themePresets.find(p => p.id === selectedThemeId);
+      if (selectedPreset) {
+        await supabase.from("merchants").update({
+          theme: {
+            themeId: selectedThemeId,
+            ...selectedPreset.theme
+          }
+        }).eq("id", user.id);
+      }
+    }
+
+    setLoading(false);
+    setStep("business");
   };
 
   const handleBusinessSubmit = async () => {
@@ -133,11 +160,12 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
-      <div className="mx-auto max-w-2xl px-4 py-6 sm:py-12">
+      <div className={`mx-auto px-4 py-6 sm:py-12 ${step === "theme" ? "max-w-6xl" : "max-w-2xl"}`}>
         {/* Progress */}
         <div className="mb-6 sm:mb-8">
           <div className="flex items-center justify-center gap-1.5 sm:gap-2">
             {[
+              { key: "theme", icon: Palette, label: "Theme" },
               { key: "business", icon: Store, label: "Info" },
               { key: "services", icon: Scissors, label: "Services" },
               { key: "hours", icon: Clock, label: "Hours" },
@@ -160,7 +188,7 @@ export default function OnboardingPage() {
                 </div>
                 {i < arr.length - 1 && (
                   <div
-                    className={`h-1 w-8 sm:w-12 ${
+                    className={`h-1 w-6 sm:w-8 ${
                       arr.findIndex((x) => x.key === step) > i
                         ? "bg-green-500"
                         : "bg-gray-200"
@@ -171,6 +199,49 @@ export default function OnboardingPage() {
             ))}
           </div>
         </div>
+
+        {/* Step: Theme Selection */}
+        {step === "theme" && (
+          <div className="rounded-2xl bg-white p-4 sm:p-8 shadow-sm">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+              Choose Your Theme
+            </h1>
+            <p className="mt-2 text-sm sm:text-base text-gray-600">
+              Pick a beautiful theme for your booking page. You can customize colors and fonts later.
+            </p>
+
+            <div className="mt-8">
+              <ThemeGallery
+                themes={themePresets}
+                selectedThemeId={selectedThemeId}
+                onSelectTheme={setSelectedThemeId}
+                onPreviewTheme={setPreviewTheme}
+                compact={false}
+              />
+            </div>
+
+            <button
+              onClick={handleThemeSubmit}
+              disabled={loading}
+              className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 py-4 font-semibold text-white hover:bg-purple-700 disabled:opacity-50"
+            >
+              {loading ? t("saving") : t("continue")}
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          </div>
+        )}
+
+        {/* Theme Preview Modal */}
+        <ThemePreviewModal
+          theme={previewTheme}
+          isOpen={!!previewTheme}
+          onClose={() => setPreviewTheme(null)}
+          onApply={(themeId) => {
+            setSelectedThemeId(themeId);
+            setPreviewTheme(null);
+          }}
+          currentThemeId={selectedThemeId}
+        />
 
         {/* Step: Business Info */}
         {step === "business" && (

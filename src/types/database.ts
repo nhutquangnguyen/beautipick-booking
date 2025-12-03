@@ -463,6 +463,8 @@ export interface ThemePreset {
   name: string;
   description: string;
   preview: string; // preview image or gradient
+  category?: string; // e.g., "Professional", "Luxury", "Modern"
+  bestFor?: string[]; // e.g., ["Spa", "Salon", "Wellness"]
   theme: Omit<MerchantTheme, "themeId">;
 }
 
@@ -509,8 +511,10 @@ export const themePresets: ThemePreset[] = [
   {
     id: "modern",
     name: "Modern",
-    description: "Clean and professional with purple accents",
+    description: "Clean and professional with vibrant purple accents. Perfect for modern beauty businesses.",
     preview: "linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)",
+    category: "Modern",
+    bestFor: ["Salon", "Spa", "Beauty Studio"],
     theme: {
       primaryColor: "#8B5CF6",
       secondaryColor: "#EC4899",
@@ -528,8 +532,10 @@ export const themePresets: ThemePreset[] = [
   {
     id: "elegant",
     name: "Elegant",
-    description: "Sophisticated dark theme with gold accents",
+    description: "Sophisticated dark theme with luxurious gold accents. Ideal for premium spa experiences.",
     preview: "linear-gradient(135deg, #1F2937 0%, #374151 100%)",
+    category: "Luxury",
+    bestFor: ["Premium Spa", "Luxury Salon", "High-End Wellness"],
     theme: {
       primaryColor: "#D4AF37",
       secondaryColor: "#C9A227",
@@ -547,8 +553,10 @@ export const themePresets: ThemePreset[] = [
   {
     id: "fresh",
     name: "Fresh",
-    description: "Bright and energetic with teal tones",
+    description: "Bright and energetic with refreshing teal tones. Great for wellness and health-focused businesses.",
     preview: "linear-gradient(135deg, #14B8A6 0%, #06B6D4 100%)",
+    category: "Fresh",
+    bestFor: ["Wellness Center", "Health Spa", "Yoga Studio"],
     theme: {
       primaryColor: "#14B8A6",
       secondaryColor: "#06B6D4",
@@ -566,8 +574,10 @@ export const themePresets: ThemePreset[] = [
   {
     id: "minimal",
     name: "Minimal",
-    description: "Simple black and white design",
+    description: "Clean black and white design with maximum simplicity. Perfect for contemporary, minimalist brands.",
     preview: "linear-gradient(135deg, #FFFFFF 0%, #F3F4F6 100%)",
+    category: "Minimalist",
+    bestFor: ["Modern Salon", "Boutique Studio", "Professional Services"],
     theme: {
       primaryColor: "#000000",
       secondaryColor: "#4B5563",
@@ -585,8 +595,10 @@ export const themePresets: ThemePreset[] = [
   {
     id: "warm",
     name: "Warm",
-    description: "Cozy and inviting with earthy tones",
+    description: "Cozy and inviting with warm earthy tones. Excellent for creating a welcoming, friendly atmosphere.",
     preview: "linear-gradient(135deg, #F97316 0%, #EA580C 100%)",
+    category: "Warm",
+    bestFor: ["Traditional Spa", "Massage Studio", "Holistic Wellness"],
     theme: {
       primaryColor: "#EA580C",
       secondaryColor: "#DC2626",
@@ -604,8 +616,10 @@ export const themePresets: ThemePreset[] = [
   {
     id: "rose",
     name: "Rose",
-    description: "Soft and feminine with pink hues",
+    description: "Soft and feminine with delicate pink hues. Perfect for beauty salons and bridal services.",
     preview: "linear-gradient(135deg, #F43F5E 0%, #EC4899 100%)",
+    category: "Feminine",
+    bestFor: ["Beauty Salon", "Bridal Services", "Aesthetic Clinic"],
     theme: {
       primaryColor: "#F43F5E",
       secondaryColor: "#EC4899",
@@ -623,8 +637,10 @@ export const themePresets: ThemePreset[] = [
   {
     id: "ocean",
     name: "Ocean",
-    description: "Calm and serene with blue tones",
+    description: "Calm and serene with soothing blue tones. Great for creating a tranquil, relaxing experience.",
     preview: "linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)",
+    category: "Calming",
+    bestFor: ["Medical Spa", "Therapy Center", "Relaxation Studio"],
     theme: {
       primaryColor: "#3B82F6",
       secondaryColor: "#1D4ED8",
@@ -642,8 +658,10 @@ export const themePresets: ThemePreset[] = [
   {
     id: "forest",
     name: "Forest",
-    description: "Natural and organic with green tones",
+    description: "Natural and organic with fresh green tones. Ideal for eco-friendly and natural wellness brands.",
     preview: "linear-gradient(135deg, #22C55E 0%, #15803D 100%)",
+    category: "Natural",
+    bestFor: ["Organic Spa", "Natural Wellness", "Eco Beauty"],
     theme: {
       primaryColor: "#22C55E",
       secondaryColor: "#15803D",

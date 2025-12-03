@@ -1,8 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { UnifiedSettingsForm } from "@/components/dashboard/settings/unified-settings-form";
+import { CombinedBusinessInfoForm } from "@/components/dashboard/business-info/combined-business-info-form";
 
-export default async function SettingsPage() {
+export default async function BusinessInfoPage() {
   const supabase = await createClient();
   const {
     data: { user },
@@ -21,13 +21,13 @@ export default async function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-gray-900">Settings</h2>
+        <h2 className="text-xl font-semibold text-gray-900">Business Information</h2>
         <p className="text-sm text-gray-600">
-          Configure your booking page URL, custom domain, booking rules, and QR code
+          Manage your logo, cover image, business details, contact information, and location
         </p>
       </div>
 
-      <UnifiedSettingsForm merchant={merchant} />
+      <CombinedBusinessInfoForm merchant={merchant} />
     </div>
   );
 }

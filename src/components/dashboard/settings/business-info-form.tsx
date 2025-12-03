@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { Merchant } from "@/types/database";
 import { generateSlug } from "@/lib/utils";
+import { ImageUpload } from "@/components/ui/image-upload";
 
 export function BusinessInfoForm({ merchant }: { merchant: Merchant }) {
   const t = useTranslations("businessForm");
@@ -15,6 +16,8 @@ export function BusinessInfoForm({ merchant }: { merchant: Merchant }) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [origin, setOrigin] = useState("");
+  const [logoUrl, setLogoUrl] = useState<string | null>(merchant.logo_url);
+  const [coverUrl, setCoverUrl] = useState<string | null>(merchant.cover_image_url);
 
   const [businessInfo, setBusinessInfo] = useState({
     business_name: merchant.business_name,
@@ -66,6 +69,8 @@ export function BusinessInfoForm({ merchant }: { merchant: Merchant }) {
           timezone: businessInfo.timezone,
           currency: businessInfo.currency,
           custom_domain: normalizedDomain,
+          logo_url: logoUrl,
+          cover_image_url: coverUrl,
         })
         .eq("id", merchant.id);
 
@@ -86,7 +91,38 @@ export function BusinessInfoForm({ merchant }: { merchant: Merchant }) {
       {/* Business Details */}
       <div className="card p-4 sm:p-6">
         <h3 className="text-base font-semibold text-gray-900">{t("businessDetails")}</h3>
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+        <form onSubmit={handleSubmit} className="mt-4 space-y-6">
+          {/* Logo & Cover Images */}
+          <div className="space-y-6 pb-6 border-b border-gray-200">
+            <div>
+              <label className="label mb-2">Cover Image</label>
+              <ImageUpload
+                value={coverUrl}
+                onChange={setCoverUrl}
+                folder={`merchants/${merchant.id}/cover`}
+                aspectRatio="cover"
+                placeholder="Upload cover image"
+              />
+              <p className="mt-2 text-xs text-gray-500">
+                Recommended: 1200x400px. This appears at the top of your booking page.
+              </p>
+            </div>
+
+            <div>
+              <label className="label mb-2">Logo</label>
+              <ImageUpload
+                value={logoUrl}
+                onChange={setLogoUrl}
+                folder={`merchants/${merchant.id}/logo`}
+                aspectRatio="square"
+                placeholder="Upload logo"
+              />
+              <p className="mt-2 text-xs text-gray-500">
+                Recommended: 400x400px. Square format works best.
+              </p>
+            </div>
+          </div>
+
           <div>
             <label className="label">{t("businessName")}</label>
             <input
