@@ -44,11 +44,13 @@ export async function middleware(request: NextRequest) {
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
+      console.error('Missing Supabase configuration');
       return new NextResponse('Missing configuration', { status: 500 });
     }
 
     // Query database using fetch API (edge-compatible)
     const apiUrl = `${supabaseUrl}/rest/v1/merchants?custom_domain=eq.${hostname}&is_active=eq.true&select=slug&limit=1`;
+    console.log(`Checking custom domain: ${hostname}`);
 
     const response = await fetch(apiUrl, {
       headers: {
@@ -60,18 +62,23 @@ export async function middleware(request: NextRequest) {
     if (response.ok) {
       const data = await response.json();
       const merchant = data && data.length > 0 ? data[0] : null;
+      console.log(`Query result for ${hostname}:`, merchant ? `Found: ${merchant.slug}` : 'Not found');
 
       if (merchant) {
         // Rewrite to merchant page
         const url = request.nextUrl.clone();
         url.pathname = `/${merchant.slug}${pathname}`;
+        console.log(`Rewriting ${hostname}${pathname} to ${url.pathname}`);
         return NextResponse.rewrite(url);
       }
+    } else {
+      console.error(`Supabase query failed for ${hostname}:`, response.status);
     }
 
     // Try without www
     const hostnameWithoutWww = hostname.replace('www.', '');
     if (hostnameWithoutWww !== hostname) {
+      console.log(`Trying without www: ${hostnameWithoutWww}`);
       const apiUrlAlt = `${supabaseUrl}/rest/v1/merchants?custom_domain=eq.${hostnameWithoutWww}&is_active=eq.true&select=slug&limit=1`;
 
       const responseAlt = await fetch(apiUrlAlt, {
@@ -84,12 +91,16 @@ export async function middleware(request: NextRequest) {
       if (responseAlt.ok) {
         const dataAlt = await responseAlt.json();
         const merchantAlt = dataAlt && dataAlt.length > 0 ? dataAlt[0] : null;
+        console.log(`Query result for ${hostnameWithoutWww}:`, merchantAlt ? `Found: ${merchantAlt.slug}` : 'Not found');
 
         if (merchantAlt) {
           const url = request.nextUrl.clone();
           url.pathname = `/${merchantAlt.slug}${pathname}`;
+          console.log(`Rewriting ${hostname}${pathname} to ${url.pathname}`);
           return NextResponse.rewrite(url);
         }
+      } else {
+        console.error(`Supabase query failed for ${hostnameWithoutWww}:`, responseAlt.status);
       }
     }
 
