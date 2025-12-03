@@ -440,9 +440,19 @@ export type BookingInsert = Database["public"]["Tables"]["bookings"]["Insert"];
 // Content section order types
 export type ContentSection = "about" | "contact" | "social" | "video" | "gallery" | "products" | "services";
 
+// Layout template types - defines the actual visual structure
+// We have 5 unique layouts that serve all 10 theme personas
+export type LayoutTemplate =
+  | "luxury"      // Full-screen hero with parallax (Opulence, Coastal)
+  | "modern"      // Dynamic split-screen (Radiance, Glamour, Blossom)
+  | "minimal"     // Zen flowing sections (Serenity, Tranquil)
+  | "classic"     // Traditional symmetrical (Distinguished)
+  | "portfolio";  // Dark full-width showcase (Artisan, Powerhouse)
+
 // Theme configuration type
 export interface MerchantTheme {
   themeId: string; // preset theme identifier
+  layoutTemplate: LayoutTemplate; // NEW: defines the actual layout structure
   primaryColor: string;
   secondaryColor: string;
   accentColor: string;
@@ -465,6 +475,7 @@ export interface ThemePreset {
   preview: string; // preview image or gradient
   category?: string; // e.g., "Professional", "Luxury", "Modern"
   bestFor?: string[]; // e.g., ["Spa", "Salon", "Wellness"]
+  layoutTemplate: LayoutTemplate; // NEW: the layout this theme uses
   theme: Omit<MerchantTheme, "themeId">;
 }
 
@@ -493,6 +504,7 @@ export const defaultContentOrder: ContentSection[] = [
 
 export const defaultTheme: MerchantTheme = {
   themeId: "radiance",
+  layoutTemplate: "modern",
   primaryColor: "#8B5CF6",
   secondaryColor: "#EC4899",
   accentColor: "#FBBF24",
@@ -516,7 +528,9 @@ export const themePresets: ThemePreset[] = [
     preview: "linear-gradient(135deg, #0A0A0A 0%, #D4AF37 100%)",
     category: "Luxury",
     bestFor: ["Luxury Spa", "Medical Spa", "Premium Wellness", "Celebrity Esthetician"],
+    layoutTemplate: "luxury",
     theme: {
+      layoutTemplate: "luxury",
       primaryColor: "#D4AF37",
       secondaryColor: "#0A0A0A",
       accentColor: "#F7E7CE",
@@ -537,7 +551,9 @@ export const themePresets: ThemePreset[] = [
     preview: "linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)",
     category: "Vibrant",
     bestFor: ["Hair Salon", "Hair Colorist", "Style Studio", "Extension Specialist"],
+    layoutTemplate: "modern",
     theme: {
+      layoutTemplate: "modern",
       primaryColor: "#8B5CF6",
       secondaryColor: "#EC4899",
       accentColor: "#FBBF24",
@@ -558,7 +574,9 @@ export const themePresets: ThemePreset[] = [
     preview: "linear-gradient(135deg, #FF006E 0%, #B76E79 100%)",
     category: "Feminine",
     bestFor: ["Makeup Artist", "Beauty Salon", "Lash Technician", "Bridal Beauty"],
+    layoutTemplate: "modern",
     theme: {
+      layoutTemplate: "modern",
       primaryColor: "#FF006E",
       secondaryColor: "#B76E79",
       accentColor: "#FBBF24",
@@ -581,7 +599,9 @@ export const themePresets: ThemePreset[] = [
     preview: "linear-gradient(135deg, #5F9EA0 0%, #E4D4C8 100%)",
     category: "Calming",
     bestFor: ["Massage Therapy", "Therapeutic Massage", "Wellness Clinic", "Chiropractic"],
+    layoutTemplate: "minimal",
     theme: {
+      layoutTemplate: "minimal",
       primaryColor: "#5F9EA0",
       secondaryColor: "#E4D4C8",
       accentColor: "#9BB8BA",
@@ -602,7 +622,9 @@ export const themePresets: ThemePreset[] = [
     preview: "linear-gradient(135deg, #9CAF88 0%, #E8D5C4 100%)",
     category: "Natural",
     bestFor: ["Yoga Studio", "Meditation Center", "Holistic Therapy", "Ayurvedic Spa"],
+    layoutTemplate: "minimal",
     theme: {
+      layoutTemplate: "minimal",
       primaryColor: "#9CAF88",
       secondaryColor: "#E8D5C4",
       accentColor: "#B8C5A8",
@@ -623,7 +645,9 @@ export const themePresets: ThemePreset[] = [
     preview: "linear-gradient(135deg, #B85450 0%, #2C2C2C 100%)",
     category: "Classic",
     bestFor: ["Barbershop", "Men's Grooming", "Traditional Barber", "Gentleman's Lounge"],
+    layoutTemplate: "classic",
     theme: {
+      layoutTemplate: "classic",
       primaryColor: "#B85450",
       secondaryColor: "#2C2C2C",
       accentColor: "#C19A6B",
@@ -646,7 +670,9 @@ export const themePresets: ThemePreset[] = [
     preview: "linear-gradient(135deg, #C9A0DC 0%, #B4E7CE 50%, #FFD4B2 100%)",
     category: "Playful",
     bestFor: ["Nail Salon", "Nail Technician", "Nail Art Specialist", "Mobile Nail Service"],
+    layoutTemplate: "modern",
     theme: {
+      layoutTemplate: "modern",
       primaryColor: "#C9A0DC",
       secondaryColor: "#B4E7CE",
       accentColor: "#FFD4B2",
@@ -667,7 +693,9 @@ export const themePresets: ThemePreset[] = [
     preview: "linear-gradient(135deg, #0066FF 0%, #FFE500 100%)",
     category: "Energy",
     bestFor: ["Personal Trainer", "Fitness Studio", "CrossFit", "Sports Coach"],
+    layoutTemplate: "portfolio",
     theme: {
+      layoutTemplate: "portfolio",
       primaryColor: "#0066FF",
       secondaryColor: "#1A1A1A",
       accentColor: "#FFE500",
@@ -688,7 +716,9 @@ export const themePresets: ThemePreset[] = [
     preview: "linear-gradient(135deg, #0D0D0D 0%, #DC143C 100%)",
     category: "Edgy",
     bestFor: ["Tattoo Studio", "Tattoo Artist", "Permanent Makeup", "Body Art"],
+    layoutTemplate: "portfolio",
     theme: {
+      layoutTemplate: "portfolio",
       primaryColor: "#DC143C",
       secondaryColor: "#0D0D0D",
       accentColor: "#8B0000",
@@ -711,7 +741,9 @@ export const themePresets: ThemePreset[] = [
     preview: "linear-gradient(135deg, #0077BE 0%, #F5E6D3 100%)",
     category: "Vacation",
     bestFor: ["Resort Spa", "Hotel Spa", "Destination Wellness", "Beach Spa"],
+    layoutTemplate: "luxury",
     theme: {
+      layoutTemplate: "luxury",
       primaryColor: "#0077BE",
       secondaryColor: "#F5E6D3",
       accentColor: "#A7D8DE",

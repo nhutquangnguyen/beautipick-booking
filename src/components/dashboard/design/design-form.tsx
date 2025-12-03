@@ -93,9 +93,10 @@ export function DesignForm({
   const selectPreset = (presetId: string) => {
     const preset = themePresets.find((p) => p.id === presetId);
     if (preset) {
-      // Apply ALL theme settings including content order, header style, etc.
+      // Apply ALL theme settings including layout template, content order, header style, etc.
       setFormData({
         themeId: presetId,
+        layoutTemplate: preset.theme.layoutTemplate,
         primaryColor: preset.theme.primaryColor,
         secondaryColor: preset.theme.secondaryColor,
         accentColor: preset.theme.accentColor,
