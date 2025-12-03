@@ -20,12 +20,23 @@ export async function middleware(request: NextRequest) {
     return await updateSession(request);
   }
 
-  // Check if this is a custom domain
+  // Check if this is a custom domain or a slug path on main domain
+  const isMainDomain = hostname.includes('beautipick.com') && !hostname.includes('www.');
   const isCustomDomain =
     !hostname.includes('localhost') &&
-    !hostname.includes('beautipick.com') &&
     !hostname.includes('.vercel.app') &&
     hostname.includes('.');
+
+  // Skip custom domain routing for main domain root paths
+  const skipRouting = isMainDomain && (
+    pathname === '/' ||
+    pathname.startsWith('/blog') ||
+    pathname.startsWith('/admin')
+  );
+
+  if (skipRouting) {
+    return await updateSession(request);
+  }
 
   if (isCustomDomain) {
     // Get environment variables
@@ -82,7 +93,9 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    return new NextResponse('Domain not found', { status: 404 });
+    // If custom domain not found, fall through to normal routing
+    // This allows beautipick.com/sky-spa to work even if not in database
+    console.log(`Custom domain not found for ${hostname}, falling through to normal routing`);
   }
 
   // Default domain - update session
