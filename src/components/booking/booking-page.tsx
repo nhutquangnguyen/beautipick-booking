@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Merchant, Service, Staff, Availability, MerchantTheme, MerchantSettings, SocialLink, SocialLinkType, ContentSection, defaultContentOrder } from "@/types/database";
 import { formatCurrency, formatDuration, formatTime, generateTimeSlots, cn } from "@/lib/utils";
 import { LanguageSwitcherIcon } from "@/components/language-switcher";
+import { LayoutWrapper } from "./layouts/layout-wrapper";
 
 // Social link icons
 function InstagramIcon({ className }: { className?: string }) {
@@ -1604,17 +1605,18 @@ export function BookingPage({
 
   // Landing page view
   return (
-    <div
-      className="min-h-screen"
-      style={{
-        backgroundColor: theme.backgroundColor,
-        color: theme.textColor,
-        fontFamily: theme.fontFamily,
-      }}
-    >
-      {renderHeader()}
+    <LayoutWrapper layoutTemplate={theme.layoutTemplate}>
+      <div
+        className="min-h-screen"
+        style={{
+          backgroundColor: theme.backgroundColor,
+          color: theme.textColor,
+          fontFamily: theme.fontFamily,
+        }}
+      >
+        {renderHeader()}
 
-      {/* Floating Header - appears on scroll */}
+        {/* Floating Header - appears on scroll */}
       <div
         className={cn(
           "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
@@ -1791,6 +1793,7 @@ export function BookingPage({
           />
         </div>
       )}
-    </div>
+      </div>
+    </LayoutWrapper>
   );
 }
