@@ -60,7 +60,7 @@ export function EleganceGridTheme({ data, colors, cart }: ThemeComponentProps) {
       {/* Fixed Header */}
       <Header
         businessName={data.merchant.business_name}
-        logoUrl={data.merchant.logo_url}
+        logoUrl={data.merchant.logo_url || undefined}
         primaryColor={ELEGANCE_COLORS.primary}
         accentColor={ELEGANCE_COLORS.accent}
         onScrollToServices={handleScrollToServices}

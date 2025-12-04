@@ -20,11 +20,18 @@ type SortDirection = "asc" | "desc";
 interface CartItemData {
   type: "service" | "product";
   id: string;
-  name: string;
-  price: number;
   quantity: number;
-  duration_minutes?: number;
+  service?: {
+    name: string;
+    price: number;
+    duration_minutes?: number;
+  };
+  product?: {
+    name: string;
+    price: number;
+  };
 }
+
 
 export function OrdersTable({ bookings }: { bookings: BookingWithRelations[] }) {
   const t = useTranslations("bookings");
@@ -134,7 +141,7 @@ export function OrdersTable({ bookings }: { bookings: BookingWithRelations[] }) 
   const getOrderDetails = (booking: BookingWithRelations) => {
     if (booking.cart_items && Array.isArray(booking.cart_items) && booking.cart_items.length > 0) {
       const items = booking.cart_items as unknown as CartItemData[];
-      return items.map((item) => item.name).join(", ");
+      return items.map((item) => item.service?.name || item.product?.name || "Unknown").join(", ");
     }
     return booking.services?.name || "N/A";
   };
@@ -401,13 +408,13 @@ export function OrdersTable({ bookings }: { bookings: BookingWithRelations[] }) 
                       >
                         <div>
                           <p className="text-sm font-medium text-gray-900">
-                            {item.name}
+                            {item.service?.name || item.product?.name || "Unknown"}
                             {item.quantity > 1 && <span className="text-gray-500"> x{item.quantity}</span>}
                           </p>
                           <p className="text-xs text-gray-500 capitalize">{item.type}</p>
                         </div>
                         <span className="text-sm font-medium text-gray-700">
-                          {formatCurrency(item.price * item.quantity)}
+                          {formatCurrency((item.service?.price || item.product?.price || 0) * item.quantity)}
                         </span>
                       </div>
                     ))}

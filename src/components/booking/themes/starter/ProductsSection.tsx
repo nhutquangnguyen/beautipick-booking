@@ -12,7 +12,7 @@ export function StarterProductsSection({ products, merchant, colors, cart }: Pro
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: merchant.currency || 'USD',
+      currency: merchant?.currency || 'USD',
     }).format(price);
   };
 

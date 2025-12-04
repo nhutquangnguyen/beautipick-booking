@@ -132,12 +132,9 @@ export function DesignForm({
         textColor: colorScheme.textColor,
         fontFamily: colorScheme.fontFamily,
         // Keep existing layout settings
-        borderRadius: layoutId === "luxury" || layoutId === "portfolio" ? "none" :
-                      layoutId === "classic" ? "sm" : "lg",
-        buttonStyle: layoutId === "minimal" ? "ghost" :
-                     layoutId === "luxury" || layoutId === "classic" || layoutId === "portfolio" ? "outline" : "solid",
-        headerStyle: layoutId === "classic" ? "stacked" :
-                     layoutId === "minimal" ? "minimal" : "overlay",
+        borderRadius: "lg",
+        buttonStyle: "solid",
+        headerStyle: "overlay",
       });
     }
   };

@@ -9,35 +9,11 @@ import { CartDrawer } from "./CartDrawer";
 import { CheckoutFlow } from "./CheckoutFlow";
 
 // Dynamic imports for theme components - Tailwind-based versions
-const LuxuryTheme = dynamic(() => import("./themes/luxury").then(mod => ({ default: mod.LuxuryTheme })), {
-  ssr: true,
-});
-
-const ClassicTheme = dynamic(() => import("./themes/classic").then(mod => ({ default: mod.ClassicTheme })), {
-  ssr: true,
-});
-
-const ModernTheme = dynamic(() => import("./themes/modern").then(mod => ({ default: mod.ModernTheme })), {
-  ssr: true,
-});
-
-const MinimalTheme = dynamic(() => import("./themes/minimal").then(mod => ({ default: mod.MinimalTheme })), {
-  ssr: true,
-});
-
-const PortfolioTheme = dynamic(() => import("./themes/portfolio").then(mod => ({ default: mod.PortfolioTheme })), {
-  ssr: true,
-});
-
 const ChristmasTheme = dynamic(() => import("./themes/christmas").then(mod => ({ default: mod.ChristmasTheme })), {
   ssr: true,
 });
 
 const StarterTheme = dynamic(() => import("./themes/starter").then(mod => ({ default: mod.StarterTheme })), {
-  ssr: true,
-});
-
-const BlossomTheme = dynamic(() => import("./themes/blossom").then(mod => ({ default: mod.BlossomTheme })), {
   ssr: true,
 });
 
@@ -186,16 +162,10 @@ export function BookingPageDynamic({
 
   // Select theme component based on layout
   const ThemeComponent =
-    theme.layoutTemplate === "starter" ? StarterTheme :
-    theme.layoutTemplate === "blossom" ? BlossomTheme :
+    theme.layoutTemplate === "christmas" ? ChristmasTheme :
     theme.layoutTemplate === "elegancegrid" ? EleganceGridTheme :
     theme.layoutTemplate === "showcasegrid" ? ShowcaseGridTheme :
-    theme.layoutTemplate === "luxury" ? LuxuryTheme :
-    theme.layoutTemplate === "modern" ? ModernTheme :
-    theme.layoutTemplate === "minimal" ? MinimalTheme :
-    theme.layoutTemplate === "portfolio" ? PortfolioTheme :
-    theme.layoutTemplate === "christmas" ? ChristmasTheme :
-    ClassicTheme; // Default fallback
+    StarterTheme; // Default fallback
 
   return (
     <div className="min-h-screen">

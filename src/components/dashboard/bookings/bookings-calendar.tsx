@@ -26,10 +26,16 @@ import { formatCurrency, formatTime, formatDuration } from "@/lib/utils";
 interface CartItemData {
   type: "service" | "product";
   id: string;
-  name: string;
-  price: number;
   quantity: number;
-  duration_minutes?: number;
+  service?: {
+    name: string;
+    price: number;
+    duration_minutes?: number;
+  };
+  product?: {
+    name: string;
+    price: number;
+  };
 }
 
 type BookingWithRelations = Booking & {

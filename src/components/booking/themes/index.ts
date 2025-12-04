@@ -1,36 +1,26 @@
 // Theme registry - maps layout template to theme component
-import { LuxuryTheme } from "./luxury";
-import { ClassicTheme } from "./classic";
-import { ModernTheme } from "./modern";
-import { MinimalTheme } from "./minimal";
-import { PortfolioTheme } from "./portfolio";
 import { ChristmasTheme } from "./christmas";
 import { StarterTheme } from "./starter";
-import { BlossomTheme } from "./blossom";
-import { GridTheme } from "./grid";
+import { EleganceGridTheme } from "./elegancegrid";
+import { ShowcaseGridTheme } from "./showcasegrid";
 import { ThemeComponentProps } from "./types";
 
 export type ThemeComponent = React.ComponentType<ThemeComponentProps>;
 
 export const THEME_REGISTRY: Record<string, ThemeComponent> = {
-  luxury: LuxuryTheme,
-  classic: ClassicTheme,
-  modern: ModernTheme,
-  minimal: MinimalTheme,
-  portfolio: PortfolioTheme,
   christmas: ChristmasTheme,
   starter: StarterTheme,
-  blossom: BlossomTheme,
-  grid: GridTheme,
+  elegancegrid: EleganceGridTheme,
+  showcasegrid: ShowcaseGridTheme,
 };
 
-// Get theme component, fallback to Classic if not found
+// Get theme component, fallback to Starter if not found
 export function getThemeComponent(layoutTemplate: string): ThemeComponent {
   const theme = THEME_REGISTRY[layoutTemplate];
 
   if (!theme) {
-    console.warn(`Theme "${layoutTemplate}" not found, falling back to Classic theme`);
-    return ClassicTheme;
+    console.warn(`Theme "${layoutTemplate}" not found, falling back to Starter theme`);
+    return StarterTheme;
   }
 
   return theme;

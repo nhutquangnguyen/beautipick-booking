@@ -67,7 +67,7 @@ export function EleganceGridGallerySection({ gallery, colors }: GallerySectionPr
                 <div className={`relative w-full ${isLarge ? 'h-96' : isTall ? 'h-80' : 'h-48'}`}>
                   <img
                     src={image.image_url}
-                    alt={image.title || `Gallery image ${idx + 1}`}
+                    alt={image.caption || `Gallery image ${idx + 1}`}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
 
@@ -92,8 +92,8 @@ export function EleganceGridGallerySection({ gallery, colors }: GallerySectionPr
                           d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
                         />
                       </svg>
-                      {image.title && (
-                        <p className="text-lg font-semibold">{image.title}</p>
+                      {image.caption && (
+                        <p className="text-lg font-semibold">{image.caption}</p>
                       )}
                     </div>
                   </div>
