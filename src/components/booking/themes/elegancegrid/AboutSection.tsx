@@ -3,7 +3,7 @@
 import { AboutSectionProps } from "../types";
 
 export function EleganceGridAboutSection({ merchant, colors }: AboutSectionProps) {
-  if (!merchant.about) return null;
+  if (!merchant.description) return null;
 
   return (
     <section
@@ -35,7 +35,7 @@ export function EleganceGridAboutSection({ merchant, colors }: AboutSectionProps
                 color: colors.textColor,
               }}
             >
-              {merchant.about.split('\n').map((paragraph, idx) => (
+              {merchant.description.split('\n').map((paragraph, idx) => (
                 <p key={idx} className="text-lg">
                   {paragraph}
                 </p>
