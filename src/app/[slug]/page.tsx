@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { BookingPage } from "@/components/booking/booking-page";
+import { BookingPageDynamic } from "@/components/booking/booking-page-dynamic";
 import { MerchantTheme, MerchantSettings, defaultTheme, defaultSettings } from "@/types/database";
 
 const BUCKET_NAME = "images";
@@ -88,6 +88,9 @@ export default async function PublicBookingPage({
   // Generate public URLs for merchant images
   const logoUrl = getImageUrl(supabase, merchant.logo_url);
   const coverImageUrl = getImageUrl(supabase, merchant.cover_image_url);
+  const coverImage1Url = getImageUrl(supabase, merchant.cover_image_1);
+  const coverImage2Url = getImageUrl(supabase, merchant.cover_image_2);
+  const coverImage3Url = getImageUrl(supabase, merchant.cover_image_3);
 
   // Generate public URLs for gallery images
   const galleryWithUrls = (galleryResult.data ?? []).map((image) => ({
@@ -109,10 +112,13 @@ export default async function PublicBookingPage({
     ...merchant,
     logo_url: logoUrl,
     cover_image_url: coverImageUrl,
+    cover_image_1: coverImage1Url,
+    cover_image_2: coverImage2Url,
+    cover_image_3: coverImage3Url,
   };
 
   return (
-    <BookingPage
+    <BookingPageDynamic
       merchant={merchantWithUrls}
       services={servicesResult.data ?? []}
       staff={staffResult.data ?? []}

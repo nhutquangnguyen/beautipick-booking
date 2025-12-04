@@ -9,10 +9,13 @@ import {
   themePresets,
   defaultTheme,
   defaultContentOrder,
-  ThemePreset
+  ThemePreset,
+  layoutOptions,
+  LayoutTemplate,
 } from "@/types/database";
 import { ThemeGallery } from "@/components/dashboard/design/theme-gallery";
 import { ThemePreviewModal } from "@/components/dashboard/design/theme-preview-modal";
+import { LayoutSelector } from "@/components/dashboard/design/layout-selector";
 
 // Helper to ensure theme has all required fields
 function ensureCompleteTheme(theme: Partial<MerchantTheme>): MerchantTheme {
@@ -112,33 +115,61 @@ export function DesignForm({
     }
   };
 
+  const handleLayoutChange = (layoutId: LayoutTemplate, colorSchemeId: string) => {
+    const layout = layoutOptions.find((l) => l.id === layoutId);
+    const colorScheme = layout?.colorSchemes.find((cs) => cs.id === colorSchemeId);
+
+    if (layout && colorScheme) {
+      // Apply layout and color scheme settings
+      setFormData({
+        ...formData,
+        themeId: `${layoutId}-${colorSchemeId}`,
+        layoutTemplate: layoutId,
+        primaryColor: colorScheme.primaryColor,
+        secondaryColor: colorScheme.secondaryColor,
+        accentColor: colorScheme.accentColor,
+        backgroundColor: colorScheme.backgroundColor,
+        textColor: colorScheme.textColor,
+        fontFamily: colorScheme.fontFamily,
+        // Keep existing layout settings
+        borderRadius: layoutId === "luxury" || layoutId === "portfolio" ? "none" :
+                      layoutId === "classic" ? "sm" : "lg",
+        buttonStyle: layoutId === "minimal" ? "ghost" :
+                     layoutId === "luxury" || layoutId === "classic" || layoutId === "portfolio" ? "outline" : "solid",
+        headerStyle: layoutId === "classic" ? "stacked" :
+                     layoutId === "minimal" ? "minimal" : "overlay",
+      });
+    }
+  };
+
+  // Determine current color scheme from themeId
+  const getCurrentColorScheme = (): string => {
+    // If themeId contains a dash, it's the new format: "layout-colorscheme"
+    if (formData.themeId.includes("-")) {
+      return formData.themeId.split("-")[1];
+    }
+    // Otherwise, it's a legacy theme preset ID - find its color scheme
+    const layout = layoutOptions.find((l) => l.id === formData.layoutTemplate);
+    return layout?.defaultColorScheme || "radiance";
+  };
+
   return (
     <div className="space-y-6">
-      {/* Theme Gallery */}
+      {/* Layout Selector */}
       <div className="card p-4 sm:p-6">
         <div className="mb-6">
-          <h3 className="font-semibold text-gray-900 text-lg">Choose Your Theme</h3>
-          <p className="text-sm text-gray-500 mt-1">
-            Select a professionally designed theme for your booking page. Each theme includes optimized colors, fonts, and layout.
+          <h3 className="font-semibold text-gray-900 text-lg sm:text-2xl">Choose Your Layout & Colors</h3>
+          <p className="text-sm sm:text-base text-gray-500 mt-2">
+            First, select a layout style that matches your business. Then choose from curated color schemes designed for that layout.
           </p>
         </div>
-        <ThemeGallery
-          themes={themePresets}
-          selectedThemeId={formData.themeId}
-          onSelectTheme={selectPreset}
-          onPreviewTheme={setPreviewTheme}
-          compact={false}
+        <LayoutSelector
+          layouts={layoutOptions}
+          selectedLayout={formData.layoutTemplate}
+          selectedColorScheme={getCurrentColorScheme()}
+          onLayoutChange={handleLayoutChange}
         />
       </div>
-
-      {/* Theme Preview Modal */}
-      <ThemePreviewModal
-        theme={previewTheme}
-        isOpen={!!previewTheme}
-        onClose={() => setPreviewTheme(null)}
-        onApply={selectPreset}
-        currentThemeId={formData.themeId}
-      />
 
       {/* Auto-save Status */}
       <div className="flex items-center justify-center gap-2 py-4 text-sm text-gray-500">

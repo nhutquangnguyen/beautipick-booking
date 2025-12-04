@@ -24,6 +24,9 @@ export function CombinedBusinessInfoForm({ merchant }: { merchant: Merchant }) {
   const [origin, setOrigin] = useState("");
   const [logoUrl, setLogoUrl] = useState<string | null>(merchant.logo_url);
   const [coverUrl, setCoverUrl] = useState<string | null>(merchant.cover_image_url);
+  const [coverUrl1, setCoverUrl1] = useState<string | null>(merchant.cover_image_1);
+  const [coverUrl2, setCoverUrl2] = useState<string | null>(merchant.cover_image_2);
+  const [coverUrl3, setCoverUrl3] = useState<string | null>(merchant.cover_image_3);
 
   // Collapsible sections state
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
@@ -130,6 +133,9 @@ export function CombinedBusinessInfoForm({ merchant }: { merchant: Merchant }) {
           currency: businessInfo.currency,
           logo_url: logoUrl,
           cover_image_url: coverUrl,
+          cover_image_1: coverUrl1,
+          cover_image_2: coverUrl2,
+          cover_image_3: coverUrl3,
           phone: contactInfo.phone || null,
           address: contactInfo.address || null,
           city: contactInfo.city || null,
@@ -207,7 +213,7 @@ export function CombinedBusinessInfoForm({ merchant }: { merchant: Merchant }) {
         {expandedSections.has("branding") && (
           <div className="p-6 space-y-6">
             <div>
-              <label className="label mb-2">Cover Image</label>
+              <label className="label mb-2">Cover Image (Legacy)</label>
               <ImageUpload
                 value={coverUrl}
                 onChange={setCoverUrl}
@@ -216,7 +222,59 @@ export function CombinedBusinessInfoForm({ merchant }: { merchant: Merchant }) {
                 placeholder="Upload cover image"
               />
               <p className="mt-2 text-xs text-gray-500">
-                Recommended: 1200x400px. Appears at the top of your booking page.
+                Recommended: 1200x400px. Used by older themes.
+              </p>
+            </div>
+
+            {/* 3 Slideshow Cover Images for Showcase Grid Theme */}
+            <div className="space-y-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="h-8 w-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">
+                  ✨
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900">Slideshow Cover Images</h4>
+                  <p className="text-xs text-gray-600">For Showcase Grid theme - 3 images auto-rotate every 5 seconds</p>
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div>
+                  <label className="label mb-2 text-sm">Cover Image 1</label>
+                  <ImageUpload
+                    value={coverUrl1}
+                    onChange={setCoverUrl1}
+                    folder={`merchants/${merchant.id}/covers`}
+                    aspectRatio="cover"
+                    placeholder="Upload image 1"
+                  />
+                </div>
+
+                <div>
+                  <label className="label mb-2 text-sm">Cover Image 2</label>
+                  <ImageUpload
+                    value={coverUrl2}
+                    onChange={setCoverUrl2}
+                    folder={`merchants/${merchant.id}/covers`}
+                    aspectRatio="cover"
+                    placeholder="Upload image 2"
+                  />
+                </div>
+
+                <div>
+                  <label className="label mb-2 text-sm">Cover Image 3</label>
+                  <ImageUpload
+                    value={coverUrl3}
+                    onChange={setCoverUrl3}
+                    folder={`merchants/${merchant.id}/covers`}
+                    aspectRatio="cover"
+                    placeholder="Upload image 3"
+                  />
+                </div>
+              </div>
+
+              <p className="text-xs text-gray-600 mt-2">
+                💡 Tip: Upload high-quality images (1920x1080px recommended) for full-screen slideshow effect.
               </p>
             </div>
 

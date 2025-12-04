@@ -19,6 +19,9 @@ export type Database = {
           slug: string;
           logo_url: string | null;
           cover_image_url: string | null;
+          cover_image_1: string | null;
+          cover_image_2: string | null;
+          cover_image_3: string | null;
           description: string | null;
           phone: string | null;
           address: string | null;
@@ -45,6 +48,9 @@ export type Database = {
           slug: string;
           logo_url?: string | null;
           cover_image_url?: string | null;
+          cover_image_1?: string | null;
+          cover_image_2?: string | null;
+          cover_image_3?: string | null;
           description?: string | null;
           phone?: string | null;
           address?: string | null;
@@ -71,6 +77,9 @@ export type Database = {
           slug?: string;
           logo_url?: string | null;
           cover_image_url?: string | null;
+          cover_image_1?: string | null;
+          cover_image_2?: string | null;
+          cover_image_3?: string | null;
           description?: string | null;
           phone?: string | null;
           address?: string | null;
@@ -443,11 +452,17 @@ export type ContentSection = "about" | "contact" | "social" | "video" | "gallery
 // Layout template types - defines the actual visual structure
 // We have 5 unique layouts that serve all 10 theme personas
 export type LayoutTemplate =
-  | "luxury"      // Full-screen hero with parallax (Opulence, Coastal)
-  | "modern"      // Dynamic split-screen (Radiance, Glamour, Blossom)
-  | "minimal"     // Zen flowing sections (Serenity, Tranquil)
-  | "classic"     // Traditional symmetrical (Distinguished)
-  | "portfolio";  // Dark full-width showcase (Artisan, Powerhouse)
+  | "starter"       // Simple Linktree-style layout
+  | "blossom"       // Soft feminine design with pastel colors
+  | "grid"          // Instagram-style visual grid with dark mode
+  | "elegancegrid"  // Sophisticated grid with elegant colors
+  | "showcasegrid"  // Minimalist portfolio with masonry gallery
+  | "luxury"        // Full-screen hero with parallax (Opulence, Coastal)
+  | "modern"        // Dynamic split-screen (Radiance, Glamour, Blossom)
+  | "minimal"       // Zen flowing sections (Serenity, Tranquil)
+  | "classic"       // Traditional symmetrical (Distinguished)
+  | "portfolio"     // Dark full-width showcase (Artisan, Powerhouse)
+  | "christmas";    // Festive holiday theme
 
 // Theme configuration type
 export interface MerchantTheme {
@@ -467,7 +482,34 @@ export interface MerchantTheme {
   showSectionTitles: boolean;
 }
 
-// Theme preset type
+// Color scheme for a layout
+export interface ColorScheme {
+  id: string;
+  name: string;
+  description: string;
+  preview: string; // gradient preview
+  primaryColor: string;
+  secondaryColor: string;
+  accentColor: string;
+  backgroundColor: string;
+  textColor: string;
+  fontFamily: string;
+}
+
+// Layout option with available color schemes
+export interface LayoutOption {
+  id: LayoutTemplate;
+  name: string;
+  description: string;
+  icon: string; // emoji or icon
+  coverImage?: string; // optional cover image URL
+  bestFor: string[];
+  features: string[];
+  colorSchemes: ColorScheme[];
+  defaultColorScheme: string; // id of default color scheme
+}
+
+// Theme preset type (legacy - kept for backward compatibility)
 export interface ThemePreset {
   id: string;
   name: string;
@@ -756,6 +798,385 @@ export const themePresets: ThemePreset[] = [
       contentOrder: ["video", "about", "services", "gallery", "products", "contact", "social"],
       showSectionTitles: true,
     },
+  },
+];
+
+// Layout options with color schemes
+export const layoutOptions: LayoutOption[] = [
+  {
+    id: "starter",
+    name: "Starter",
+    description: "Simple & clean Linktree-style layout, perfect for beginners",
+    icon: "🔗",
+    bestFor: ["Beginners", "Simple Setup", "Link-in-Bio", "All Services"],
+    features: ["Single column", "Stacked cards", "Clean design", "Mobile-first"],
+    defaultColorScheme: "clean",
+    colorSchemes: [
+      {
+        id: "clean",
+        name: "Clean",
+        description: "Simple white background with brand colors",
+        preview: "linear-gradient(135deg, #3B82F6 0%, #FFFFFF 100%)",
+        primaryColor: "#3B82F6",
+        secondaryColor: "#10B981",
+        accentColor: "#F59E0B",
+        backgroundColor: "#FFFFFF",
+        textColor: "#111827",
+        fontFamily: "Inter",
+      },
+      {
+        id: "minimal",
+        name: "Minimal",
+        description: "Soft gray with subtle accent",
+        preview: "linear-gradient(135deg, #6B7280 0%, #F3F4F6 100%)",
+        primaryColor: "#6B7280",
+        secondaryColor: "#9CA3AF",
+        accentColor: "#4B5563",
+        backgroundColor: "#FFFFFF",
+        textColor: "#1F2937",
+        fontFamily: "System UI",
+      },
+    ],
+  },
+  {
+    id: "blossom",
+    name: "Blossom",
+    description: "Soft feminine design with pastel colors, perfect for beauty services",
+    icon: "🌸",
+    bestFor: ["Nail Artists", "Lash Techs", "Bridal Makeup", "Beauty Salons", "Estheticians"],
+    features: ["Soft pastels", "Rounded cards", "Script typography", "Gentle animations"],
+    defaultColorScheme: "blush",
+    colorSchemes: [
+      {
+        id: "blush",
+        name: "Blush",
+        description: "Soft pink and cream with rose gold accents",
+        preview: "linear-gradient(135deg, #E8B4B8 0%, #FAF3F0 100%)",
+        primaryColor: "#E8B4B8",
+        secondaryColor: "#FAF3F0",
+        accentColor: "#D4A574",
+        backgroundColor: "#FAF3F0",
+        textColor: "#4A3933",
+        fontFamily: "Dancing Script",
+      },
+      {
+        id: "lavender",
+        name: "Lavender",
+        description: "Soft purple and cream with silver accents",
+        preview: "linear-gradient(135deg, #D8BFD8 0%, #FFF8F0 100%)",
+        primaryColor: "#D8BFD8",
+        secondaryColor: "#FFF8F0",
+        accentColor: "#C0C0C0",
+        backgroundColor: "#FFF8F0",
+        textColor: "#4A3F52",
+        fontFamily: "Dancing Script",
+      },
+    ],
+  },
+  {
+    id: "grid",
+    name: "Grid",
+    description: "Instagram-style visual grid with dark mode, perfect for photo-driven portfolios",
+    icon: "🎨",
+    bestFor: ["Photographers", "Tattoo Artists", "Hair Colorists", "Makeup Artists", "Visual Portfolios"],
+    features: ["Instagram grid", "Dark mode", "Image-first", "Masonry layout"],
+    defaultColorScheme: "dark",
+    colorSchemes: [
+      {
+        id: "dark",
+        name: "Dark",
+        description: "High contrast dark mode with bold accents",
+        preview: "linear-gradient(135deg, #0A0A0A 0%, #1A1A1A 100%)",
+        primaryColor: "#FFFFFF",
+        secondaryColor: "#1A1A1A",
+        accentColor: "#FF6B6B",
+        backgroundColor: "#0A0A0A",
+        textColor: "#FFFFFF",
+        fontFamily: "Inter",
+      },
+      {
+        id: "neon",
+        name: "Neon",
+        description: "Dark mode with vibrant neon accents",
+        preview: "linear-gradient(135deg, #0A0A0A 0%, #00F5FF 100%)",
+        primaryColor: "#FFFFFF",
+        secondaryColor: "#1A1A1A",
+        accentColor: "#00F5FF",
+        backgroundColor: "#0A0A0A",
+        textColor: "#F5F5F5",
+        fontFamily: "Inter",
+      },
+    ],
+  },
+  {
+    id: "elegancegrid",
+    name: "Elegance Grid",
+    description: "Sophisticated grid layout with elegant colors and smooth animations, perfect for luxury spas",
+    icon: "✨",
+    coverImage: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=2070",
+    bestFor: ["Luxury Spas", "Beauty Salons", "Wellness Centers", "Premium Services", "High-end Aesthetics"],
+    features: ["Fixed header", "Asymmetrical grid", "Elegant palette", "Hover effects", "Instagram-native"],
+    defaultColorScheme: "elegance",
+    colorSchemes: [
+      {
+        id: "elegance",
+        name: "Elegance",
+        description: "Deep teal, warm beige and rose gold - sophisticated and calming",
+        preview: "linear-gradient(135deg, #0B5345 0%, #F5F5DC 50%, #C89467 100%)",
+        primaryColor: "#0B5345",
+        secondaryColor: "#F5F5DC",
+        accentColor: "#C89467",
+        backgroundColor: "#F7F7F7",
+        textColor: "#333333",
+        fontFamily: "Inter",
+      },
+      {
+        id: "imperial",
+        name: "Imperial",
+        description: "Deep purple with silver - regal and sophisticated",
+        preview: "linear-gradient(135deg, #4A148C 0%, #E8E8E8 50%, #C0C0C0 100%)",
+        primaryColor: "#4A148C",
+        secondaryColor: "#E8E8E8",
+        accentColor: "#C0C0C0",
+        backgroundColor: "#FAFAFA",
+        textColor: "#2D2D2D",
+        fontFamily: "Inter",
+      },
+    ],
+  },
+  {
+    id: "showcasegrid",
+    name: "Showcase Grid",
+    description: "Minimalist portfolio layout with high-contrast design and masonry gallery for artists",
+    icon: "🎨",
+    coverImage: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?q=80&w=2071",
+    bestFor: ["Artists", "Photographers", "Designers", "Tattoo Artists", "Creative Professionals"],
+    features: ["Minimalist design", "Masonry gallery", "High contrast", "Full-screen slideshow", "Image-centric"],
+    defaultColorScheme: "monochrome",
+    colorSchemes: [
+      {
+        id: "monochrome",
+        name: "Monochrome",
+        description: "Deep charcoal with vibrant blue - clean and modern",
+        preview: "linear-gradient(135deg, #1A1A1A 0%, #F0F0F0 50%, #007AFF 100%)",
+        primaryColor: "#1A1A1A",
+        secondaryColor: "#F0F0F0",
+        accentColor: "#007AFF",
+        backgroundColor: "#FFFFFF",
+        textColor: "#1A1A1A",
+        fontFamily: "Inter",
+      },
+    ],
+  },
+  {
+    id: "luxury",
+    name: "Luxury",
+    description: "Full-screen hero with parallax, elegant spacing, perfect for high-end experiences",
+    icon: "💎",
+    bestFor: ["High-end Spas", "Medical Spas", "Resort Spas", "Premium Wellness Centers"],
+    features: ["Full-screen hero", "Parallax effects", "Elegant typography", "Generous whitespace"],
+    defaultColorScheme: "opulence",
+    colorSchemes: [
+      {
+        id: "opulence",
+        name: "Opulence",
+        description: "Gold and black sophistication",
+        preview: "linear-gradient(135deg, #D4AF37 0%, #0A0A0A 100%)",
+        primaryColor: "#D4AF37",
+        secondaryColor: "#0A0A0A",
+        accentColor: "#F7E7CE",
+        backgroundColor: "#FAFAF9",
+        textColor: "#0A0A0A",
+        fontFamily: "Playfair Display",
+      },
+      {
+        id: "coastal",
+        name: "Coastal",
+        description: "Ocean blue and sandy beige",
+        preview: "linear-gradient(135deg, #0077BE 0%, #F5E6D3 100%)",
+        primaryColor: "#0077BE",
+        secondaryColor: "#F5E6D3",
+        accentColor: "#A7D8DE",
+        backgroundColor: "#FAFCFC",
+        textColor: "#1A3A4A",
+        fontFamily: "Montserrat",
+      },
+    ],
+  },
+  {
+    id: "modern",
+    name: "Modern",
+    description: "Dynamic split-screen, Instagram-grid gallery, vibrant and energetic",
+    icon: "✨",
+    bestFor: ["Hair Salons", "Makeup Artists", "Nail Salons", "Beauty Studios"],
+    features: ["Split-screen hero", "Instagram grid", "Card layouts", "Bold typography"],
+    defaultColorScheme: "radiance",
+    colorSchemes: [
+      {
+        id: "radiance",
+        name: "Radiance",
+        description: "Purple and pink vibrancy",
+        preview: "linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)",
+        primaryColor: "#8B5CF6",
+        secondaryColor: "#EC4899",
+        accentColor: "#FBBF24",
+        backgroundColor: "#FDFCFD",
+        textColor: "#1F2937",
+        fontFamily: "Poppins",
+      },
+      {
+        id: "glamour",
+        name: "Glamour",
+        description: "Rose gold and blush elegance",
+        preview: "linear-gradient(135deg, #D4AF37 0%, #F8BBD0 100%)",
+        primaryColor: "#D4AF37",
+        secondaryColor: "#F8BBD0",
+        accentColor: "#E91E63",
+        backgroundColor: "#FFF8F9",
+        textColor: "#4A1C40",
+        fontFamily: "Cormorant Garamond",
+      },
+      {
+        id: "blossom",
+        name: "Blossom",
+        description: "Warm amber and coral",
+        preview: "linear-gradient(135deg, #F59E0B 0%, #FB923C 100%)",
+        primaryColor: "#F59E0B",
+        secondaryColor: "#FB923C",
+        accentColor: "#FDE68A",
+        backgroundColor: "#FFFBF5",
+        textColor: "#78350F",
+        fontFamily: "Quicksand",
+      },
+    ],
+  },
+  {
+    id: "minimal",
+    name: "Minimal",
+    description: "Zen flowing sections, asymmetric layouts, generous breathing space",
+    icon: "🍃",
+    bestFor: ["Yoga Studios", "Massage Therapy", "Wellness Centers", "Meditation Spaces"],
+    features: ["Asymmetric sections", "Light typography", "Ghost buttons", "Calm animations"],
+    defaultColorScheme: "serenity",
+    colorSchemes: [
+      {
+        id: "serenity",
+        name: "Serenity",
+        description: "Soft indigo and lavender",
+        preview: "linear-gradient(135deg, #818CF8 0%, #C4B5FD 100%)",
+        primaryColor: "#818CF8",
+        secondaryColor: "#C4B5FD",
+        accentColor: "#EDE9FE",
+        backgroundColor: "#FDFCFE",
+        textColor: "#312E81",
+        fontFamily: "Inter",
+      },
+      {
+        id: "tranquil",
+        name: "Tranquil",
+        description: "Emerald green and mint",
+        preview: "linear-gradient(135deg, #34D399 0%, #A7F3D0 100%)",
+        primaryColor: "#34D399",
+        secondaryColor: "#A7F3D0",
+        accentColor: "#D1FAE5",
+        backgroundColor: "#F0FDF9",
+        textColor: "#065F46",
+        fontFamily: "Lato",
+      },
+    ],
+  },
+  {
+    id: "classic",
+    name: "Classic",
+    description: "Traditional symmetrical, heritage feel, timeless professional aesthetic",
+    icon: "🎩",
+    bestFor: ["Barbershops", "Traditional Services", "Men's Grooming", "Classic Salons"],
+    features: ["Symmetrical grids", "Stacked header", "Menu-style lists", "Formal typography"],
+    defaultColorScheme: "distinguished",
+    colorSchemes: [
+      {
+        id: "distinguished",
+        name: "Distinguished",
+        description: "Rich brown and cream heritage",
+        preview: "linear-gradient(135deg, #6B4F3B 0%, #D4C5B9 100%)",
+        primaryColor: "#6B4F3B",
+        secondaryColor: "#D4C5B9",
+        accentColor: "#8B7355",
+        backgroundColor: "#FAF9F7",
+        textColor: "#2D1B0E",
+        fontFamily: "Merriweather",
+      },
+    ],
+  },
+  {
+    id: "portfolio",
+    name: "Portfolio",
+    description: "Dark full-width showcase, bold typography, edge-to-edge imagery",
+    icon: "🎨",
+    bestFor: ["Tattoo Studios", "Fitness Trainers", "Creative Studios", "Bold Brands"],
+    features: ["Dark mode", "Full-width sections", "Bold typography", "Portfolio grid"],
+    defaultColorScheme: "artisan",
+    colorSchemes: [
+      {
+        id: "artisan",
+        name: "Artisan",
+        description: "Bold red and charcoal",
+        preview: "linear-gradient(135deg, #DC2626 0%, #18181B 100%)",
+        primaryColor: "#DC2626",
+        secondaryColor: "#18181B",
+        accentColor: "#FCA5A5",
+        backgroundColor: "#0F0F0F",
+        textColor: "#F5F5F5",
+        fontFamily: "Bebas Neue",
+      },
+      {
+        id: "powerhouse",
+        name: "Powerhouse",
+        description: "Electric blue and deep navy",
+        preview: "linear-gradient(135deg, #2563EB 0%, #1E293B 100%)",
+        primaryColor: "#2563EB",
+        secondaryColor: "#1E293B",
+        accentColor: "#93C5FD",
+        backgroundColor: "#F5F5F5",
+        textColor: "#0D0D0D",
+        fontFamily: "Oswald",
+      },
+    ],
+  },
+  {
+    id: "christmas",
+    name: "Christmas",
+    description: "Festive holiday theme with warm colors, snowfall effects, and seasonal cheer",
+    icon: "🎄",
+    bestFor: ["Holiday Promotions", "Seasonal Services", "Christmas Specials", "Festive Events"],
+    features: ["Snowfall animation", "Holiday emojis", "Festive gradient borders", "Gold accents"],
+    defaultColorScheme: "holiday",
+    colorSchemes: [
+      {
+        id: "holiday",
+        name: "Holiday Magic",
+        description: "Traditional Christmas red and green",
+        preview: "linear-gradient(135deg, #B30000 0%, #165B33 50%, #F8B229 100%)",
+        primaryColor: "#B30000",
+        secondaryColor: "#165B33",
+        accentColor: "#F8B229",
+        backgroundColor: "#FFFAF0",
+        textColor: "#2C1810",
+        fontFamily: "Georgia",
+      },
+      {
+        id: "winter",
+        name: "Winter Wonderland",
+        description: "Cool winter blue and silver",
+        preview: "linear-gradient(135deg, #0284C7 0%, #F0F9FF 100%)",
+        primaryColor: "#0284C7",
+        secondaryColor: "#F0F9FF",
+        accentColor: "#BAE6FD",
+        backgroundColor: "#FEFEFE",
+        textColor: "#0C4A6E",
+        fontFamily: "Montserrat",
+      },
+    ],
   },
 ];
 

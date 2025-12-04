@@ -473,6 +473,26 @@ export function BookingPage({
     switch (section) {
       case "about":
         if (!merchant.description) return null;
+
+        // Luxury layout: Use split-screen if cover image exists
+        if (theme.layoutTemplate === "luxury" && merchant.cover_image_url) {
+          return (
+            <section key="about" className="luxury-split">
+              <div
+                className="luxury-split-image"
+                style={{ backgroundImage: `url(${merchant.cover_image_url})` }}
+                role="img"
+                aria-label="About us"
+              />
+              <div className="luxury-split-content">
+                {showSectionTitles && <SectionTitle icon={<Sparkles className="h-5 w-5" />}>{t("aboutUs")}</SectionTitle>}
+                <p className="text-base sm:text-lg leading-relaxed opacity-85">{merchant.description}</p>
+              </div>
+            </section>
+          );
+        }
+
+        // Default layout
         return (
           <section key="about" className="mb-12">
             {showSectionTitles && <SectionTitle icon={<Sparkles className="h-5 w-5" />}>{t("aboutUs")}</SectionTitle>}
@@ -646,6 +666,95 @@ export function BookingPage({
 
       case "products":
         if (products.length === 0) return null;
+
+        // Luxury layout: Use glass container
+        if (theme.layoutTemplate === "luxury") {
+          return (
+            <section id="section-products" key="products" className="luxury-default-section scroll-mt-20">
+              <div className="luxury-glass-container">
+                {showSectionTitles && <SectionTitle icon={<ShoppingBag className="h-5 w-5" />}>{t("ourProducts")}</SectionTitle>}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                  {products.map((product) => {
+                    const quantityInCart = getProductQuantityInCart(product.id);
+                    return (
+                      <div
+                        key={product.id}
+                        className="group p-4 transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] hover:-translate-y-1"
+                        style={{
+                          borderRadius: cardRadius,
+                          backgroundColor: theme.backgroundColor,
+                          border: `1px solid ${theme.primaryColor}12`,
+                          boxShadow: `0 4px 20px ${theme.primaryColor}08`
+                        }}
+                      >
+                        {product.image_url ? (
+                          <div className="relative overflow-hidden mb-4" style={{ borderRadius: `calc(${cardRadius} - 8px)` }}>
+                            <img
+                              src={product.image_url}
+                              alt={product.name}
+                              className="relative w-full aspect-square object-cover transition-transform duration-500 group-hover:scale-110"
+                            />
+                          </div>
+                        ) : (
+                          <div
+                            className="w-full aspect-square flex items-center justify-center mb-4"
+                            style={{
+                              background: `linear-gradient(135deg, ${theme.primaryColor}08 0%, ${theme.secondaryColor}08 100%)`,
+                              borderRadius: `calc(${cardRadius} - 8px)`
+                            }}
+                          >
+                            <ShoppingBag className="h-12 w-12 opacity-20" />
+                          </div>
+                        )}
+                        <h3 className="font-semibold text-sm sm:text-base truncate">{product.name}</h3>
+                        {product.description && (
+                          <p className="text-xs opacity-60 truncate mt-1">{product.description}</p>
+                        )}
+                        <div className="flex items-center justify-between mt-3">
+                          <p
+                            className="text-lg font-bold"
+                            style={{ color: theme.primaryColor }}
+                          >
+                            {formatCurrency(product.price, merchant.currency)}
+                          </p>
+                          {quantityInCart > 0 ? (
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => updateProductQuantity(product.id, quantityInCart - 1)}
+                                className="p-1.5 rounded-full transition-colors"
+                                style={{ backgroundColor: theme.primaryColor + "15", color: theme.primaryColor }}
+                              >
+                                <Minus className="h-4 w-4" />
+                              </button>
+                              <span className="font-semibold min-w-[20px] text-center">{quantityInCart}</span>
+                              <button
+                                onClick={() => updateProductQuantity(product.id, quantityInCart + 1)}
+                                className="p-1.5 rounded-full transition-colors"
+                                style={{ backgroundColor: theme.primaryColor, color: "#fff" }}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => addProductToCart(product)}
+                              className="p-2 rounded-full transition-all duration-300 hover:scale-110"
+                              style={{ backgroundColor: theme.primaryColor, color: "#fff" }}
+                            >
+                              <Plus className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </section>
+          );
+        }
+
+        // Default layout
         return (
           <section id="section-products" key="products" className="mb-12 scroll-mt-20">
             {showSectionTitles && <SectionTitle icon={<ShoppingBag className="h-5 w-5" />}>{t("ourProducts")}</SectionTitle>}
@@ -729,6 +838,110 @@ export function BookingPage({
         );
 
       case "services":
+        // Luxury layout: Use glass container
+        if (theme.layoutTemplate === "luxury") {
+          return (
+            <section id="section-services" key="services" className="luxury-default-section scroll-mt-20">
+              <div className="luxury-glass-container">
+                {showSectionTitles && <SectionTitle icon={<Sparkles className="h-5 w-5" />}>{t("ourServices")}</SectionTitle>}
+                <div className="space-y-4">
+                  {Object.entries(servicesByCategory).map(([category, categoryServices]) => (
+                    <div key={category}>
+                      {Object.keys(servicesByCategory).length > 1 && (
+                        <div className="flex items-center gap-3 mb-4 mt-8">
+                          <div
+                            className="h-1 flex-1 rounded-full"
+                            style={{
+                              background: `linear-gradient(to right, ${theme.primaryColor}30, transparent)`
+                            }}
+                          />
+                          <h3
+                            className="text-sm font-bold uppercase tracking-widest px-4"
+                            style={{ color: theme.primaryColor }}
+                          >
+                            {category}
+                          </h3>
+                          <div
+                            className="h-1 flex-1 rounded-full"
+                            style={{
+                              background: `linear-gradient(to left, ${theme.primaryColor}30, transparent)`
+                            }}
+                          />
+                        </div>
+                      )}
+                      <div className="space-y-3">
+                        {categoryServices.map((service) => {
+                          const inCart = isServiceInCart(service.id);
+                          return (
+                            <div
+                              key={service.id}
+                              className="group flex items-center justify-between p-5 sm:p-6 transition-all duration-300 hover:shadow-xl"
+                              style={{
+                                borderRadius: cardRadius,
+                                backgroundColor: theme.backgroundColor,
+                                border: inCart ? `2px solid ${theme.primaryColor}` : `1px solid ${theme.primaryColor}12`,
+                                boxShadow: inCart ? `0 4px 20px ${theme.primaryColor}25` : `0 4px 20px ${theme.primaryColor}06`
+                              }}
+                            >
+                              <div className="flex-1 min-w-0 pr-4">
+                                <div className="flex items-center gap-2">
+                                  <h3 className="font-semibold text-base sm:text-lg">{service.name}</h3>
+                                  {inCart && (
+                                    <Check className="h-5 w-5" style={{ color: theme.primaryColor }} />
+                                  )}
+                                </div>
+                                {service.description && (
+                                  <p className="text-sm opacity-60 mt-1 line-clamp-2">{service.description}</p>
+                                )}
+                                <div
+                                  className="inline-flex items-center gap-2 mt-3 px-3 py-1.5 rounded-full text-xs font-medium"
+                                  style={{
+                                    backgroundColor: theme.primaryColor + "10",
+                                    color: theme.primaryColor
+                                  }}
+                                >
+                                  <Clock className="h-3.5 w-3.5" />
+                                  <span>{formatDuration(service.duration_minutes)}</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-4">
+                                <p
+                                  className="text-xl sm:text-2xl font-bold"
+                                  style={{ color: theme.primaryColor }}
+                                >
+                                  {formatCurrency(service.price, merchant.currency)}
+                                </p>
+                                {inCart ? (
+                                  <button
+                                    onClick={() => removeFromCart(service.id)}
+                                    className="p-3 rounded-full transition-all duration-300 hover:scale-110"
+                                    style={{ backgroundColor: "#EF4444", color: "#fff" }}
+                                  >
+                                    <X className="h-5 w-5" />
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => addServiceToCart(service)}
+                                    className="p-3 rounded-full transition-all duration-300 hover:scale-110"
+                                    style={{ backgroundColor: theme.primaryColor, color: "#fff" }}
+                                  >
+                                    <Plus className="h-5 w-5" />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          );
+        }
+
+        // Default layout
         return (
           <section id="section-services" key="services" className="mb-12 scroll-mt-20">
             {showSectionTitles && <SectionTitle icon={<Sparkles className="h-5 w-5" />}>{t("ourServices")}</SectionTitle>}
@@ -883,11 +1096,12 @@ export function BookingPage({
       return (
         <section className="relative">
           {merchant.cover_image_url ? (
-            <div className="h-48 sm:h-64 md:h-72 w-full overflow-hidden">
+            <div className="w-full overflow-hidden" style={{ maxHeight: '60vh', minHeight: '12rem' }}>
               <img
                 src={merchant.cover_image_url}
                 alt={merchant.business_name}
-                className="w-full h-full object-cover"
+                className="w-full h-auto object-cover"
+                style={{ maxHeight: '60vh' }}
               />
             </div>
           ) : (
@@ -899,16 +1113,16 @@ export function BookingPage({
             />
           )}
           <div className="mx-auto max-w-5xl px-4 sm:px-6">
-            <div className="relative -mt-16 sm:-mt-20 flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-6 pb-6">
+            <div className="relative -mt-12 sm:-mt-16 flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-5 pb-6">
               {merchant.logo_url ? (
                 <img
                   src={merchant.logo_url}
                   alt={merchant.business_name}
-                  className="h-28 w-28 sm:h-36 sm:w-36 rounded-3xl object-cover shadow-2xl ring-4 ring-white"
+                  className="h-20 w-20 sm:h-28 sm:w-28 md:h-32 md:w-32 rounded-2xl sm:rounded-3xl object-cover shadow-2xl ring-2 sm:ring-4 ring-white flex-shrink-0"
                 />
               ) : (
                 <div
-                  className="h-28 w-28 sm:h-36 sm:w-36 rounded-3xl shadow-2xl ring-4 ring-white flex items-center justify-center text-4xl font-bold text-white"
+                  className="h-20 w-20 sm:h-28 sm:w-28 md:h-32 md:w-32 rounded-2xl sm:rounded-3xl shadow-2xl ring-2 sm:ring-4 ring-white flex items-center justify-center text-3xl sm:text-4xl font-bold text-white flex-shrink-0"
                   style={{
                     background: `linear-gradient(135deg, ${theme.primaryColor} 0%, ${theme.secondaryColor} 100%)`
                   }}
@@ -916,12 +1130,14 @@ export function BookingPage({
                   {merchant.business_name.charAt(0)}
                 </div>
               )}
-              <div className="flex-1 pb-2">
-                <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">{merchant.business_name}</h1>
+              <div className="flex-1 pb-1 sm:pb-2 min-w-0">
+                <h1 className="text-xl sm:text-3xl md:text-4xl font-bold tracking-tight leading-tight">{merchant.business_name}</h1>
                 {(merchant.city || merchant.state) && (
-                  <p className="text-sm sm:text-base opacity-60 flex items-center gap-1.5 mt-2">
-                    <MapPin className="h-4 w-4" />
-                    {merchant.city}{merchant.city && merchant.state && ", "}{merchant.state}
+                  <p className="text-xs sm:text-sm md:text-base opacity-60 flex items-center gap-1 sm:gap-1.5 mt-1 sm:mt-2">
+                    <MapPin className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                    <span className="truncate">
+                      {merchant.city}{merchant.city && merchant.state && ", "}{merchant.state}
+                    </span>
                   </p>
                 )}
               </div>
@@ -938,11 +1154,12 @@ export function BookingPage({
     return (
       <section className="relative">
         {merchant.cover_image_url ? (
-          <div className="h-64 sm:h-80 md:h-96 w-full overflow-hidden">
+          <div className="w-full overflow-hidden relative" style={{ maxHeight: '70vh', minHeight: '16rem' }}>
             <img
               src={merchant.cover_image_url}
               alt={merchant.business_name}
-              className="w-full h-full object-cover scale-105"
+              className="w-full h-auto object-cover"
+              style={{ maxHeight: '70vh' }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
           </div>
@@ -965,30 +1182,32 @@ export function BookingPage({
         </div>
 
         <div className="absolute bottom-0 left-0 right-0">
-          <div className="mx-auto max-w-5xl px-4 sm:px-6 pb-8">
-            <div className="flex items-end gap-5 sm:gap-6">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6 pb-6 sm:pb-8">
+            <div className="flex items-end gap-3 sm:gap-5">
               {merchant.logo_url ? (
                 <img
                   src={merchant.logo_url}
                   alt={merchant.business_name}
-                  className="h-24 w-24 sm:h-32 sm:w-32 rounded-3xl object-cover shadow-2xl ring-4 ring-white/30 backdrop-blur"
+                  className="h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 rounded-2xl sm:rounded-3xl object-cover shadow-2xl ring-2 sm:ring-4 ring-white/30 backdrop-blur flex-shrink-0"
                 />
               ) : (
                 <div
-                  className="h-24 w-24 sm:h-32 sm:w-32 rounded-3xl ring-4 ring-white/30 shadow-2xl backdrop-blur flex items-center justify-center text-3xl sm:text-4xl font-bold text-white"
+                  className="h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 rounded-2xl sm:rounded-3xl ring-2 sm:ring-4 ring-white/30 shadow-2xl backdrop-blur flex items-center justify-center text-2xl sm:text-3xl md:text-4xl font-bold text-white flex-shrink-0"
                   style={{ backgroundColor: theme.primaryColor + "80" }}
                 >
                   {merchant.business_name.charAt(0)}
                 </div>
               )}
-              <div className="pb-1 sm:pb-2 text-white">
-                <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight drop-shadow-lg">
+              <div className="pb-0.5 sm:pb-1 md:pb-2 text-white flex-1 min-w-0">
+                <h1 className="text-xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight drop-shadow-lg leading-tight">
                   {merchant.business_name}
                 </h1>
                 {(merchant.city || merchant.state) && (
-                  <p className="text-sm sm:text-base opacity-90 flex items-center gap-1.5 mt-2 drop-shadow">
-                    <MapPin className="h-4 w-4" />
-                    {merchant.city}{merchant.city && merchant.state && ", "}{merchant.state}
+                  <p className="text-xs sm:text-sm md:text-base opacity-90 flex items-center gap-1 sm:gap-1.5 mt-1 sm:mt-2 drop-shadow">
+                    <MapPin className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                    <span className="truncate">
+                      {merchant.city}{merchant.city && merchant.state && ", "}{merchant.state}
+                    </span>
                   </p>
                 )}
               </div>

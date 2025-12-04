@@ -280,12 +280,18 @@ export function BookingsList({ bookings }: { bookings: BookingWithRelations[] })
                     <p className="text-xs font-medium text-gray-500 mb-1">
                       {booking.booking_date ? "Service" : "Products"}
                     </p>
-                    <p className="text-sm text-gray-900">
-                      {booking.cart_items && Array.isArray(booking.cart_items) && booking.cart_items.length > 0
-                        ? `${booking.cart_items.length} ${booking.cart_items.length > 1 ? t("items") : t("item")}`
-                        : booking.services?.name
-                      }
-                    </p>
+                    {booking.cart_items && Array.isArray(booking.cart_items) && booking.cart_items.length > 0 ? (
+                      <div className="text-sm text-gray-900">
+                        {(booking.cart_items as unknown as CartItemData[]).map((item, idx) => (
+                          <div key={idx}>
+                            {item.type === "service" ? item.service?.name || "Service" : item.product?.name || "Product"}
+                            {item.type === "product" && ` (x${item.quantity || 1})`}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-900">{booking.services?.name}</p>
+                    )}
                     {booking.staff && (
                       <p className="text-xs text-gray-500 mt-1">with {booking.staff.name}</p>
                     )}
@@ -344,29 +350,36 @@ export function BookingsList({ bookings }: { bookings: BookingWithRelations[] })
                 {/* Cart Items */}
                 {selectedBooking.cart_items && Array.isArray(selectedBooking.cart_items) && selectedBooking.cart_items.length > 0 ? (
                   <div className="mt-3 space-y-2">
-                    {(selectedBooking.cart_items as unknown as CartItemData[]).map((item, index) => (
-                      <div key={index} className="flex items-center justify-between py-2 border-b border-gray-200 last:border-0">
-                        <div className="flex items-center gap-2">
-                          {item.type === "service" ? (
-                            <Sparkles className="h-4 w-4 text-purple-500" />
-                          ) : (
-                            <ShoppingBag className="h-4 w-4 text-blue-500" />
-                          )}
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">
-                              {item.name}
-                              {item.quantity > 1 && <span className="text-gray-500"> x{item.quantity}</span>}
-                            </p>
-                            {item.type === "service" && item.duration_minutes && (
-                              <p className="text-xs text-gray-500">{formatDuration(item.duration_minutes)}</p>
+                    {(selectedBooking.cart_items as unknown as CartItemData[]).map((item, index) => {
+                      const name = item.type === "service" ? item.service?.name : item.product?.name;
+                      const price = item.type === "service" ? item.service?.price : item.product?.price;
+                      const quantity = item.quantity || 1;
+                      const durationMinutes = item.type === "service" ? item.service?.duration_minutes : null;
+
+                      return (
+                        <div key={index} className="flex items-center justify-between py-2 border-b border-gray-200 last:border-0">
+                          <div className="flex items-center gap-2">
+                            {item.type === "service" ? (
+                              <Sparkles className="h-4 w-4 text-purple-500" />
+                            ) : (
+                              <ShoppingBag className="h-4 w-4 text-blue-500" />
                             )}
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">
+                                {name || (item.type === "service" ? "Service" : "Product")}
+                                {quantity > 1 && <span className="text-gray-500"> x{quantity}</span>}
+                              </p>
+                              {item.type === "service" && durationMinutes && (
+                                <p className="text-xs text-gray-500">{formatDuration(durationMinutes)}</p>
+                              )}
+                            </div>
                           </div>
+                          <span className="text-sm font-medium text-gray-700">
+                            {formatCurrency((price || 0) * quantity)}
+                          </span>
                         </div>
-                        <span className="text-sm font-medium text-gray-700">
-                          {formatCurrency(item.price * item.quantity)}
-                        </span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <>
