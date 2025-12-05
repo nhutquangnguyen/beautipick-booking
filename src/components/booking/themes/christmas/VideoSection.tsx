@@ -1,8 +1,10 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { VideoSectionProps } from "../types";
 
 export function ChristmasVideoSection({ videoUrl, colors }: VideoSectionProps) {
+  const t = useTranslations("common");
   if (!videoUrl) return null;
 
   return (
@@ -23,7 +25,7 @@ export function ChristmasVideoSection({ videoUrl, colors }: VideoSectionProps) {
                 color: colors.primaryColor,
               }}
             >
-              Our Story
+              {t("watchOurStory")}
             </h2>
             <span className="text-3xl">🎬</span>
           </div>
@@ -31,7 +33,7 @@ export function ChristmasVideoSection({ videoUrl, colors }: VideoSectionProps) {
             className="text-lg"
             style={{ color: colors.secondaryColor }}
           >
-            Watch our holiday magic unfold!
+            {t("christmasVideoSubtitle")}
           </p>
         </div>
 
@@ -53,7 +55,7 @@ export function ChristmasVideoSection({ videoUrl, colors }: VideoSectionProps) {
             >
               <iframe
                 src={videoUrl}
-                title="Business video"
+                title={t("businessVideo")}
                 className="w-full h-full"
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

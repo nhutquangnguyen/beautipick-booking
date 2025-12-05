@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { GallerySectionProps } from "../types";
 
 export function ChristmasGallerySection({ gallery, colors }: GallerySectionProps) {
+  const t = useTranslations("common");
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
@@ -44,7 +46,7 @@ export function ChristmasGallerySection({ gallery, colors }: GallerySectionProps
                 color: colors.primaryColor,
               }}
             >
-              Our Gallery
+              {t("gallery")}
             </h2>
             <span className="text-3xl">📸</span>
           </div>
@@ -52,7 +54,7 @@ export function ChristmasGallerySection({ gallery, colors }: GallerySectionProps
             className="text-lg"
             style={{ color: colors.secondaryColor }}
           >
-            Capturing magical moments!
+            {t("christmasGallerySubtitle")}
           </p>
         </div>
 

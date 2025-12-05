@@ -9,19 +9,18 @@ import { ShowcaseGridGallerySection } from "./GallerySection";
 import { ShowcaseGridWorkSection } from "./WorkSection";
 import { ShowcaseGridProductsSection } from "./ProductsSection";
 import { ShowcaseGridContactSection } from "./ContactSection";
-import { ShowcaseColors } from "@/config/ShowcaseColors";
 import { LanguageSwitcher } from "../../LanguageSwitcher";
 
 export function ShowcaseGridTheme({ data, colors, cart, locale, currency, onOpenCart }: ThemeComponentProps) {
-  // Override with Showcase Grid color palette using constants
+  // Use the colors from the selected color scheme
   const showcaseColors = {
     ...colors,
-    primaryColor: ShowcaseColors.primary,      // Deep Charcoal
-    secondaryColor: ShowcaseColors.secondary,  // Light Gray
-    accentColor: ShowcaseColors.accent,        // Vibrant Blue
-    backgroundColor: "#FFFFFF",                 // White
-    textColor: ShowcaseColors.text,            // Deep Charcoal
-    fontFamily: "Inter",
+    primaryColor: colors.primaryColor,
+    secondaryColor: colors.secondaryColor,
+    accentColor: colors.accentColor,
+    backgroundColor: colors.backgroundColor,
+    textColor: colors.textColor,
+    fontFamily: colors.fontFamily,
   };
 
   const scrollToServices = () => {

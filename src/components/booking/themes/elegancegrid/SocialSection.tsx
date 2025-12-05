@@ -1,9 +1,11 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { SocialSectionProps } from "../types";
 import { SOCIAL_LINK_CONFIG } from "../shared/SocialConfig";
 
 export function EleganceGridSocialSection({ socialLinks, colors }: SocialSectionProps) {
+  const t = useTranslations("common");
   if (socialLinks.length === 0) return null;
 
   return (
@@ -20,7 +22,7 @@ export function EleganceGridSocialSection({ socialLinks, colors }: SocialSection
             color: colors.primaryColor,
           }}
         >
-          Connect With Us
+          {t("connectWithUs")}
         </h2>
         <div
           className="w-20 h-1 mx-auto mb-6"
@@ -34,7 +36,7 @@ export function EleganceGridSocialSection({ socialLinks, colors }: SocialSection
             opacity: 0.8,
           }}
         >
-          Follow us on social media for updates and inspiration
+          {t("socialSubtitle")}
         </p>
 
         {/* Social Links Grid */}

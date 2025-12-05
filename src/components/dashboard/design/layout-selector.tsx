@@ -155,10 +155,10 @@ export function LayoutSelector({
                           />
 
                           {/* Color Scheme Info */}
-                          <h5 className="font-semibold text-sm text-gray-900">
+                          <h5 className="font-bold text-sm text-gray-900">
                             {t(`colorSchemes.${colorScheme.id}.name`)}
                           </h5>
-                          <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
+                          <p className="text-xs text-gray-700 mt-0.5 line-clamp-1 font-medium">
                             {t(`colorSchemes.${colorScheme.id}.description`)}
                           </p>
 

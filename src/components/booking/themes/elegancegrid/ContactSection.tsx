@@ -1,8 +1,10 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { ContactSectionProps } from "../types";
 
 export function EleganceGridContactSection({ merchant, colors }: ContactSectionProps) {
+  const t = useTranslations("common");
   return (
     <section
       id="section-contact"
@@ -19,7 +21,7 @@ export function EleganceGridContactSection({ merchant, colors }: ContactSectionP
               color: colors.primaryColor,
             }}
           >
-            Contact Us
+            {t("contactUs")}
           </h2>
           <div
             className="w-20 h-1 mx-auto mb-6"
@@ -53,7 +55,7 @@ export function EleganceGridContactSection({ merchant, colors }: ContactSectionP
                   color: colors.primaryColor,
                 }}
               >
-                Address
+                {t("address")}
               </h3>
               <p
                 className="text-base"
@@ -92,7 +94,7 @@ export function EleganceGridContactSection({ merchant, colors }: ContactSectionP
                   color: colors.primaryColor,
                 }}
               >
-                Phone
+                {t("phone")}
               </h3>
               <a
                 href={`tel:${merchant.phone}`}

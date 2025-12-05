@@ -1,8 +1,10 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { ProductsSectionProps } from "../types";
 
 export function EleganceGridProductsSection({ products, merchant, colors, cart }: ProductsSectionProps) {
+  const t = useTranslations("common");
   if (!products || products.length === 0) return null;
 
   return (
@@ -21,7 +23,7 @@ export function EleganceGridProductsSection({ products, merchant, colors, cart }
               color: colors.primaryColor,
             }}
           >
-            Our Products
+            {t("ourProducts")}
           </h2>
           <div
             className="w-20 h-1 mx-auto mb-6"

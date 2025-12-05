@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { ServicesSectionProps } from "../types";
 
 export function ChristmasServicesSection({ services, merchant, colors, cart }: ServicesSectionProps) {
+  const t = useTranslations("common");
   const [hoveredService, setHoveredService] = useState<string | null>(null);
 
   if (services.length === 0) return null;
@@ -26,7 +28,7 @@ export function ChristmasServicesSection({ services, merchant, colors, cart }: S
                 color: colors.primaryColor,
               }}
             >
-              Our Services
+              {t("ourServices")}
             </h2>
             <span className="text-3xl">🎄</span>
           </div>
@@ -34,7 +36,7 @@ export function ChristmasServicesSection({ services, merchant, colors, cart }: S
             className="text-lg"
             style={{ color: colors.secondaryColor }}
           >
-            Treat yourself this holiday season!
+            {t("christmasServicesSubtitle")}
           </p>
         </div>
 
@@ -141,7 +143,7 @@ export function ChristmasServicesSection({ services, merchant, colors, cart }: S
                       border: `2px solid ${isInCart ? colors.textColor : colors.accentColor}`,
                     }}
                   >
-                    {isInCart ? "✓ Added to Cart" : "Add to Cart 🎅"}
+                    {isInCart ? t("addedToCart") : t("christmasAddToCartService")}
                   </button>
                 </div>
               </div>

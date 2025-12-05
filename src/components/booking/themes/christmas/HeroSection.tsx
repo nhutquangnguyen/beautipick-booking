@@ -1,8 +1,10 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { HeroSectionProps } from "../types";
 
 export function ChristmasHeroSection({ merchant, colors, onScrollToServices }: HeroSectionProps) {
+  const t = useTranslations("common");
   return (
     <section className="christmas-section min-h-[85vh] flex items-center justify-center relative overflow-hidden px-6 py-20">
       {/* Festive Gradient Background */}
@@ -58,7 +60,7 @@ export function ChristmasHeroSection({ merchant, colors, onScrollToServices }: H
               boxShadow: `0 8px 30px ${colors.accentColor}60`,
             }}
           >
-            🎄 Holiday Special 🎁
+            {t("christmasHolidaySpecial")}
           </div>
         </div>
 
@@ -153,7 +155,7 @@ export function ChristmasHeroSection({ merchant, colors, onScrollToServices }: H
           />
 
           <span className="relative z-10 flex items-center gap-3">
-            🎁 Book Your Holiday Treat
+            {t("christmasBookButton")}
           </span>
         </button>
 
@@ -164,7 +166,7 @@ export function ChristmasHeroSection({ merchant, colors, onScrollToServices }: H
             color: merchant.cover_image_url ? "#fff" : colors.textColor,
           }}
         >
-          ✨ Make This Season Extra Special ✨
+          {t("christmasSeasonalMessage")}
         </p>
       </div>
 

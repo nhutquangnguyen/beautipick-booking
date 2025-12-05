@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { ProductsSectionProps } from "../types";
 
 export function ChristmasProductsSection({ products, merchant, colors, cart }: ProductsSectionProps) {
+  const t = useTranslations("common");
   const [hoveredProduct, setHoveredProduct] = useState<string | null>(null);
 
   if (products.length === 0) return null;
@@ -26,7 +28,7 @@ export function ChristmasProductsSection({ products, merchant, colors, cart }: P
                 color: colors.primaryColor,
               }}
             >
-              Holiday Products
+              {t("christmasHolidayProducts")}
             </h2>
             <span className="text-3xl">🎁</span>
           </div>
@@ -34,7 +36,7 @@ export function ChristmasProductsSection({ products, merchant, colors, cart }: P
             className="text-lg"
             style={{ color: colors.secondaryColor }}
           >
-            Perfect gifts for the season!
+            {t("christmasProductsSubtitle")}
           </p>
         </div>
 
@@ -131,7 +133,7 @@ export function ChristmasProductsSection({ products, merchant, colors, cart }: P
                         border: `2px solid ${colors.accentColor}`,
                       }}
                     >
-                      Add to Cart 🔔
+                      {t("christmasAddToCart")}
                     </button>
                   ) : (
                     <div className="space-y-2">

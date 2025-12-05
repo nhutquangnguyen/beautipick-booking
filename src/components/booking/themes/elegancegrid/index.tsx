@@ -14,15 +14,6 @@ import { EleganceGridVideoSection } from "./VideoSection";
 import { getYouTubeVideoId, scrollToElement } from "../utils";
 import { LanguageSwitcher } from "../../LanguageSwitcher";
 
-// EleganceGrid Theme Colors
-const ELEGANCE_COLORS = {
-  primary: '#0B5345',      // Deep Teal
-  secondary: '#F5F5DC',    // Warm Beige
-  accent: '#C89467',       // Rose Gold
-  background: '#F7F7F7',   // Off-White
-  text: '#333333',         // Dark Gray
-};
-
 export function EleganceGridTheme({ data, colors, cart, onOpenCart }: ThemeComponentProps) {
   const [scrollY, setScrollY] = useState(0);
 
@@ -40,14 +31,14 @@ export function EleganceGridTheme({ data, colors, cart, onOpenCart }: ThemeCompo
 
   const videoId = data.merchant.youtube_url ? getYouTubeVideoId(data.merchant.youtube_url) : null;
 
-  // Override theme colors with EleganceGrid palette
+  // Use the colors from the selected color scheme
   const eleganceColors = {
     ...colors,
-    primaryColor: ELEGANCE_COLORS.primary,
-    secondaryColor: ELEGANCE_COLORS.secondary,
-    accentColor: ELEGANCE_COLORS.accent,
-    backgroundColor: ELEGANCE_COLORS.background,
-    textColor: ELEGANCE_COLORS.text,
+    primaryColor: colors.primaryColor,
+    secondaryColor: colors.secondaryColor,
+    accentColor: colors.accentColor,
+    backgroundColor: colors.backgroundColor,
+    textColor: colors.textColor,
   };
 
   return (
@@ -55,15 +46,15 @@ export function EleganceGridTheme({ data, colors, cart, onOpenCart }: ThemeCompo
       className="min-h-screen relative"
       style={{
         fontFamily: colors.fontFamily,
-        backgroundColor: ELEGANCE_COLORS.background,
+        backgroundColor: eleganceColors.backgroundColor,
       }}
     >
       {/* Fixed Header */}
       <Header
         businessName={data.merchant.business_name}
         logoUrl={data.merchant.logo_url || undefined}
-        primaryColor={ELEGANCE_COLORS.primary}
-        accentColor={ELEGANCE_COLORS.accent}
+        primaryColor={eleganceColors.primaryColor}
+        accentColor={eleganceColors.accentColor}
         onScrollToServices={handleScrollToServices}
       />
 
@@ -79,24 +70,21 @@ export function EleganceGridTheme({ data, colors, cart, onOpenCart }: ThemeCompo
         <EleganceGridSocialSection socialLinks={data.socialLinks} colors={eleganceColors} />
       </div>
 
-      {/* Language Switcher */}
-      <LanguageSwitcher accentColor={ELEGANCE_COLORS.accent} position="top-right" />
-
       {/* Floating Cart Button - Elegant & Sophisticated Style */}
       {cart.cart.length > 0 && (
         <button
           onClick={onOpenCart}
           className="fixed bottom-8 right-8 w-16 h-16 rounded-full shadow-xl flex items-center justify-center transition-all duration-500 hover:scale-110 z-50 group"
           style={{
-            background: `linear-gradient(135deg, ${ELEGANCE_COLORS.primary}, ${ELEGANCE_COLORS.accent})`,
-            boxShadow: `0 8px 32px rgba(11, 83, 69, 0.3)`,
+            background: `linear-gradient(135deg, ${eleganceColors.primaryColor}, ${eleganceColors.accentColor})`,
+            boxShadow: `0 8px 32px ${eleganceColors.primaryColor}40`,
           }}
         >
           {/* Elegant glow ring */}
           <div
             className="absolute -inset-1 blur-md opacity-40 rounded-full transition-all duration-500 group-hover:opacity-60"
             style={{
-              background: `linear-gradient(135deg, ${ELEGANCE_COLORS.accent}, ${ELEGANCE_COLORS.primary})`,
+              background: `linear-gradient(135deg, ${eleganceColors.accentColor}, ${eleganceColors.primaryColor})`,
             }}
           />
 
@@ -115,13 +103,13 @@ export function EleganceGridTheme({ data, colors, cart, onOpenCart }: ThemeCompo
             />
           </svg>
 
-          {/* Item Count Badge - Rose Gold Accent */}
+          {/* Item Count Badge - Accent Color */}
           <div
             className="absolute -top-2 -right-2 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shadow-lg border-2 transition-all duration-300 group-hover:scale-110"
             style={{
-              backgroundColor: ELEGANCE_COLORS.accent,
+              backgroundColor: eleganceColors.accentColor,
               color: '#FFFFFF',
-              borderColor: ELEGANCE_COLORS.secondary,
+              borderColor: eleganceColors.secondaryColor,
             }}
           >
             {cart.cart.length}

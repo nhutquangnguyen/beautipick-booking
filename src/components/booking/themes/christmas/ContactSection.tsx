@@ -1,8 +1,10 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { ContactSectionProps } from "../types";
 
 export function ChristmasContactSection({ merchant, colors }: ContactSectionProps) {
+  const t = useTranslations("common");
   return (
     <section
       id="section-contact"
@@ -21,7 +23,7 @@ export function ChristmasContactSection({ merchant, colors }: ContactSectionProp
                 color: colors.primaryColor,
               }}
             >
-              Get in Touch
+              {t("contactUs")}
             </h2>
             <span className="text-3xl">🔔</span>
           </div>
@@ -32,7 +34,7 @@ export function ChristmasContactSection({ merchant, colors }: ContactSectionProp
               color: colors.secondaryColor,
             }}
           >
-            We'd love to hear from you this holiday season!
+            {t("christmasContactSubtitle")}
           </p>
         </div>
 
@@ -63,7 +65,7 @@ export function ChristmasContactSection({ merchant, colors }: ContactSectionProp
                   color: colors.primaryColor,
                 }}
               >
-                Phone
+                {t("phone")}
               </h3>
               <a
                 href={`tel:${merchant.phone}`}
@@ -73,7 +75,7 @@ export function ChristmasContactSection({ merchant, colors }: ContactSectionProp
                 {merchant.phone}
               </a>
               <p className="text-sm mt-2 opacity-70" style={{ color: colors.textColor }}>
-                Give us a call! 🎅
+                {t("christmasPhoneText")}
               </p>
             </div>
           )}
@@ -103,7 +105,7 @@ export function ChristmasContactSection({ merchant, colors }: ContactSectionProp
                   color: colors.secondaryColor,
                 }}
               >
-                Email
+                {t("email")}
               </h3>
               <a
                 href={`mailto:${merchant.email}`}
@@ -113,7 +115,7 @@ export function ChristmasContactSection({ merchant, colors }: ContactSectionProp
                 {merchant.email}
               </a>
               <p className="text-sm mt-2 opacity-70" style={{ color: colors.textColor }}>
-                Send us a message! 🎄
+                {t("christmasEmailText")}
               </p>
             </div>
           )}
@@ -143,7 +145,7 @@ export function ChristmasContactSection({ merchant, colors }: ContactSectionProp
                   color: colors.primaryColor,
                 }}
               >
-                Address
+                {t("address")}
               </h3>
               <p
                 className="text-lg font-semibold"
@@ -152,7 +154,7 @@ export function ChristmasContactSection({ merchant, colors }: ContactSectionProp
                 {merchant.address}
               </p>
               <p className="text-sm mt-2 opacity-70" style={{ color: colors.textColor }}>
-                Come visit us! 🎁
+                {t("christmasAddressText")}
               </p>
             </div>
           )}

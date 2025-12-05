@@ -129,7 +129,36 @@
     "book": "Đặt lịch",
     "added": "Đã thêm",
     "min": "phút",
-    "viewOnMap": "Xem trên bản đồ"
+    "viewOnMap": "Xem trên bản đồ",
+    "premiumSpaWellness": "Spa & Chăm Sóc Sức Khỏe Cao Cấp",
+    "exploreServices": "Khám Phá Dịch Vụ",
+    "viewGallery": "Xem Thư Viện",
+    "bookNow": "Đặt Ngay",
+    "aboutUs": "Về Chúng Tôi",
+    "gallerySubtitle": "Khám phá các tác phẩm đẹp và sự chuyển đổi của chúng tôi",
+    "ourServices": "Dịch Vụ Của Chúng Tôi",
+    "ourProducts": "Sản Phẩm Của Chúng Tôi",
+    "watchOurStory": "Xem Câu Chuyện Của Chúng Tôi",
+    "contactUs": "Liên Hệ Với Chúng Tôi",
+    "connectWithUs": "Kết Nối Với Chúng Tôi",
+    "socialSubtitle": "Theo dõi chúng tôi trên mạng xã hội để cập nhật và cảm hứng",
+    "addedToCart": "✓ Đã Thêm Vào Giỏ",
+    "businessVideo": "Video giới thiệu",
+    "christmasHolidaySpecial": "🎄 Ưu Đãi Lễ Hội 🎁",
+    "christmasBookButton": "🎁 Đặt Món Quà Lễ Hội",
+    "christmasSeasonalMessage": "✨ Làm Cho Mùa Này Thêm Đặc Biệt ✨",
+    "christmasContactSubtitle": "Chúng tôi rất mong nhận được phản hồi từ bạn trong mùa lễ hội này!",
+    "christmasPhoneText": "Hãy gọi cho chúng tôi! 🎅",
+    "christmasEmailText": "Gửi tin nhắn cho chúng tôi! 🎄",
+    "christmasAddressText": "Ghé thăm chúng tôi! 🎁",
+    "christmasGallerySubtitle": "Lưu giữ những khoảnh khắc kỳ diệu!",
+    "christmasHolidayProducts": "Sản Phẩm Lễ Hội",
+    "christmasProductsSubtitle": "Quà tặng hoàn hảo cho mùa lễ hội!",
+    "christmasAddToCart": "Thêm Vào Giỏ 🔔",
+    "christmasServicesSubtitle": "Tự thưởng cho bản thân trong mùa lễ hội này!",
+    "christmasAddToCartService": "Thêm Vào Giỏ 🎅",
+    "christmasSocialSubtitle": "Kết nối với chúng tôi trong mùa lễ hội này!",
+    "christmasVideoSubtitle": "Xem phép màu lễ hội của chúng tôi!"
   },
   "nav": {
     "home": "Trang chủ",
@@ -863,11 +892,11 @@
         "description": "Bố cục đơn giản & sạch sẽ kiểu Linktree, hoàn hảo cho người mới bắt đầu"
       },
       "elegancegrid": {
-        "name": "Lưới Thanh Lịch",
+        "name": "Thanh Lịch",
         "description": "Bố cục lưới tinh tế với màu sắc tao nhã và hoạt ảnh mượt mà, hoàn hảo cho spa sang trọng"
       },
       "showcasegrid": {
-        "name": "Lưới Trưng Bày",
+        "name": "Trưng Bày",
         "description": "Bố cục danh mục đầu tư tối giản với thiết kế độ tương phản cao và phòng trưng bày gạch cho nghệ sĩ"
       },
       "christmas": {
@@ -924,9 +953,49 @@
         "name": "Hoàng Gia",
         "description": "Tím đậm với bạc - sang trọng và tinh tế"
       },
+      "blush": {
+        "name": "Hồng Phấn",
+        "description": "Hồng phấn mềm mại với vàng champagne - lãng mạn và nữ tính"
+      },
+      "emerald": {
+        "name": "Ngọc Lục Bảo",
+        "description": "Xanh ngọc lục bảo phong phú với kem - sang trọng và tự nhiên"
+      },
+      "sapphire": {
+        "name": "Ngọc Bích",
+        "description": "Xanh ngọc bích đậm với trắng ngọc trai - cổ điển và vượt thời gian"
+      },
+      "plum": {
+        "name": "Mận",
+        "description": "Mận đậm với hồng cổ điển - thanh lịch và huyền bí"
+      },
       "monochrome": {
         "name": "Đơn Sắc",
         "description": "Than chì đậm với xanh sống động - sạch và hiện đại"
+      },
+      "crimson": {
+        "name": "Đỏ Thẫm",
+        "description": "Đỏ thẫm táo bạo với đen - mạnh mẽ và kịch tính"
+      },
+      "goldenHour": {
+        "name": "Giờ Vàng",
+        "description": "Vàng ấm và xanh navy đậm - thanh lịch và xa hoa"
+      },
+      "electricViolet": {
+        "name": "Tím Neon",
+        "description": "Tím sống động với điểm nhấn neon - táo bạo và sáng tạo"
+      },
+      "emeraldNight": {
+        "name": "Đêm Ngọc Lục Bảo",
+        "description": "Xanh ngọc lục bảo đậm với tông tối - huyền bí và tinh tế"
+      },
+      "sunsetOrange": {
+        "name": "Cam Hoàng Hôn",
+        "description": "Cam ấm với san hô - tràn đầy năng lượng và sống động"
+      },
+      "midnightBlue": {
+        "name": "Xanh Nửa Đêm",
+        "description": "Xanh đậm với điểm nhấn cyan - mát mẻ và chuyên nghiệp"
       },
       "holiday": {
         "name": "Phép Màu Kỳ Nghỉ",
@@ -935,6 +1004,38 @@
       "winter": {
         "name": "Xứ Sở Mùa Đông",
         "description": "Xanh mùa đông mát mẻ và bạc"
+      },
+      "goldenchristmas": {
+        "name": "Giáng Sinh Vàng",
+        "description": "Vàng sang trọng và đỏ burgundy đậm với điểm nhấn ngà"
+      },
+      "frostynight": {
+        "name": "Đêm Băng Giá",
+        "description": "Xanh navy đậm và xanh băng với ánh bạc lấp lánh"
+      },
+      "candycane": {
+        "name": "Kẹo Gậy",
+        "description": "Sọc đỏ trắng vui tươi với điểm nhấn xanh bạc hà"
+      },
+      "pinecone": {
+        "name": "Quả Thông",
+        "description": "Nâu đất và xanh rừng với đồng ấm áp"
+      },
+      "snowyrose": {
+        "name": "Hồng Tuyết",
+        "description": "Hồng nhẹ nhàng và trắng tuyết với ánh vàng hồng lấp lánh"
+      },
+      "northernlights": {
+        "name": "Cực Quang",
+        "description": "Xanh ngọc và tím huyền ảo với ánh bạc nổi bật"
+      },
+      "gingerbread": {
+        "name": "Nhà Bánh Gừng",
+        "description": "Nâu bánh gừng ấm áp với kem và đỏ anh đào"
+      },
+      "silverbell": {
+        "name": "Chuông Bạc",
+        "description": "Bạc thanh lịch và than chì với điểm nhấn xanh pha lê"
       }
     }
   }

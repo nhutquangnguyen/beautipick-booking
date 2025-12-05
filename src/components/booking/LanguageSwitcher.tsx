@@ -51,18 +51,18 @@ export function LanguageSwitcher({
         disabled={isPending}
         className={`flex items-center gap-2 rounded-full transition-all duration-300 border-2 group ${
           isInline
-            ? "px-2 py-1 bg-transparent hover:bg-gray-50"
+            ? "px-3 py-2 bg-transparent hover:bg-gray-50"
             : "px-3 py-2 bg-white shadow-lg hover:shadow-xl"
         }`}
         style={{
-          borderColor: isOpen ? accentColor : (isInline ? "transparent" : "#E5E7EB"),
+          borderColor: isOpen ? accentColor : (isInline ? "#E5E7EB" : "#E5E7EB"),
         }}
       >
         <Globe
-          className={`transition-transform group-hover:rotate-12 ${isInline ? "w-4 h-4" : "w-5 h-5"}`}
+          className={`transition-transform group-hover:rotate-12 ${isInline ? "w-5 h-5" : "w-5 h-5"}`}
           style={{ color: accentColor }}
         />
-        <span className={`font-semibold ${isInline ? "text-xs" : "text-sm"}`}>{currentLanguage.flag}</span>
+        <span className={`font-semibold ${isInline ? "text-base" : "text-sm"}`}>{currentLanguage.flag}</span>
         {!isInline && (
           <span className="text-sm font-medium text-gray-700 hidden sm:inline">
             {currentLanguage.code.toUpperCase()}

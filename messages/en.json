@@ -129,7 +129,36 @@
     "book": "Book",
     "added": "Added",
     "min": "min",
-    "viewOnMap": "View on Map"
+    "viewOnMap": "View on Map",
+    "premiumSpaWellness": "Premium Spa & Wellness",
+    "exploreServices": "Explore Services",
+    "viewGallery": "View Gallery",
+    "bookNow": "Book Now",
+    "aboutUs": "About Us",
+    "gallerySubtitle": "Explore our beautiful work and transformations",
+    "ourServices": "Our Services",
+    "ourProducts": "Our Products",
+    "watchOurStory": "Watch Our Story",
+    "contactUs": "Contact Us",
+    "connectWithUs": "Connect With Us",
+    "socialSubtitle": "Follow us on social media for updates and inspiration",
+    "addedToCart": "✓ Added to Cart",
+    "businessVideo": "Business video",
+    "christmasHolidaySpecial": "🎄 Holiday Special 🎁",
+    "christmasBookButton": "🎁 Book Your Holiday Treat",
+    "christmasSeasonalMessage": "✨ Make This Season Extra Special ✨",
+    "christmasContactSubtitle": "We'd love to hear from you this holiday season!",
+    "christmasPhoneText": "Give us a call! 🎅",
+    "christmasEmailText": "Send us a message! 🎄",
+    "christmasAddressText": "Come visit us! 🎁",
+    "christmasGallerySubtitle": "Capturing magical moments!",
+    "christmasHolidayProducts": "Holiday Products",
+    "christmasProductsSubtitle": "Perfect gifts for the season!",
+    "christmasAddToCart": "Add to Cart 🔔",
+    "christmasServicesSubtitle": "Treat yourself this holiday season!",
+    "christmasAddToCartService": "Add to Cart 🎅",
+    "christmasSocialSubtitle": "Stay connected this holiday season!",
+    "christmasVideoSubtitle": "Watch our holiday magic unfold!"
   },
   "nav": {
     "home": "Home",
@@ -862,11 +891,11 @@
         "description": "Simple & clean Linktree-style layout, perfect for beginners"
       },
       "elegancegrid": {
-        "name": "Elegance Grid",
+        "name": "Elegance",
         "description": "Sophisticated grid layout with elegant colors and smooth animations, perfect for luxury spas"
       },
       "showcasegrid": {
-        "name": "Showcase Grid",
+        "name": "Showcase",
         "description": "Minimalist portfolio layout with high-contrast design and masonry gallery for artists"
       },
       "christmas": {
@@ -923,9 +952,49 @@
         "name": "Imperial",
         "description": "Deep purple with silver - regal and sophisticated"
       },
+      "blush": {
+        "name": "Blush",
+        "description": "Soft blush pink with champagne gold - romantic and feminine"
+      },
+      "emerald": {
+        "name": "Emerald",
+        "description": "Rich emerald green with cream - luxurious and natural"
+      },
+      "sapphire": {
+        "name": "Sapphire",
+        "description": "Deep sapphire blue with pearl white - classic and timeless"
+      },
+      "plum": {
+        "name": "Plum",
+        "description": "Deep plum with dusty rose - elegant and mysterious"
+      },
       "monochrome": {
         "name": "Monochrome",
         "description": "Deep charcoal with vibrant blue - clean and modern"
+      },
+      "crimson": {
+        "name": "Crimson",
+        "description": "Bold crimson red with black - powerful and dramatic"
+      },
+      "goldenHour": {
+        "name": "Golden Hour",
+        "description": "Warm gold and deep navy - elegant and luxurious"
+      },
+      "electricViolet": {
+        "name": "Electric Violet",
+        "description": "Vibrant purple with neon accents - bold and creative"
+      },
+      "emeraldNight": {
+        "name": "Emerald Night",
+        "description": "Deep emerald green with dark tones - mysterious and sophisticated"
+      },
+      "sunsetOrange": {
+        "name": "Sunset Orange",
+        "description": "Warm orange with coral - energetic and vibrant"
+      },
+      "midnightBlue": {
+        "name": "Midnight Blue",
+        "description": "Deep blue with cyan highlights - cool and professional"
       },
       "holiday": {
         "name": "Holiday Magic",
@@ -934,6 +1003,38 @@
       "winter": {
         "name": "Winter Wonderland",
         "description": "Cool winter blue and silver"
+      },
+      "goldenchristmas": {
+        "name": "Golden Christmas",
+        "description": "Luxurious gold and deep burgundy with ivory accents"
+      },
+      "frostynight": {
+        "name": "Frosty Night",
+        "description": "Deep navy and icy blue with silver sparkles"
+      },
+      "candycane": {
+        "name": "Candy Cane",
+        "description": "Playful red and white stripes with mint green accents"
+      },
+      "pinecone": {
+        "name": "Pine Cone",
+        "description": "Earthy brown and forest green with warm copper"
+      },
+      "snowyrose": {
+        "name": "Snowy Rose",
+        "description": "Soft pink and snowy white with rose gold shimmer"
+      },
+      "northernlights": {
+        "name": "Northern Lights",
+        "description": "Magical teal and purple aurora with silver highlights"
+      },
+      "gingerbread": {
+        "name": "Gingerbread House",
+        "description": "Warm gingerbread brown with cream and cherry red"
+      },
+      "silverbell": {
+        "name": "Silver Bell",
+        "description": "Elegant silver and charcoal with crystal blue accents"
       }
     }
   }

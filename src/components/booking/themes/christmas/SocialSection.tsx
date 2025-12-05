@@ -1,9 +1,11 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { SocialSectionProps } from "../types";
 import { Facebook, Instagram, Twitter, Linkedin, Youtube, Music, Globe } from "lucide-react";
 
 export function ChristmasSocialSection({ socialLinks, colors }: SocialSectionProps) {
+  const t = useTranslations("common");
   if (socialLinks.length === 0) return null;
 
   const getSocialIcon = (platform: string) => {
@@ -46,7 +48,7 @@ export function ChristmasSocialSection({ socialLinks, colors }: SocialSectionPro
                 color: colors.primaryColor,
               }}
             >
-              Follow Us
+              {t("connectWithUs")}
             </h2>
             <span className="text-3xl">🎅</span>
           </div>
@@ -57,7 +59,7 @@ export function ChristmasSocialSection({ socialLinks, colors }: SocialSectionPro
               color: colors.secondaryColor,
             }}
           >
-            Stay connected this holiday season!
+            {t("christmasSocialSubtitle")}
           </p>
         </div>
 

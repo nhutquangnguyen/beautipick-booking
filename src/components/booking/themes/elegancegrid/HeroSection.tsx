@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { HeroSectionProps } from "../types";
 
 // Default cover images if merchant doesn't have any
@@ -11,6 +12,7 @@ const DEFAULT_COVERS = [
 ];
 
 export function EleganceGridHeroSection({ merchant, colors, onScrollToServices }: HeroSectionProps) {
+  const t = useTranslations("common");
   const [currentSlide, setCurrentSlide] = useState(0);
 
   // Use merchant cover or default covers
@@ -90,7 +92,7 @@ export function EleganceGridHeroSection({ merchant, colors, onScrollToServices }
               className="text-sm font-semibold"
               style={{ color: colors.accentColor }}
             >
-              Premium Spa & Wellness
+              {t("premiumSpaWellness")}
             </span>
           </div>
 
@@ -145,7 +147,7 @@ export function EleganceGridHeroSection({ merchant, colors, onScrollToServices }
                 boxShadow: `0 10px 30px ${colors.accentColor}40`,
               }}
             >
-              <span className="relative z-10">Explore Services</span>
+              <span className="relative z-10">{t("exploreServices")}</span>
               <div
                 className="absolute inset-0 bg-gradient-to-r opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                 style={{
@@ -168,56 +170,8 @@ export function EleganceGridHeroSection({ merchant, colors, onScrollToServices }
                 backgroundColor: `${colors.backgroundColor}80`,
               }}
             >
-              View Gallery
+              {t("viewGallery")}
             </button>
-          </div>
-
-          {/* Stats Grid */}
-          <div className="grid grid-cols-3 gap-4 mt-12 max-w-xl">
-            <div
-              className="p-4 rounded-xl backdrop-blur-sm"
-              style={{
-                backgroundColor: `${colors.secondaryColor}80`,
-                border: `1px solid ${colors.accentColor}30`,
-              }}
-            >
-              <div className="text-3xl font-bold" style={{ color: colors.accentColor }}>
-                500+
-              </div>
-              <div className="text-sm mt-1" style={{ color: colors.textColor, opacity: 0.7 }}>
-                Happy Clients
-              </div>
-            </div>
-
-            <div
-              className="p-4 rounded-xl backdrop-blur-sm"
-              style={{
-                backgroundColor: `${colors.secondaryColor}80`,
-                border: `1px solid ${colors.accentColor}30`,
-              }}
-            >
-              <div className="text-3xl font-bold" style={{ color: colors.accentColor }}>
-                15+
-              </div>
-              <div className="text-sm mt-1" style={{ color: colors.textColor, opacity: 0.7 }}>
-                Services
-              </div>
-            </div>
-
-            <div
-              className="p-4 rounded-xl backdrop-blur-sm"
-              style={{
-                backgroundColor: `${colors.secondaryColor}80`,
-                border: `1px solid ${colors.accentColor}30`,
-              }}
-            >
-              <div className="text-3xl font-bold" style={{ color: colors.accentColor }}>
-                5★
-              </div>
-              <div className="text-sm mt-1" style={{ color: colors.textColor, opacity: 0.7 }}>
-                Rating
-              </div>
-            </div>
           </div>
         </div>
       </div>

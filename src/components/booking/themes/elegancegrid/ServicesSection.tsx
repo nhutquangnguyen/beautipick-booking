@@ -1,8 +1,10 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { ServicesSectionProps } from "../types";
 
 export function EleganceGridServicesSection({ services, merchant, colors, cart }: ServicesSectionProps) {
+  const t = useTranslations("common");
   if (!services || services.length === 0) return null;
 
   return (
@@ -21,7 +23,7 @@ export function EleganceGridServicesSection({ services, merchant, colors, cart }
               color: colors.primaryColor,
             }}
           >
-            Our Services
+            {t("ourServices")}
           </h2>
           <div
             className="w-20 h-1 mx-auto mb-6"
@@ -98,14 +100,14 @@ export function EleganceGridServicesSection({ services, merchant, colors, cart }
                   <div className="flex items-center justify-between mb-6">
                     <div>
                       <div
-                        className="text-xs uppercase tracking-wide opacity-70 mb-1"
-                        style={{ color: colors.textColor }}
+                        className="text-xs uppercase tracking-wide font-semibold mb-1"
+                        style={{ color: colors.textColor, opacity: 0.9 }}
                       >
                         Duration
                       </div>
                       <div
                         className="text-lg font-bold"
-                        style={{ color: colors.accentColor }}
+                        style={{ color: colors.textColor }}
                       >
                         {service.duration_minutes} min
                       </div>
@@ -113,8 +115,8 @@ export function EleganceGridServicesSection({ services, merchant, colors, cart }
 
                     <div className="text-right">
                       <div
-                        className="text-xs uppercase tracking-wide opacity-70 mb-1"
-                        style={{ color: colors.textColor }}
+                        className="text-xs uppercase tracking-wide font-semibold mb-1"
+                        style={{ color: colors.textColor, opacity: 0.9 }}
                       >
                         Price
                       </div>

@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { GallerySectionProps } from "../types";
 
 export function EleganceGridGallerySection({ gallery, colors }: GallerySectionProps) {
+  const t = useTranslations("common");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   if (!gallery || gallery.length === 0) return null;
@@ -24,7 +26,7 @@ export function EleganceGridGallerySection({ gallery, colors }: GallerySectionPr
               color: colors.primaryColor,
             }}
           >
-            Gallery
+            {t("gallery")}
           </h2>
           <div
             className="w-20 h-1 mx-auto mb-6"
@@ -38,7 +40,7 @@ export function EleganceGridGallerySection({ gallery, colors }: GallerySectionPr
               opacity: 0.8,
             }}
           >
-            Explore our beautiful work and transformations
+            {t("gallerySubtitle")}
           </p>
         </div>
 

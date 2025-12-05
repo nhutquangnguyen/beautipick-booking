@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 interface HeaderProps {
   businessName: string;
@@ -11,6 +13,7 @@ interface HeaderProps {
 }
 
 export function Header({ businessName, logoUrl, primaryColor, accentColor, onScrollToServices }: HeaderProps) {
+  const t = useTranslations("common");
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -72,14 +75,14 @@ export function Header({ businessName, logoUrl, primaryColor, accentColor, onScr
 
           {/* Desktop Navigation Menu */}
           <nav className="hidden lg:flex items-center gap-8">
-            {['About', 'Gallery', 'Services', 'Products', 'Contact'].map((item) => (
+            {['about', 'gallery', 'services', 'products', 'contact'].map((item) => (
               <button
                 key={item}
                 onClick={() => scrollToSection(`section-${item.toLowerCase()}`)}
-                className="relative text-sm font-medium transition-all duration-200 group"
+                className="relative text-base font-semibold transition-all duration-200 group"
                 style={{ color: '#333333' }}
               >
-                {item}
+                {t(item)}
                 <span
                   className="absolute bottom-0 left-0 w-0 h-0.5 transition-all duration-300 group-hover:w-full"
                   style={{ backgroundColor: accentColor }}
@@ -88,8 +91,10 @@ export function Header({ businessName, logoUrl, primaryColor, accentColor, onScr
             ))}
           </nav>
 
-          {/* Book Now Button */}
+          {/* Book Now Button & Language Switcher */}
           <div className="flex items-center gap-4">
+            <LanguageSwitcher accentColor={accentColor} position="inline" />
+
             <button
               onClick={onScrollToServices || (() => scrollToSection('section-services'))}
               className="hidden sm:block px-8 py-3 rounded-full text-white font-semibold text-sm transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
@@ -98,7 +103,7 @@ export function Header({ businessName, logoUrl, primaryColor, accentColor, onScr
                 boxShadow: `0 4px 14px ${accentColor}40`
               }}
             >
-              Book Now
+              {t("bookNow")}
             </button>
 
             {/* Mobile Menu Button */}
@@ -122,22 +127,28 @@ export function Header({ businessName, logoUrl, primaryColor, accentColor, onScr
         {mobileMenuOpen && (
           <div className="lg:hidden py-4 border-t">
             <nav className="flex flex-col gap-4">
-              {['About', 'Gallery', 'Services', 'Products', 'Contact'].map((item) => (
+              {['about', 'gallery', 'services', 'products', 'contact'].map((item) => (
                 <button
                   key={item}
                   onClick={() => scrollToSection(`section-${item.toLowerCase()}`)}
                   className="text-left py-2 font-medium transition-colors duration-200"
                   style={{ color: '#333333' }}
                 >
-                  {item}
+                  {t(item)}
                 </button>
               ))}
+
+              {/* Mobile Language Switcher */}
+              <div className="py-2">
+                <LanguageSwitcher accentColor={accentColor} position="inline" />
+              </div>
+
               <button
                 onClick={onScrollToServices || (() => scrollToSection('section-services'))}
                 className="mt-2 px-6 py-3 rounded-full text-white font-semibold text-sm text-center"
                 style={{ backgroundColor: accentColor }}
               >
-                Book Now
+                {t("bookNow")}
               </button>
             </nav>
           </div>

@@ -12,15 +12,19 @@ import { ChristmasSocialSection } from "./SocialSection";
 import { ChristmasVideoSection } from "./VideoSection";
 import { getYouTubeVideoId, scrollToElement } from "../utils";
 import { LanguageSwitcher } from "../../LanguageSwitcher";
+import { Header } from "../../Header";
 
 export function ChristmasTheme({ data, colors, cart, onOpenCart }: ThemeComponentProps) {
   const [scrollY, setScrollY] = useState(0);
   const [mounted, setMounted] = useState(false);
+  const [showHeader, setShowHeader] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     const handleScroll = () => {
       setScrollY(window.scrollY);
+      // Show header when scrolled down more than 300px (past the logo/avatar)
+      setShowHeader(window.scrollY > 300);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -76,22 +80,40 @@ export function ChristmasTheme({ data, colors, cart, onOpenCart }: ThemeComponen
         </div>
       )}
 
-      {/* Festive Top Border */}
-      <div
-        className="sticky top-0 z-50 h-2 w-full transition-opacity duration-300"
-        style={{
-          background: `repeating-linear-gradient(
-            90deg,
-            ${colors.primaryColor} 0px,
-            ${colors.primaryColor} 20px,
-            ${colors.secondaryColor} 20px,
-            ${colors.secondaryColor} 40px,
-            ${colors.accentColor} 40px,
-            ${colors.accentColor} 60px
-          )`,
-          opacity: mounted && scrollY > 100 ? 1 : 0.7,
-        }}
-      />
+      {/* Sticky Header with Festive Border - Only visible when scrolled */}
+      {showHeader && (
+        <div className="fixed top-0 left-0 right-0 z-50 animate-slide-down">
+          {/* Festive Top Border */}
+          <div
+            className="h-2 w-full"
+            style={{
+              background: `repeating-linear-gradient(
+                90deg,
+                ${colors.primaryColor} 0px,
+                ${colors.primaryColor} 20px,
+                ${colors.secondaryColor} 20px,
+                ${colors.secondaryColor} 40px,
+                ${colors.accentColor} 40px,
+                ${colors.accentColor} 60px
+              )`,
+            }}
+          />
+
+          {/* Header with Navigation */}
+          <Header
+            businessName={data.merchant.business_name}
+            logoUrl={data.merchant.logo_url || undefined}
+            primaryColor={colors.primaryColor}
+            accentColor={colors.accentColor}
+            onScrollToServices={handleScrollToServices}
+          />
+        </div>
+      )}
+
+      {/* Floating Language Switcher - Only visible when header is hidden */}
+      {!showHeader && (
+        <LanguageSwitcher accentColor={colors.accentColor} position="top-right" />
+      )}
 
       {/* Content */}
       <div className="relative z-10">
@@ -123,9 +145,6 @@ export function ChristmasTheme({ data, colors, cart, onOpenCart }: ThemeComponen
         <ChristmasContactSection merchant={data.merchant} colors={colors} />
         <ChristmasSocialSection socialLinks={data.socialLinks} colors={colors} />
       </div>
-
-      {/* Language Switcher */}
-      <LanguageSwitcher accentColor={colors.accentColor} position="top-right" />
 
       {/* Floating Cart Button - Festive Christmas Style */}
       {cart.cart.length > 0 && (
@@ -211,6 +230,19 @@ export function ChristmasTheme({ data, colors, cart, onOpenCart }: ThemeComponen
           75% {
             transform: scale(1.05) rotate(5deg);
           }
+        }
+        @keyframes slide-down {
+          from {
+            transform: translateY(-100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+        .animate-slide-down {
+          animation: slide-down 0.3s ease-out forwards;
         }
       `}</style>
     </div>

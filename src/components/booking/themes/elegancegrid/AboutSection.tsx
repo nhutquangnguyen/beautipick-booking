@@ -1,8 +1,10 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { AboutSectionProps } from "../types";
 
 export function EleganceGridAboutSection({ merchant, colors }: AboutSectionProps) {
+  const t = useTranslations("common");
   if (!merchant.description) return null;
 
   return (
@@ -22,7 +24,7 @@ export function EleganceGridAboutSection({ merchant, colors }: AboutSectionProps
                 color: colors.primaryColor,
               }}
             >
-              About Us
+              {t("aboutUs")}
             </h2>
             <div
               className="w-20 h-1 mb-6"

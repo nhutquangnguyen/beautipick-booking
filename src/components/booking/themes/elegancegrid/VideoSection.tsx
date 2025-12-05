@@ -1,8 +1,10 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { VideoSectionProps } from "../types";
 
 export function EleganceGridVideoSection({ videoUrl, colors }: VideoSectionProps) {
+  const t = useTranslations("common");
   if (!videoUrl) return null;
 
   return (
@@ -20,7 +22,7 @@ export function EleganceGridVideoSection({ videoUrl, colors }: VideoSectionProps
               color: colors.primaryColor,
             }}
           >
-            Watch Our Story
+            {t("watchOurStory")}
           </h2>
           <div
             className="w-20 h-1 mx-auto mb-6"
