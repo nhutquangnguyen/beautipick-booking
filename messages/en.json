@@ -135,6 +135,8 @@
     "links": "Links",
     "qrCode": "QR Code",
     "settings": "Settings",
+    "themes": "Themes",
+    "themesDesc": "Choose a professional theme for your booking page",
     "businessInfo": "Business Info",
     "contactLocation": "Contact & Location",
     "language": "Language",
@@ -142,6 +144,31 @@
   },
   "settings": {
     "title": "Settings",
+    "subtitle": "Configure your booking page URL, custom domain, booking rules, and QR code",
+    "pageSlug": "Page Slug",
+    "pageSlugDesc": "This is your unique booking page URL",
+    "customDomainOptional": "Custom Domain (Optional)",
+    "customDomainDesc": "Use your own domain instead of {origin}",
+    "dnsSetupRequired": "DNS Setup Required:",
+    "bookingRulesTitle": "Booking Rules",
+    "requirePhoneNumber": "Require Phone Number",
+    "requirePhoneNumberDesc": "Customers must provide phone number",
+    "requireEmailAddress": "Require Email Address",
+    "requireEmailDesc": "Customers must provide email",
+    "allowSameDayBooking": "Allow Same-Day Booking",
+    "allowSameDayBookingDesc": "Customers can book for today",
+    "minimumAdvanceBooking": "Minimum Advance Booking (days)",
+    "minimumAdvanceBookingDesc": "How far ahead customers must book",
+    "maximumAdvanceBooking": "Maximum Advance Booking (days)",
+    "maximumAdvanceBookingDesc": "Maximum days in advance to book",
+    "cancellationNotice": "Cancellation Notice (hours)",
+    "cancellationNoticeDesc": "Hours before appointment customers can cancel",
+    "qrCodeTitle": "QR Code",
+    "qrCodeDesc": "Display this QR code at your location so customers can quickly access your booking page",
+    "qrCodeUrl": "QR Code URL",
+    "downloadQrCode": "Download QR Code",
+    "qrCodePrintDesc": "Print this QR code and display it at your reception, on flyers, or business cards. Customers can scan it to book instantly.",
+    "saveSettings": "Save Settings",
     "business": "Business",
     "businessDesc": "Update your business information",
     "services": "Services",
@@ -162,6 +189,48 @@
   "businessForm": {
     "title": "Business Information",
     "subtitle": "This information will be displayed on your public booking page",
+    "pageSubtitle": "Manage your logo, cover image, business details, contact information, and location",
+    "branding": "Branding",
+    "coverImageLegacy": "Cover Image (Legacy)",
+    "coverImageLegacyDesc": "Recommended: 1200x400px. Used by older themes.",
+    "slideshowCoverImages": "Slideshow Cover Images",
+    "slideshowDesc": "For Showcase Grid theme - 3 images auto-rotate every 5 seconds",
+    "coverImage1": "Cover Image 1",
+    "coverImage2": "Cover Image 2",
+    "coverImage3": "Cover Image 3",
+    "uploadImage": "Upload image",
+    "slideshowTip": "💡 Tip: Upload high-quality images (1920x1080px recommended) for full-screen slideshow effect.",
+    "logo": "Logo",
+    "uploadLogo": "Upload logo",
+    "logoDesc": "Recommended: 400x400px. Square format works best.",
+    "videoDesc": "Add a video tour or introduction to your business",
+    "describeYourBusiness": "Describe your business, services, and what makes you special...",
+    "characters": "characters",
+    "contactLocation": "Contact & Location",
+    "streetAddress": "Street Address",
+    "streetAddressPlaceholder": "123 Main Street",
+    "city": "City",
+    "stateProvince": "State/Province",
+    "zipCode": "Zip Code",
+    "googleMapsLink": "Google Maps Link",
+    "googleMapsPlaceholder": "https://maps.google.com/...",
+    "googleMapsDesc": "Customers can click to get directions",
+    "businessHours": "Business Hours",
+    "to": "to",
+    "closed": "Closed",
+    "socialLinks": "Social Links",
+    "socialLinksDesc": "Click on a social platform icon to add or edit your link",
+    "editUrl": "Edit {platform} URL:",
+    "addUrl": "Add {platform} URL:",
+    "saveAllChanges": "Save All Changes",
+    "savedSuccessfully": "✓ Saved successfully!",
+    "sunday": "Sunday",
+    "monday": "Monday",
+    "tuesday": "Tuesday",
+    "wednesday": "Wednesday",
+    "thursday": "Thursday",
+    "friday": "Friday",
+    "saturday": "Saturday",
     "businessName": "Business Name",
     "businessNamePlaceholder": "Your salon or spa name",
     "businessDetails": "Business Details",
@@ -301,6 +370,8 @@
     "logoAvatar": "Logo / Avatar",
     "logoRec": "Recommended: 200 x 200 pixels",
     "chooseTheme": "Choose a Theme",
+    "chooseLayoutColors": "Choose Your Layout & Colors",
+    "chooseLayoutColorsDesc": "First, select a layout style that matches your business. Then choose from curated color schemes designed for that layout.",
     "contentOrder": "Content Order",
     "contentOrderDesc": "Drag to reorder sections on your booking page",
     "headerStyle": "Header Style",
@@ -724,5 +795,97 @@
     "copyLink": "Copy Link",
     "copied": "Copied!",
     "language": "Language"
+  },
+  "themes": {
+    "presets": {
+      "opulence": {
+        "name": "💎 Opulence",
+        "description": "Ultra-luxury design with gold accents and sophisticated dark palette. For high-end spas and medical aesthetics."
+      },
+      "radiance": {
+        "name": "✨ Radiance",
+        "description": "Vibrant and stylish with purple-pink gradients. Perfect for hair salons and transformation-focused businesses."
+      },
+      "glamour": {
+        "name": "💄 Glamour",
+        "description": "Bold and trendy with hot pink and rose gold. Instagram-worthy design for makeup artists and beauty influencers."
+      },
+      "tranquil": {
+        "name": "🧖 Tranquil",
+        "description": "Peaceful and healing with soft teal and sandy tones. Designed for massage therapy and therapeutic services."
+      },
+      "serenity": {
+        "name": "🌿 Serenity",
+        "description": "Zen-inspired with sage green and warm beige. Perfect for holistic wellness and meditation centers."
+      },
+      "distinguished": {
+        "name": "🎩 Distinguished",
+        "description": "Classic masculine design with bourbon and charcoal. Vintage-modern aesthetic for barbershops and men's grooming."
+      },
+      "blossom": {
+        "name": "🌸 Blossom",
+        "description": "Cute and trendy with pastel palette. Pinterest-style design for nail salons and nail art specialists."
+      },
+      "powerhouse": {
+        "name": "🏋️ Powerhouse",
+        "description": "Bold and energetic with electric blue and neon accents. High-impact design for fitness and training."
+      },
+      "artisan": {
+        "name": "🪡 Artisan",
+        "description": "Edgy and artistic with dark aesthetic and crimson accents. Portfolio-focused for tattoo artists and body art."
+      },
+      "coastal": {
+        "name": "🌊 Coastal",
+        "description": "Breezy and luxurious with ocean blue and sandy beige. Vacation-inspired for resort spas and beach locations."
+      }
+    },
+    "layouts": {
+      "starter": {
+        "name": "Starter",
+        "description": "Simple & clean Linktree-style layout, perfect for beginners"
+      },
+      "elegancegrid": {
+        "name": "Elegance Grid",
+        "description": "Sophisticated grid layout with elegant colors and smooth animations, perfect for luxury spas"
+      },
+      "showcasegrid": {
+        "name": "Showcase Grid",
+        "description": "Minimalist portfolio layout with high-contrast design and masonry gallery for artists"
+      },
+      "christmas": {
+        "name": "Christmas",
+        "description": "Festive holiday theme with warm colors, snowfall effects, and seasonal cheer"
+      }
+    },
+    "colorSchemes": {
+      "clean": {
+        "name": "Clean",
+        "description": "Simple white background with brand colors"
+      },
+      "minimal": {
+        "name": "Minimal",
+        "description": "Soft gray with subtle accent"
+      },
+      "elegance": {
+        "name": "Elegance",
+        "description": "Deep teal, warm beige and rose gold - sophisticated and calming"
+      },
+      "imperial": {
+        "name": "Imperial",
+        "description": "Deep purple with silver - regal and sophisticated"
+      },
+      "monochrome": {
+        "name": "Monochrome",
+        "description": "Deep charcoal with vibrant blue - clean and modern"
+      },
+      "holiday": {
+        "name": "Holiday Magic",
+        "description": "Traditional Christmas red and green"
+      },
+      "winter": {
+        "name": "Winter Wonderland",
+        "description": "Cool winter blue and silver"
+      }
+    }
   }
 }

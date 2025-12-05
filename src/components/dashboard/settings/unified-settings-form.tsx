@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Globe, Info, ClipboardList, QrCode as QrCodeIcon, ChevronDown, ChevronUp, Download } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Merchant } from "@/types/database";
@@ -9,6 +10,7 @@ import { generateSlug } from "@/lib/utils";
 import { QRCodeSVG } from "qrcode.react";
 
 export function UnifiedSettingsForm({ merchant }: { merchant: Merchant }) {
+  const t = useTranslations("settings");
   const router = useRouter();
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
@@ -138,11 +140,11 @@ export function UnifiedSettingsForm({ merchant }: { merchant: Merchant }) {
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* URL Settings */}
       <div className="card overflow-hidden">
-        <SectionHeader title="Booking Page URL" section="url" icon={Globe} />
+        <SectionHeader title={t("bookingPageUrl")} section="url" icon={Globe} />
         {expandedSections.has("url") && (
           <div className="p-6 space-y-4">
             <div>
-              <label className="label">Page Slug</label>
+              <label className="label">{t("pageSlug")}</label>
               <div className="mt-1 flex flex-col sm:flex-row">
                 <span className="flex items-center rounded-t-md sm:rounded-l-md sm:rounded-tr-none border border-b-0 sm:border-b sm:border-r-0 border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-500">
                   {origin}/
@@ -158,14 +160,14 @@ export function UnifiedSettingsForm({ merchant }: { merchant: Merchant }) {
                 />
               </div>
               <p className="mt-2 text-xs text-gray-500">
-                This is your unique booking page URL
+                {t("pageSlugDesc")}
               </p>
             </div>
 
             <div>
               <label className="label flex items-center gap-2">
                 <Globe className="h-4 w-4" />
-                Custom Domain (Optional)
+                {t("customDomainOptional")}
               </label>
               <input
                 type="text"
@@ -177,13 +179,13 @@ export function UnifiedSettingsForm({ merchant }: { merchant: Merchant }) {
                 placeholder="yourdomain.com"
               />
               <p className="mt-1 text-xs text-gray-500">
-                Use your own domain instead of {origin}
+                {t("customDomainDesc", { origin })}
               </p>
               <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
                 <div className="flex gap-2">
                   <Info className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
                   <div className="text-xs text-blue-800 space-y-2">
-                    <p className="font-medium">DNS Setup Required:</p>
+                    <p className="font-medium">{t("dnsSetupRequired")}</p>
                     <div className="space-y-1 p-2 bg-white rounded border border-blue-300 font-mono text-[11px]">
                       <div><strong>A Record:</strong> @ → 216.198.79.1</div>
                       <div><strong>CNAME:</strong> www → d05236ba666bbb6a.vercel-dns-017.com.</div>
@@ -198,7 +200,7 @@ export function UnifiedSettingsForm({ merchant }: { merchant: Merchant }) {
 
       {/* Booking Rules */}
       <div className="card overflow-hidden">
-        <SectionHeader title="Booking Rules" section="rules" icon={ClipboardList} />
+        <SectionHeader title={t("bookingRulesTitle")} section="rules" icon={ClipboardList} />
         {expandedSections.has("rules") && (
           <div className="p-6 space-y-4">
             <div className="space-y-3">
@@ -212,8 +214,8 @@ export function UnifiedSettingsForm({ merchant }: { merchant: Merchant }) {
                   className="h-4 w-4 rounded text-purple-600"
                 />
                 <div>
-                  <p className="text-sm font-medium text-gray-700">Require Phone Number</p>
-                  <p className="text-xs text-gray-500">Customers must provide phone number</p>
+                  <p className="text-sm font-medium text-gray-700">{t("requirePhoneNumber")}</p>
+                  <p className="text-xs text-gray-500">{t("requirePhoneNumberDesc")}</p>
                 </div>
               </label>
 
@@ -227,8 +229,8 @@ export function UnifiedSettingsForm({ merchant }: { merchant: Merchant }) {
                   className="h-4 w-4 rounded text-purple-600"
                 />
                 <div>
-                  <p className="text-sm font-medium text-gray-700">Require Email Address</p>
-                  <p className="text-xs text-gray-500">Customers must provide email</p>
+                  <p className="text-sm font-medium text-gray-700">{t("requireEmailAddress")}</p>
+                  <p className="text-xs text-gray-500">{t("requireEmailDesc")}</p>
                 </div>
               </label>
 
@@ -242,15 +244,15 @@ export function UnifiedSettingsForm({ merchant }: { merchant: Merchant }) {
                   className="h-4 w-4 rounded text-purple-600"
                 />
                 <div>
-                  <p className="text-sm font-medium text-gray-700">Allow Same-Day Booking</p>
-                  <p className="text-xs text-gray-500">Customers can book for today</p>
+                  <p className="text-sm font-medium text-gray-700">{t("allowSameDayBooking")}</p>
+                  <p className="text-xs text-gray-500">{t("allowSameDayBookingDesc")}</p>
                 </div>
               </label>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="label">Minimum Advance Booking (days)</label>
+                <label className="label">{t("minimumAdvanceBooking")}</label>
                 <input
                   type="number"
                   value={bookingRules.min_advance_booking}
@@ -261,12 +263,12 @@ export function UnifiedSettingsForm({ merchant }: { merchant: Merchant }) {
                   min="0"
                 />
                 <p className="mt-1 text-xs text-gray-500">
-                  How far ahead customers must book
+                  {t("minimumAdvanceBookingDesc")}
                 </p>
               </div>
 
               <div>
-                <label className="label">Maximum Advance Booking (days)</label>
+                <label className="label">{t("maximumAdvanceBooking")}</label>
                 <input
                   type="number"
                   value={bookingRules.max_advance_booking}
@@ -277,13 +279,13 @@ export function UnifiedSettingsForm({ merchant }: { merchant: Merchant }) {
                   min="1"
                 />
                 <p className="mt-1 text-xs text-gray-500">
-                  Maximum days in advance to book
+                  {t("maximumAdvanceBookingDesc")}
                 </p>
               </div>
             </div>
 
             <div>
-              <label className="label">Cancellation Notice (hours)</label>
+              <label className="label">{t("cancellationNotice")}</label>
               <input
                 type="number"
                 value={bookingRules.cancellation_hours}
@@ -294,7 +296,7 @@ export function UnifiedSettingsForm({ merchant }: { merchant: Merchant }) {
                 min="0"
               />
               <p className="mt-1 text-xs text-gray-500">
-                Hours before appointment customers can cancel
+                {t("cancellationNoticeDesc")}
               </p>
             </div>
           </div>
@@ -303,11 +305,11 @@ export function UnifiedSettingsForm({ merchant }: { merchant: Merchant }) {
 
       {/* QR Code */}
       <div className="card overflow-hidden">
-        <SectionHeader title="QR Code" section="qrcode" icon={QrCodeIcon} />
+        <SectionHeader title={t("qrCodeTitle")} section="qrcode" icon={QrCodeIcon} />
         {expandedSections.has("qrcode") && (
           <div className="p-6 space-y-4">
             <p className="text-sm text-gray-600">
-              Display this QR code at your location so customers can quickly access your booking page
+              {t("qrCodeDesc")}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-6">
@@ -322,7 +324,7 @@ export function UnifiedSettingsForm({ merchant }: { merchant: Merchant }) {
 
               <div className="flex-1 space-y-4">
                 <div>
-                  <label className="label">QR Code URL</label>
+                  <label className="label">{t("qrCodeUrl")}</label>
                   <input
                     type="text"
                     value={customDomainUrl || bookingPageUrl}
@@ -337,12 +339,11 @@ export function UnifiedSettingsForm({ merchant }: { merchant: Merchant }) {
                   className="btn btn-outline btn-md flex items-center gap-2"
                 >
                   <Download className="h-4 w-4" />
-                  Download QR Code
+                  {t("downloadQrCode")}
                 </button>
 
                 <p className="text-xs text-gray-500">
-                  Print this QR code and display it at your reception, on flyers, or business cards.
-                  Customers can scan it to book instantly.
+                  {t("qrCodePrintDesc")}
                 </p>
               </div>
             </div>
@@ -358,10 +359,10 @@ export function UnifiedSettingsForm({ merchant }: { merchant: Merchant }) {
             disabled={loading}
             className="btn btn-primary btn-lg"
           >
-            {loading ? "Saving..." : "Save Settings"}
+            {loading ? t("saving") : t("saveSettings")}
           </button>
           {success && (
-            <span className="text-sm text-green-600 font-medium">✓ Saved successfully!</span>
+            <span className="text-sm text-green-600 font-medium">{t("savedSuccessfully")}</span>
           )}
         </div>
       </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { X, Check, Sparkles } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { ThemePreset } from "@/types/database";
 import { useEffect } from "react";
 
@@ -19,6 +20,8 @@ export function ThemePreviewModal({
   onApply,
   currentThemeId,
 }: ThemePreviewModalProps) {
+  const t = useTranslations("themes");
+
   // Close on Escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -58,7 +61,7 @@ export function ThemePreviewModal({
             />
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-gray-900">{theme.name}</h2>
+                <h2 className="text-xl font-bold text-gray-900">{t(`presets.${theme.id}.name`)}</h2>
                 {isPopular && (
                   <span className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-semibold px-2 py-1 rounded-full flex items-center gap-1">
                     <Sparkles className="h-3 w-3" />
@@ -66,7 +69,7 @@ export function ThemePreviewModal({
                   </span>
                 )}
               </div>
-              <p className="text-sm text-gray-500 mt-0.5">{theme.description}</p>
+              <p className="text-sm text-gray-500 mt-0.5">{t(`presets.${theme.id}.description`)}</p>
             </div>
           </div>
 

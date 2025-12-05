@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import {
   MerchantTheme,
@@ -33,6 +34,7 @@ export function DesignForm({
   merchantId: string;
   theme: MerchantTheme;
 }) {
+  const t = useTranslations("designForm");
   const router = useRouter();
   const supabase = createClient();
   const [saving, setSaving] = useState(false);
@@ -155,9 +157,9 @@ export function DesignForm({
       {/* Layout Selector */}
       <div className="card p-4 sm:p-6">
         <div className="mb-6">
-          <h3 className="font-semibold text-gray-900 text-lg sm:text-2xl">Choose Your Layout & Colors</h3>
+          <h3 className="font-semibold text-gray-900 text-lg sm:text-2xl">{t("chooseLayoutColors")}</h3>
           <p className="text-sm sm:text-base text-gray-500 mt-2">
-            First, select a layout style that matches your business. Then choose from curated color schemes designed for that layout.
+            {t("chooseLayoutColorsDesc")}
           </p>
         </div>
         <LayoutSelector

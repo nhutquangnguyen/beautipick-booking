@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Check, Eye, Sparkles } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { ThemePreset, MerchantTheme } from "@/types/database";
 
 interface ThemeGalleryProps {
@@ -19,6 +20,7 @@ export function ThemeGallery({
   onPreviewTheme,
   compact = false,
 }: ThemeGalleryProps) {
+  const t = useTranslations("themes");
   const [hoveredTheme, setHoveredTheme] = useState<string | null>(null);
 
   return (
@@ -166,10 +168,10 @@ export function ThemeGallery({
               {/* Theme Info */}
               <div className={compact ? "p-3" : "p-4"}>
                 <h4 className={`font-bold text-gray-900 ${compact ? "text-sm" : "text-base"}`}>
-                  {preset.name}
+                  {t(`presets.${preset.id}.name`)}
                 </h4>
                 {!compact && (
-                  <p className="text-sm text-gray-500 mt-1 line-clamp-2">{preset.description}</p>
+                  <p className="text-sm text-gray-500 mt-1 line-clamp-2">{t(`presets.${preset.id}.description`)}</p>
                 )}
 
                 {/* Theme Attributes */}
@@ -190,7 +192,7 @@ export function ThemeGallery({
                 )}
 
                 {compact && (
-                  <p className="text-xs text-gray-500 mt-1 line-clamp-1">{preset.description}</p>
+                  <p className="text-xs text-gray-500 mt-1 line-clamp-1">{t(`presets.${preset.id}.description`)}</p>
                 )}
               </div>
             </div>

@@ -135,6 +135,8 @@
     "links": "Liên kết",
     "qrCode": "Mã QR",
     "settings": "Cài đặt",
+    "themes": "Giao diện",
+    "themesDesc": "Chọn giao diện chuyên nghiệp cho trang đặt lịch của bạn",
     "businessInfo": "Thông tin doanh nghiệp",
     "contactLocation": "Liên hệ & Địa chỉ",
     "language": "Ngôn ngữ",
@@ -142,6 +144,34 @@
   },
   "settings": {
     "title": "Cài đặt",
+    "subtitle": "Cấu hình URL trang đặt lịch, tên miền riêng, quy tắc đặt lịch và mã QR",
+    "bookingPageUrl": "URL trang đặt lịch",
+    "pageSlug": "Đường dẫn trang",
+    "pageSlugDesc": "Đây là URL trang đặt lịch duy nhất của bạn",
+    "customDomainOptional": "Tên miền riêng (Tùy chọn)",
+    "customDomainDesc": "Sử dụng tên miền riêng của bạn thay vì {origin}",
+    "dnsSetupRequired": "Yêu cầu cài đặt DNS:",
+    "bookingRulesTitle": "Quy tắc đặt lịch",
+    "requirePhoneNumber": "Yêu cầu số điện thoại",
+    "requirePhoneNumberDesc": "Khách hàng phải cung cấp số điện thoại",
+    "requireEmailAddress": "Yêu cầu địa chỉ Email",
+    "requireEmailDesc": "Khách hàng phải cung cấp email",
+    "allowSameDayBooking": "Cho phép đặt lịch trong ngày",
+    "allowSameDayBookingDesc": "Khách hàng có thể đặt lịch cho hôm nay",
+    "minimumAdvanceBooking": "Đặt trước tối thiểu (ngày)",
+    "minimumAdvanceBookingDesc": "Khách hàng phải đặt trước bao xa",
+    "maximumAdvanceBooking": "Đặt trước tối đa (ngày)",
+    "maximumAdvanceBookingDesc": "Số ngày tối đa có thể đặt trước",
+    "cancellationNotice": "Thông báo hủy (giờ)",
+    "cancellationNoticeDesc": "Số giờ trước cuộc hẹn khách hàng có thể hủy",
+    "qrCodeTitle": "Mã QR",
+    "qrCodeDesc": "Hiển thị mã QR này tại địa điểm của bạn để khách hàng có thể truy cập nhanh trang đặt lịch",
+    "qrCodeUrl": "URL mã QR",
+    "downloadQrCode": "Tải xuống mã QR",
+    "qrCodePrintDesc": "In mã QR này và hiển thị tại quầy lễ tân, trên tờ rơi hoặc danh thiếp. Khách hàng có thể quét để đặt lịch ngay lập tức.",
+    "saveSettings": "Lưu cài đặt",
+    "saving": "Đang lưu...",
+    "savedSuccessfully": "✓ Đã lưu thành công!",
     "business": "Doanh nghiệp",
     "businessDesc": "Cập nhật thông tin doanh nghiệp",
     "services": "Dịch vụ",
@@ -162,6 +192,48 @@
   "businessForm": {
     "title": "Thông tin doanh nghiệp",
     "subtitle": "Thông tin này sẽ hiển thị trên trang đặt lịch công khai",
+    "pageSubtitle": "Quản lý logo, ảnh bìa, thông tin doanh nghiệp, liên hệ và địa điểm",
+    "branding": "Thương hiệu",
+    "coverImageLegacy": "Ảnh bìa (Cũ)",
+    "coverImageLegacyDesc": "Khuyến nghị: 1200x400px. Dùng cho các giao diện cũ.",
+    "slideshowCoverImages": "Ảnh bìa Slideshow",
+    "slideshowDesc": "Cho giao diện Lưới Trưng Bày - 3 ảnh tự động xoay vòng mỗi 5 giây",
+    "coverImage1": "Ảnh bìa 1",
+    "coverImage2": "Ảnh bìa 2",
+    "coverImage3": "Ảnh bìa 3",
+    "uploadImage": "Tải ảnh lên",
+    "slideshowTip": "💡 Mẹo: Tải lên ảnh chất lượng cao (khuyến nghị 1920x1080px) cho hiệu ứng slideshow toàn màn hình.",
+    "logo": "Logo",
+    "uploadLogo": "Tải logo lên",
+    "logoDesc": "Khuyến nghị: 400x400px. Định dạng vuông hoạt động tốt nhất.",
+    "videoDesc": "Thêm video giới thiệu hoặc tour doanh nghiệp của bạn",
+    "describeYourBusiness": "Mô tả doanh nghiệp, dịch vụ và điểm đặc biệt của bạn...",
+    "characters": "ký tự",
+    "contactLocation": "Liên hệ & Địa điểm",
+    "streetAddress": "Địa chỉ đường",
+    "streetAddressPlaceholder": "123 Đường Chính",
+    "city": "Thành phố",
+    "stateProvince": "Tỉnh/Thành",
+    "zipCode": "Mã bưu điện",
+    "googleMapsLink": "Liên kết Google Maps",
+    "googleMapsPlaceholder": "https://maps.google.com/...",
+    "googleMapsDesc": "Khách hàng có thể nhấp để lấy chỉ đường",
+    "businessHours": "Giờ làm việc",
+    "to": "đến",
+    "closed": "Đóng cửa",
+    "socialLinks": "Liên kết mạng xã hội",
+    "socialLinksDesc": "Nhấp vào biểu tượng nền tảng mạng xã hội để thêm hoặc chỉnh sửa liên kết",
+    "editUrl": "Chỉnh sửa URL {platform}:",
+    "addUrl": "Thêm URL {platform}:",
+    "saveAllChanges": "Lưu tất cả thay đổi",
+    "savedSuccessfully": "✓ Đã lưu thành công!",
+    "sunday": "Chủ nhật",
+    "monday": "Thứ hai",
+    "tuesday": "Thứ ba",
+    "wednesday": "Thứ tư",
+    "thursday": "Thứ năm",
+    "friday": "Thứ sáu",
+    "saturday": "Thứ bảy",
     "businessName": "Tên doanh nghiệp",
     "businessNamePlaceholder": "Tên salon hoặc spa của bạn",
     "businessDetails": "Chi tiết doanh nghiệp",
@@ -301,6 +373,8 @@
     "logoAvatar": "Logo / Ảnh đại diện",
     "logoRec": "Khuyến nghị: 200 x 200 pixels",
     "chooseTheme": "Chọn giao diện",
+    "chooseLayoutColors": "Chọn Bố Cục & Màu Sắc",
+    "chooseLayoutColorsDesc": "Đầu tiên, chọn kiểu bố cục phù hợp với doanh nghiệp của bạn. Sau đó chọn từ các bảng màu được thiết kế cho bố cục đó.",
     "contentOrder": "Thứ tự nội dung",
     "contentOrderDesc": "Kéo để sắp xếp các mục trên trang đặt lịch",
     "headerStyle": "Kiểu tiêu đề",
@@ -722,5 +796,97 @@
     "copyLink": "Sao chép",
     "copied": "Đã sao chép!",
     "language": "Ngôn ngữ"
+  },
+  "themes": {
+    "presets": {
+      "opulence": {
+        "name": "💎 Sang Trọng",
+        "description": "Thiết kế siêu sang với điểm nhấn vàng và bảng màu tối tinh tế. Dành cho spa cao cấp và thẩm mỹ y khoa."
+      },
+      "radiance": {
+        "name": "✨ Rực Rỡ",
+        "description": "Sống động và phong cách với gradient tím-hồng. Hoàn hảo cho salon tóc và doanh nghiệp tập trung vào sự thay đổi."
+      },
+      "glamour": {
+        "name": "💄 Quyến Rũ",
+        "description": "Táo bạo và hợp xu hướng với hồng nóng và vàng hồng. Thiết kế đẹp Instagram cho chuyên gia trang điểm và người ảnh hưởng làm đẹp."
+      },
+      "tranquil": {
+        "name": "🧖 Thư Giãn",
+        "description": "Yên bình và chữa lành với màu xanh mòng két nhẹ và tông màu cát. Được thiết kế cho liệu pháp massage và dịch vụ trị liệu."
+      },
+      "serenity": {
+        "name": "🌿 Thanh Thản",
+        "description": "Lấy cảm hứng từ Zen với màu xanh lá nhạt và be ấm áp. Hoàn hảo cho chăm sóc sức khỏe toàn diện và trung tâm thiền định."
+      },
+      "distinguished": {
+        "name": "🎩 Lịch Lãm",
+        "description": "Thiết kế nam tính cổ điển với bourbon và than chì. Thẩm mỹ cổ điển-hiện đại cho tiệm cắt tóc nam và chăm sóc nam giới."
+      },
+      "blossom": {
+        "name": "🌸 Nở Hoa",
+        "description": "Dễ thương và hợp xu hướng với bảng màu pastel. Thiết kế phong cách Pinterest cho salon nail và chuyên gia nghệ thuật móng."
+      },
+      "powerhouse": {
+        "name": "🏋️ Năng Động",
+        "description": "Táo bạo và tràn đầy năng lượng với xanh điện và điểm nhấn neon. Thiết kế tác động cao cho thể dục và huấn luyện."
+      },
+      "artisan": {
+        "name": "🪡 Nghệ Nhân",
+        "description": "Cá tính và nghệ thuật với thẩm mỹ tối và điểm nhấn đỏ thẫm. Tập trung vào danh mục đầu tư cho nghệ sĩ xăm và nghệ thuật cơ thể."
+      },
+      "coastal": {
+        "name": "🌊 Ven Biển",
+        "description": "Thoáng đãng và sang trọng với xanh đại dương và be cát. Lấy cảm hứng từ kỳ nghỉ cho spa resort và địa điểm bãi biển."
+      }
+    },
+    "layouts": {
+      "starter": {
+        "name": "Khởi Đầu",
+        "description": "Bố cục đơn giản & sạch sẽ kiểu Linktree, hoàn hảo cho người mới bắt đầu"
+      },
+      "elegancegrid": {
+        "name": "Lưới Thanh Lịch",
+        "description": "Bố cục lưới tinh tế với màu sắc tao nhã và hoạt ảnh mượt mà, hoàn hảo cho spa sang trọng"
+      },
+      "showcasegrid": {
+        "name": "Lưới Trưng Bày",
+        "description": "Bố cục danh mục đầu tư tối giản với thiết kế độ tương phản cao và phòng trưng bày gạch cho nghệ sĩ"
+      },
+      "christmas": {
+        "name": "Giáng Sinh",
+        "description": "Chủ đề lễ hội với màu sắc ấm áp, hiệu ứng tuyết rơi và niềm vui mùa lễ"
+      }
+    },
+    "colorSchemes": {
+      "clean": {
+        "name": "Sạch Sẽ",
+        "description": "Nền trắng đơn giản với màu thương hiệu"
+      },
+      "minimal": {
+        "name": "Tối Giản",
+        "description": "Xám nhẹ với điểm nhấn tinh tế"
+      },
+      "elegance": {
+        "name": "Thanh Lịch",
+        "description": "Xanh mòng két đậm, be ấm và vàng hồng - tinh tế và êm dịu"
+      },
+      "imperial": {
+        "name": "Hoàng Gia",
+        "description": "Tím đậm với bạc - sang trọng và tinh tế"
+      },
+      "monochrome": {
+        "name": "Đơn Sắc",
+        "description": "Than chì đậm với xanh sống động - sạch và hiện đại"
+      },
+      "holiday": {
+        "name": "Phép Màu Kỳ Nghỉ",
+        "description": "Đỏ và xanh Giáng sinh truyền thống"
+      },
+      "winter": {
+        "name": "Xứ Sở Mùa Đông",
+        "description": "Xanh mùa đông mát mẻ và bạc"
+      }
+    }
   }
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Check } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { LayoutOption, ColorScheme, LayoutTemplate } from "@/types/database";
 
 interface LayoutSelectorProps {
@@ -17,6 +18,7 @@ export function LayoutSelector({
   selectedColorScheme,
   onLayoutChange,
 }: LayoutSelectorProps) {
+  const t = useTranslations("themes");
   const [expandedLayout, setExpandedLayout] = useState<LayoutTemplate | null>(selectedLayout);
 
   const handleLayoutClick = (layout: LayoutOption) => {
@@ -79,41 +81,15 @@ export function LayoutSelector({
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h3 className="font-bold text-lg sm:text-xl text-gray-900">
-                      {layout.name}
+                      {t(`layouts.${layout.id}.name`)}
                     </h3>
-                    <p className="text-sm text-gray-600 mt-1">{layout.description}</p>
+                    <p className="text-sm text-gray-600 mt-1">{t(`layouts.${layout.id}.description`)}</p>
                   </div>
                   {isSelected && (
                     <div className="flex-shrink-0 px-3 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full">
                       Active
                     </div>
                   )}
-                </div>
-
-                {/* Best For */}
-                <div className="mt-3">
-                  <div className="flex flex-wrap gap-2">
-                    {layout.bestFor.map((item) => (
-                      <span
-                        key={item}
-                        className="px-2.5 py-1 bg-white border border-gray-200 text-xs font-medium text-gray-700 rounded-lg"
-                      >
-                        {item}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Features */}
-                <div className="mt-3">
-                  <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
-                    {layout.features.map((feature) => (
-                      <div key={feature} className="flex items-center gap-1.5">
-                        <div className="w-1.5 h-1.5 rounded-full bg-gray-400" />
-                        <span>{feature}</span>
-                      </div>
-                    ))}
-                  </div>
                 </div>
               </div>
 
@@ -180,10 +156,10 @@ export function LayoutSelector({
 
                           {/* Color Scheme Info */}
                           <h5 className="font-semibold text-sm text-gray-900">
-                            {colorScheme.name}
+                            {t(`colorSchemes.${colorScheme.id}.name`)}
                           </h5>
                           <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
-                            {colorScheme.description}
+                            {t(`colorSchemes.${colorScheme.id}.description`)}
                           </p>
 
                           {/* Color Swatches */}

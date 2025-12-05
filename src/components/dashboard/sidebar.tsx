@@ -115,8 +115,8 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
     { href: "/dashboard/services", label: t("services"), icon: Scissors },
     { href: "/dashboard/products", label: t("products"), icon: ShoppingBag },
     { href: "/dashboard/themes/gallery", label: t("gallery"), icon: Images },
-    { href: "/dashboard/themes", label: "Themes", icon: Palette },
-    { href: "/dashboard/business-info", label: "Business Info", icon: Store },
+    { href: "/dashboard/themes", label: t("themes"), icon: Palette },
+    { href: "/dashboard/business-info", label: t("businessInfo"), icon: Store },
     { href: "/dashboard/settings", label: t("settings"), icon: Settings },
     // Add admin link if user is admin
     ...(isAdmin ? [{ href: "/admin", label: "Admin", icon: Shield }] : []),

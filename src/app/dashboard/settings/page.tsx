@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { UnifiedSettingsForm } from "@/components/dashboard/settings/unified-settings-form";
 
 export default async function SettingsPage() {
@@ -18,12 +19,14 @@ export default async function SettingsPage() {
 
   if (!merchant) redirect("/login");
 
+  const t = await getTranslations("settings");
+
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-gray-900">Settings</h2>
+        <h2 className="text-xl font-semibold text-gray-900">{t("title")}</h2>
         <p className="text-sm text-gray-600">
-          Configure your booking page URL, custom domain, booking rules, and QR code
+          {t("subtitle")}
         </p>
       </div>
 

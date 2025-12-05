@@ -2,13 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Youtube, Globe, Info, MapPin, Phone, Clock, Link2, ChevronDown, ChevronUp, Instagram, Facebook, Music, Twitter, MessageCircle, Send } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Merchant, SocialLink } from "@/types/database";
 import { generateSlug } from "@/lib/utils";
 import { ImageUpload } from "@/components/ui/image-upload";
-
-const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 interface DayHours {
   is_available: boolean;
@@ -17,6 +16,16 @@ interface DayHours {
 }
 
 export function CombinedBusinessInfoForm({ merchant }: { merchant: Merchant }) {
+  const t = useTranslations("businessForm");
+  const DAY_NAMES = [
+    t("sunday"),
+    t("monday"),
+    t("tuesday"),
+    t("wednesday"),
+    t("thursday"),
+    t("friday"),
+    t("saturday"),
+  ];
   const router = useRouter();
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
@@ -209,20 +218,20 @@ export function CombinedBusinessInfoForm({ merchant }: { merchant: Merchant }) {
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Branding Section */}
       <div className="card overflow-hidden">
-        <SectionHeader title="Branding" section="branding" icon={Globe} />
+        <SectionHeader title={t("branding")} section="branding" icon={Globe} />
         {expandedSections.has("branding") && (
           <div className="p-6 space-y-6">
             <div>
-              <label className="label mb-2">Cover Image (Legacy)</label>
+              <label className="label mb-2">{t("coverImageLegacy")}</label>
               <ImageUpload
                 value={coverUrl}
                 onChange={setCoverUrl}
                 folder={`merchants/${merchant.id}/cover`}
                 aspectRatio="cover"
-                placeholder="Upload cover image"
+                placeholder={t("uploadImage")}
               />
               <p className="mt-2 text-xs text-gray-500">
-                Recommended: 1200x400px. Used by older themes.
+                {t("coverImageLegacyDesc")}
               </p>
             </div>
 
@@ -233,62 +242,62 @@ export function CombinedBusinessInfoForm({ merchant }: { merchant: Merchant }) {
                   ✨
                 </div>
                 <div>
-                  <h4 className="font-semibold text-gray-900">Slideshow Cover Images</h4>
-                  <p className="text-xs text-gray-600">For Showcase Grid theme - 3 images auto-rotate every 5 seconds</p>
+                  <h4 className="font-semibold text-gray-900">{t("slideshowCoverImages")}</h4>
+                  <p className="text-xs text-gray-600">{t("slideshowDesc")}</p>
                 </div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-3">
                 <div>
-                  <label className="label mb-2 text-sm">Cover Image 1</label>
+                  <label className="label mb-2 text-sm">{t("coverImage1")}</label>
                   <ImageUpload
                     value={coverUrl1}
                     onChange={setCoverUrl1}
                     folder={`merchants/${merchant.id}/covers`}
                     aspectRatio="cover"
-                    placeholder="Upload image 1"
+                    placeholder={t("uploadImage")}
                   />
                 </div>
 
                 <div>
-                  <label className="label mb-2 text-sm">Cover Image 2</label>
+                  <label className="label mb-2 text-sm">{t("coverImage2")}</label>
                   <ImageUpload
                     value={coverUrl2}
                     onChange={setCoverUrl2}
                     folder={`merchants/${merchant.id}/covers`}
                     aspectRatio="cover"
-                    placeholder="Upload image 2"
+                    placeholder={t("uploadImage")}
                   />
                 </div>
 
                 <div>
-                  <label className="label mb-2 text-sm">Cover Image 3</label>
+                  <label className="label mb-2 text-sm">{t("coverImage3")}</label>
                   <ImageUpload
                     value={coverUrl3}
                     onChange={setCoverUrl3}
                     folder={`merchants/${merchant.id}/covers`}
                     aspectRatio="cover"
-                    placeholder="Upload image 3"
+                    placeholder={t("uploadImage")}
                   />
                 </div>
               </div>
 
               <p className="text-xs text-gray-600 mt-2">
-                💡 Tip: Upload high-quality images (1920x1080px recommended) for full-screen slideshow effect.
+                {t("slideshowTip")}
               </p>
             </div>
 
             <div>
-              <label className="label mb-2">Logo</label>
+              <label className="label mb-2">{t("logo")}</label>
               <ImageUpload
                 value={logoUrl}
                 onChange={setLogoUrl}
                 folder={`merchants/${merchant.id}/logo`}
                 aspectRatio="square"
-                placeholder="Upload logo"
+                placeholder={t("uploadLogo")}
               />
               <p className="mt-2 text-xs text-gray-500">
-                Recommended: 400x400px. Square format works best.
+                {t("logoDesc")}
               </p>
             </div>
           </div>
@@ -297,11 +306,11 @@ export function CombinedBusinessInfoForm({ merchant }: { merchant: Merchant }) {
 
       {/* Business Details Section */}
       <div className="card overflow-hidden">
-        <SectionHeader title="Business Details" section="details" icon={Info} />
+        <SectionHeader title={t("businessDetails")} section="details" icon={Info} />
         {expandedSections.has("details") && (
           <div className="p-6 space-y-4">
             <div>
-              <label className="label">Business Name</label>
+              <label className="label">{t("businessName")}</label>
               <input
                 type="text"
                 value={businessInfo.business_name}
@@ -318,7 +327,7 @@ export function CombinedBusinessInfoForm({ merchant }: { merchant: Merchant }) {
             </div>
 
             <div>
-              <label className="label">Booking Page URL</label>
+              <label className="label">{t("bookingPageUrl")}</label>
               <div className="mt-1 flex flex-col sm:flex-row">
                 <span className="flex items-center rounded-t-md sm:rounded-l-md sm:rounded-tr-none border border-b-0 sm:border-b sm:border-r-0 border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-500">
                   {origin}/
@@ -336,39 +345,39 @@ export function CombinedBusinessInfoForm({ merchant }: { merchant: Merchant }) {
             </div>
 
             <div>
-              <label className="label">Description</label>
+              <label className="label">{t("description")}</label>
               <textarea
                 value={businessInfo.description}
                 onChange={(e) => setBusinessInfo({ ...businessInfo, description: e.target.value })}
                 className="input mt-1 min-h-[150px] resize-y"
                 rows={6}
-                placeholder="Describe your business, services, and what makes you special..."
+                placeholder={t("describeYourBusiness")}
               />
               <p className="mt-2 text-xs text-gray-500">
-                {businessInfo.description.length} characters
+                {businessInfo.description.length} {t("characters")}
               </p>
             </div>
 
             <div>
               <label className="label flex items-center gap-2">
                 <Youtube className="h-4 w-4" />
-                YouTube Video
+                {t("youtubeVideo")}
               </label>
               <input
                 type="url"
                 value={businessInfo.youtube_url}
                 onChange={(e) => setBusinessInfo({ ...businessInfo, youtube_url: e.target.value })}
                 className="input mt-1"
-                placeholder="https://youtube.com/watch?v=..."
+                placeholder={t("youtubeVideoPlaceholder")}
               />
               <p className="mt-2 text-xs text-gray-500">
-                Add a video tour or introduction to your business
+                {t("videoDesc")}
               </p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="label">Timezone</label>
+                <label className="label">{t("timezone")}</label>
                 <select
                   value={businessInfo.timezone}
                   onChange={(e) => setBusinessInfo({ ...businessInfo, timezone: e.target.value })}
@@ -388,7 +397,7 @@ export function CombinedBusinessInfoForm({ merchant }: { merchant: Merchant }) {
               </div>
 
               <div>
-                <label className="label">Currency</label>
+                <label className="label">{t("currency")}</label>
                 <select
                   value={businessInfo.currency}
                   onChange={(e) => setBusinessInfo({ ...businessInfo, currency: e.target.value })}
@@ -413,34 +422,34 @@ export function CombinedBusinessInfoForm({ merchant }: { merchant: Merchant }) {
 
       {/* Contact & Location Section */}
       <div className="card overflow-hidden">
-        <SectionHeader title="Contact & Location" section="contact" icon={Phone} />
+        <SectionHeader title={t("contactLocation")} section="contact" icon={Phone} />
         {expandedSections.has("contact") && (
           <div className="p-6 space-y-4">
             <div>
-              <label className="label">Phone Number</label>
+              <label className="label">{t("phone")}</label>
               <input
                 type="tel"
                 value={contactInfo.phone}
                 onChange={(e) => setContactInfo({ ...contactInfo, phone: e.target.value })}
                 className="input mt-1"
-                placeholder="+84 123 456 789"
+                placeholder={t("phonePlaceholder")}
               />
             </div>
 
             <div>
-              <label className="label">Street Address</label>
+              <label className="label">{t("streetAddress")}</label>
               <input
                 type="text"
                 value={contactInfo.address}
                 onChange={(e) => setContactInfo({ ...contactInfo, address: e.target.value })}
                 className="input mt-1"
-                placeholder="123 Main Street"
+                placeholder={t("streetAddressPlaceholder")}
               />
             </div>
 
             <div className="grid gap-4 grid-cols-2 sm:grid-cols-3">
               <div>
-                <label className="label">City</label>
+                <label className="label">{t("city")}</label>
                 <input
                   type="text"
                   value={contactInfo.city}
@@ -449,7 +458,7 @@ export function CombinedBusinessInfoForm({ merchant }: { merchant: Merchant }) {
                 />
               </div>
               <div>
-                <label className="label">State/Province</label>
+                <label className="label">{t("stateProvince")}</label>
                 <input
                   type="text"
                   value={contactInfo.state}
@@ -458,7 +467,7 @@ export function CombinedBusinessInfoForm({ merchant }: { merchant: Merchant }) {
                 />
               </div>
               <div className="col-span-2 sm:col-span-1">
-                <label className="label">Zip Code</label>
+                <label className="label">{t("zipCode")}</label>
                 <input
                   type="text"
                   value={contactInfo.zip_code}
@@ -471,17 +480,17 @@ export function CombinedBusinessInfoForm({ merchant }: { merchant: Merchant }) {
             <div>
               <label className="label flex items-center gap-2">
                 <MapPin className="h-4 w-4" />
-                Google Maps Link
+                {t("googleMapsLink")}
               </label>
               <input
                 type="url"
                 value={contactInfo.google_maps_url}
                 onChange={(e) => setContactInfo({ ...contactInfo, google_maps_url: e.target.value })}
                 className="input mt-1"
-                placeholder="https://maps.google.com/..."
+                placeholder={t("googleMapsPlaceholder")}
               />
               <p className="mt-2 text-xs text-gray-500">
-                Customers can click to get directions
+                {t("googleMapsDesc")}
               </p>
             </div>
           </div>
@@ -490,7 +499,7 @@ export function CombinedBusinessInfoForm({ merchant }: { merchant: Merchant }) {
 
       {/* Business Hours Section */}
       <div className="card overflow-hidden">
-        <SectionHeader title="Business Hours" section="hours" icon={Clock} />
+        <SectionHeader title={t("businessHours")} section="hours" icon={Clock} />
         {expandedSections.has("hours") && !hoursLoading && (
           <div className="p-6 space-y-2">
             {Object.entries(businessHours).map(([day, hours]) => (
@@ -530,7 +539,7 @@ export function CombinedBusinessInfoForm({ merchant }: { merchant: Merchant }) {
                       }
                       className="input py-2 text-sm flex-1 min-w-0"
                     />
-                    <span className="text-gray-400 text-sm flex-shrink-0">to</span>
+                    <span className="text-gray-400 text-sm flex-shrink-0">{t("to")}</span>
                     <input
                       type="time"
                       value={hours.end_time}
@@ -544,7 +553,7 @@ export function CombinedBusinessInfoForm({ merchant }: { merchant: Merchant }) {
                     />
                   </div>
                 ) : (
-                  <span className="text-sm text-gray-400">Closed</span>
+                  <span className="text-sm text-gray-400">{t("closed")}</span>
                 )}
               </div>
             ))}
@@ -554,11 +563,11 @@ export function CombinedBusinessInfoForm({ merchant }: { merchant: Merchant }) {
 
       {/* Social Links Section */}
       <div className="card overflow-hidden">
-        <SectionHeader title="Social Links" section="social" icon={Link2} />
+        <SectionHeader title={t("socialLinks")} section="social" icon={Link2} />
         {expandedSections.has("social") && (
           <div className="p-6 space-y-4">
             <p className="text-sm text-gray-600">
-              Click on a social platform icon to add or edit your link
+              {t("socialLinksDesc")}
             </p>
 
             <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
@@ -584,7 +593,7 @@ export function CombinedBusinessInfoForm({ merchant }: { merchant: Merchant }) {
                     onClick={() => {
                       if (existingLink) {
                         // Edit existing - show modal/prompt
-                        const newUrl = prompt(`Edit ${platform.label} URL:`, existingLink.url);
+                        const newUrl = prompt(t("editUrl", { platform: platform.label }), existingLink.url);
                         if (newUrl !== null) {
                           if (newUrl.trim() === "") {
                             // Remove if empty
@@ -595,7 +604,7 @@ export function CombinedBusinessInfoForm({ merchant }: { merchant: Merchant }) {
                         }
                       } else {
                         // Add new
-                        const newUrl = prompt(`Add ${platform.label} URL:`);
+                        const newUrl = prompt(t("addUrl", { platform: platform.label }));
                         if (newUrl && newUrl.trim()) {
                           setSocialLinks([
                             ...socialLinks,
@@ -640,10 +649,10 @@ export function CombinedBusinessInfoForm({ merchant }: { merchant: Merchant }) {
             disabled={loading}
             className="btn btn-primary btn-lg"
           >
-            {loading ? "Saving..." : "Save All Changes"}
+            {loading ? t("saving") : t("saveAllChanges")}
           </button>
           {success && (
-            <span className="text-sm text-green-600 font-medium">✓ Saved successfully!</span>
+            <span className="text-sm text-green-600 font-medium">{t("savedSuccessfully")}</span>
           )}
         </div>
       </div>
