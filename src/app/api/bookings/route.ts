@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient();
+    // Use service role client to bypass RLS for public booking creation
+    const supabase = createServiceRoleClient();
     const bookingData = await request.json();
 
     // Insert booking into database

@@ -113,6 +113,7 @@ export interface ProductsSectionProps {
 export interface GallerySectionProps {
   gallery: GalleryImage[];
   colors: ThemeColors;
+  onFullGalleryChange?: (isOpen: boolean) => void;
 }
 
 export interface ContactSectionProps {

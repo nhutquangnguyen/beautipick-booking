@@ -462,7 +462,8 @@ export type LayoutTemplate =
   | "minimal"       // Zen flowing sections (Serenity, Tranquil)
   | "classic"       // Traditional symmetrical (Distinguished)
   | "portfolio"     // Dark full-width showcase (Artisan, Powerhouse)
-  | "christmas";    // Festive holiday theme
+  | "christmas"     // Festive holiday theme
+  | "tetholiday";   // Tết Nguyên Đán (Lunar New Year) theme
 
 // Theme configuration type
 export interface MerchantTheme {
@@ -1241,6 +1242,77 @@ export const layoutOptions: LayoutOption[] = [
         accentColor: "#93C5FD",
         backgroundColor: "#F9FAFB",
         textColor: "#111827",
+        fontFamily: "Inter",
+      },
+    ],
+  },
+  {
+    id: "tetholiday",
+    name: "Tết Holiday",
+    description: "Vietnamese Lunar New Year theme with elegant red & gold, falling blossoms, and prosperity vibes",
+    icon: "🧧",
+    bestFor: ["Lunar New Year", "Vietnamese Market", "Spring Festival", "Asian Celebrations"],
+    features: ["Falling flower petals", "Lucky red envelopes", "Gold coin patterns", "Prosperity blessings"],
+    defaultColorScheme: "prosperity",
+    colorSchemes: [
+      {
+        id: "prosperity",
+        name: "Prosperity Gold",
+        description: "Traditional red velvet and lucky gold",
+        preview: "linear-gradient(135deg, #C62828 0%, #FFD700 50%, #FFFDE7 100%)",
+        primaryColor: "#C62828",
+        secondaryColor: "#FFD700",
+        accentColor: "#FFFDE7",
+        backgroundColor: "#FFFAF0",
+        textColor: "#4E342E",
+        fontFamily: "Georgia",
+      },
+      {
+        id: "peachblossom",
+        name: "Peach Blossom",
+        description: "Soft pink peach blossoms with gold accents",
+        preview: "linear-gradient(135deg, #EC407A 0%, #FFB6C1 50%, #FFFAF0 100%)",
+        primaryColor: "#EC407A",
+        secondaryColor: "#FFD700",
+        accentColor: "#FFB6C1",
+        backgroundColor: "#FFF5F7",
+        textColor: "#4E342E",
+        fontFamily: "Georgia",
+      },
+      {
+        id: "apricotgold",
+        name: "Apricot Gold",
+        description: "Golden apricot blossoms with deep red",
+        preview: "linear-gradient(135deg, #FFA500 0%, #FFD700 50%, #C62828 100%)",
+        primaryColor: "#FFA500",
+        secondaryColor: "#FFD700",
+        accentColor: "#C62828",
+        backgroundColor: "#FFFBEB",
+        textColor: "#451A03",
+        fontFamily: "Georgia",
+      },
+      {
+        id: "royaltet",
+        name: "Royal Tết",
+        description: "Deep burgundy and imperial gold",
+        preview: "linear-gradient(135deg, #7F0000 0%, #FFD700 50%, #FFFFF0 100%)",
+        primaryColor: "#7F0000",
+        secondaryColor: "#FFD700",
+        accentColor: "#FFA500",
+        backgroundColor: "#FFFFF0",
+        textColor: "#3C1414",
+        fontFamily: "Playfair Display",
+      },
+      {
+        id: "fortunered",
+        name: "Fortune Red",
+        description: "Vibrant lucky red with golden highlights",
+        preview: "linear-gradient(135deg, #D32F2F 0%, #FFEB3B 50%, #FFF9C4 100%)",
+        primaryColor: "#D32F2F",
+        secondaryColor: "#FFEB3B",
+        accentColor: "#FFA000",
+        backgroundColor: "#FFFDE7",
+        textColor: "#4E342E",
         fontFamily: "Inter",
       },
     ],

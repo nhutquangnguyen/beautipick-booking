@@ -9,10 +9,12 @@ interface HeaderProps {
   logoUrl?: string;
   primaryColor: string;
   accentColor: string;
+  secondaryColor?: string;
+  backgroundColor?: string;
   onScrollToServices?: () => void;
 }
 
-export function Header({ businessName, logoUrl, primaryColor, accentColor, onScrollToServices }: HeaderProps) {
+export function Header({ businessName, logoUrl, primaryColor, accentColor, secondaryColor, backgroundColor, onScrollToServices }: HeaderProps) {
   const t = useTranslations("common");
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -43,10 +45,12 @@ export function Header({ businessName, logoUrl, primaryColor, accentColor, onScr
   return (
     <header
       className={`fixed top-0 z-50 w-full transition-all duration-300 ${
-        scrolled ? 'shadow-xl bg-white/95' : 'bg-white/90 shadow-md'
+        scrolled ? 'shadow-xl' : 'shadow-md'
       }`}
       style={{
+        background: backgroundColor || '#ffffff',
         backdropFilter: 'blur(12px)',
+        boxShadow: `0 4px 20px ${primaryColor}30`,
       }}
     >
       <div className="max-w-7xl mx-auto px-6">
@@ -62,6 +66,10 @@ export function Header({ businessName, logoUrl, primaryColor, accentColor, onScr
                   src={logoUrl}
                   alt={businessName}
                   className="h-14 w-14 object-cover rounded-full ring-2 ring-offset-2 transition-all duration-300 group-hover:ring-4"
+                  style={{
+                    // @ts-ignore - ringColor is not a standard CSS property but works with Tailwind
+                    ringColor: accentColor,
+                  }}
                 />
               </div>
             )}
@@ -93,14 +101,17 @@ export function Header({ businessName, logoUrl, primaryColor, accentColor, onScr
 
           {/* Book Now Button & Language Switcher */}
           <div className="flex items-center gap-4">
-            <LanguageSwitcher accentColor={accentColor} position="inline" />
+            <LanguageSwitcher accentColor={accentColor} primaryColor={primaryColor} position="inline" />
 
             <button
               onClick={onScrollToServices || (() => scrollToSection('section-services'))}
-              className="hidden sm:block px-8 py-3 rounded-full text-white font-semibold text-sm transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
+              className="hidden sm:block px-8 py-3 rounded-full font-bold text-sm transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl border-3"
               style={{
-                backgroundColor: accentColor,
-                boxShadow: `0 4px 14px ${accentColor}40`
+                background: `linear-gradient(135deg, ${accentColor}, ${secondaryColor || accentColor})`,
+                color: primaryColor,
+                border: `3px solid ${primaryColor}`,
+                boxShadow: `0 4px 14px ${accentColor}40`,
+                textShadow: '0 1px 2px rgba(255,255,255,0.3)',
               }}
             >
               {t("bookNow")}
@@ -145,8 +156,13 @@ export function Header({ businessName, logoUrl, primaryColor, accentColor, onScr
 
               <button
                 onClick={onScrollToServices || (() => scrollToSection('section-services'))}
-                className="mt-2 px-6 py-3 rounded-full text-white font-semibold text-sm text-center"
-                style={{ backgroundColor: accentColor }}
+                className="mt-2 px-6 py-3 rounded-full font-bold text-sm text-center border-3"
+                style={{
+                  background: `linear-gradient(135deg, ${accentColor}, ${secondaryColor || accentColor})`,
+                  color: primaryColor,
+                  border: `3px solid ${primaryColor}`,
+                  textShadow: '0 1px 2px rgba(255,255,255,0.3)',
+                }}
               >
                 {t("bookNow")}
               </button>

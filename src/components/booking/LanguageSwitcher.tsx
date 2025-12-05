@@ -6,11 +6,13 @@ import { useLocale } from "next-intl";
 
 interface LanguageSwitcherProps {
   accentColor?: string;
+  primaryColor?: string;
   position?: "top-left" | "top-right" | "bottom-left" | "bottom-right" | "inline";
 }
 
 export function LanguageSwitcher({
   accentColor = "#3B82F6",
+  primaryColor,
   position = "top-right"
 }: LanguageSwitcherProps) {
   const currentLocale = useLocale();
@@ -49,22 +51,24 @@ export function LanguageSwitcher({
       <button
         onClick={() => setIsOpen(!isOpen)}
         disabled={isPending}
-        className={`flex items-center gap-2 rounded-full transition-all duration-300 border-2 group ${
+        className={`flex items-center gap-2 rounded-full transition-all duration-300 border-3 group ${
           isInline
             ? "px-3 py-2 bg-transparent hover:bg-gray-50"
-            : "px-3 py-2 bg-white shadow-lg hover:shadow-xl"
+            : "px-4 py-2.5 bg-white shadow-xl hover:shadow-2xl"
         }`}
         style={{
-          borderColor: isOpen ? accentColor : (isInline ? "#E5E7EB" : "#E5E7EB"),
+          borderColor: primaryColor || accentColor,
+          borderWidth: isInline ? '2px' : '3px',
+          boxShadow: isInline ? undefined : `0 4px 20px ${primaryColor || accentColor}40, 0 0 0 1px ${primaryColor || accentColor}20`,
         }}
       >
         <Globe
           className={`transition-transform group-hover:rotate-12 ${isInline ? "w-5 h-5" : "w-5 h-5"}`}
-          style={{ color: accentColor }}
+          style={{ color: primaryColor || accentColor, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.2))' }}
         />
         <span className={`font-semibold ${isInline ? "text-base" : "text-sm"}`}>{currentLanguage.flag}</span>
         {!isInline && (
-          <span className="text-sm font-medium text-gray-700 hidden sm:inline">
+          <span className="text-sm font-bold hidden sm:inline" style={{ color: primaryColor || accentColor }}>
             {currentLanguage.code.toUpperCase()}
           </span>
         )}
@@ -80,7 +84,13 @@ export function LanguageSwitcher({
           />
 
           {/* Menu */}
-          <div className="absolute top-full mt-2 right-0 bg-white rounded-xl shadow-2xl border-2 border-gray-100 overflow-hidden z-40 min-w-[180px]">
+          <div
+            className="absolute top-full mt-2 right-0 rounded-xl shadow-2xl border-3 overflow-hidden z-40 min-w-[180px]"
+            style={{
+              backgroundColor: '#FFFEF5',
+              borderColor: primaryColor || accentColor,
+            }}
+          >
             {languages.map((lang) => (
               <button
                 key={lang.code}
@@ -88,18 +98,19 @@ export function LanguageSwitcher({
                 disabled={isPending}
                 className={`w-full flex items-center gap-3 px-4 py-3 transition-all duration-200 ${
                   currentLocale === lang.code
-                    ? "font-bold"
-                    : "hover:bg-gray-50 font-medium"
+                    ? "font-black"
+                    : "hover:bg-white/50 font-semibold"
                 }`}
                 style={{
-                  backgroundColor: currentLocale === lang.code ? `${accentColor}10` : undefined,
-                  color: currentLocale === lang.code ? accentColor : "#374151",
+                  backgroundColor: currentLocale === lang.code ? accentColor : undefined,
+                  color: currentLocale === lang.code ? primaryColor || '#C62828' : "#374151",
+                  textShadow: currentLocale === lang.code ? '0 1px 2px rgba(255,255,255,0.5)' : undefined,
                 }}
               >
                 <span className="text-xl">{lang.flag}</span>
-                <span className="text-sm">{lang.name}</span>
+                <span className="text-base">{lang.name}</span>
                 {currentLocale === lang.code && (
-                  <span className="ml-auto text-xs">✓</span>
+                  <span className="ml-auto text-lg font-black">✓</span>
                 )}
               </button>
             ))}

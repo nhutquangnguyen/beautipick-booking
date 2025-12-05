@@ -13,6 +13,9 @@ interface CheckoutFlowProps {
   merchantName: string;
   currency: string;
   accentColor?: string;
+  primaryColor?: string;
+  secondaryColor?: string;
+  textColor?: string;
 }
 
 type Step = "datetime" | "info" | "confirm" | "success";
@@ -24,7 +27,10 @@ export function CheckoutFlow({
   merchantId,
   merchantName,
   currency,
-  accentColor = "#3B82F6"
+  accentColor = "#3B82F6",
+  primaryColor = "#C62828",
+  secondaryColor = "#FFD700",
+  textColor = "#4A2C0E"
 }: CheckoutFlowProps) {
   const hasServices = cart.cart.some(item => item.type === "service");
 
@@ -182,19 +188,17 @@ export function CheckoutFlow({
       // Success - show success step
       setCurrentStep("success");
 
-      // Clear cart after 2 seconds and close
-      setTimeout(() => {
-        cart.clearCart();
-        onClose();
-        // Reset form
-        setCurrentStep(initialStep);
-        setSelectedDate("");
-        setSelectedTime("");
-        setCustomerName("");
-        setCustomerPhone("");
-        setCustomerEmail("");
-        setNotes("");
-      }, 3000);
+      // Don't auto-close - let user manually close
+      // Clear cart data but keep the success message visible
+      cart.clearCart();
+
+      // Reset form data
+      setSelectedDate("");
+      setSelectedTime("");
+      setCustomerName("");
+      setCustomerPhone("");
+      setCustomerEmail("");
+      setNotes("");
 
     } catch (error) {
       console.error('Error creating booking:', error);
@@ -210,6 +214,17 @@ export function CheckoutFlow({
 
   const canProceedFromInfo = () => {
     return customerName.trim() && customerPhone.trim();
+  };
+
+  // Helper functions to determine step status
+  const getStepStatus = (step: Step) => {
+    const stepOrder: Step[] = ["datetime", "info", "confirm", "success"];
+    const currentIndex = stepOrder.indexOf(currentStep);
+    const stepIndex = stepOrder.indexOf(step);
+
+    if (currentIndex === stepIndex) return "active";
+    if (currentIndex > stepIndex) return "completed";
+    return "inactive";
   };
 
   if (!isOpen) return null;
@@ -258,25 +273,145 @@ export function CheckoutFlow({
               <div className="flex items-center justify-center gap-2">
                 {hasServices && (
                   <>
-                    <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${currentStep === "datetime" ? "bg-white shadow-md" : "bg-gray-200"}`}>
-                      <Calendar className="w-4 h-4" style={{ color: currentStep === "datetime" ? accentColor : "#9CA3AF" }} />
-                      <span className={`text-sm font-semibold ${currentStep === "datetime" ? "text-gray-900" : "text-gray-500"}`}>
+                    <div
+                      className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all ${
+                        getStepStatus("datetime") === "active" ? "shadow-lg" : ""
+                      }`}
+                      style={{
+                        backgroundColor:
+                          getStepStatus("datetime") === "active"
+                            ? secondaryColor
+                            : accentColor,
+                        border:
+                          getStepStatus("datetime") === "completed"
+                            ? `2px solid ${primaryColor}`
+                            : getStepStatus("datetime") === "inactive"
+                            ? `2px solid ${textColor}`
+                            : "none",
+                        boxShadow:
+                          getStepStatus("datetime") === "active"
+                            ? `0 0 5px ${secondaryColor}60`
+                            : undefined,
+                      }}
+                    >
+                      <Calendar
+                        className="w-4 h-4"
+                        style={{
+                          color:
+                            getStepStatus("datetime") === "active"
+                              ? primaryColor
+                              : getStepStatus("datetime") === "completed"
+                              ? primaryColor
+                              : textColor,
+                        }}
+                      />
+                      <span
+                        className="text-sm font-semibold"
+                        style={{
+                          color:
+                            getStepStatus("datetime") === "active"
+                              ? primaryColor
+                              : getStepStatus("datetime") === "completed"
+                              ? primaryColor
+                              : textColor,
+                        }}
+                      >
                         Ngày & Giờ
                       </span>
                     </div>
                     <ArrowRight className="w-4 h-4 text-gray-400" />
                   </>
                 )}
-                <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${currentStep === "info" ? "bg-white shadow-md" : "bg-gray-200"}`}>
-                  <User className="w-4 h-4" style={{ color: currentStep === "info" ? accentColor : "#9CA3AF" }} />
-                  <span className={`text-sm font-semibold ${currentStep === "info" ? "text-gray-900" : "text-gray-500"}`}>
+                <div
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all ${
+                    getStepStatus("info") === "active" ? "shadow-lg" : ""
+                  }`}
+                  style={{
+                    backgroundColor:
+                      getStepStatus("info") === "active"
+                        ? secondaryColor
+                        : accentColor,
+                    border:
+                      getStepStatus("info") === "completed"
+                        ? `2px solid ${primaryColor}`
+                        : getStepStatus("info") === "inactive"
+                        ? `2px solid ${textColor}`
+                        : "none",
+                    boxShadow:
+                      getStepStatus("info") === "active"
+                        ? `0 0 5px ${secondaryColor}60`
+                        : undefined,
+                  }}
+                >
+                  <User
+                    className="w-4 h-4"
+                    style={{
+                      color:
+                        getStepStatus("info") === "active"
+                          ? primaryColor
+                          : getStepStatus("info") === "completed"
+                          ? primaryColor
+                          : textColor,
+                    }}
+                  />
+                  <span
+                    className="text-sm font-semibold"
+                    style={{
+                      color:
+                        getStepStatus("info") === "active"
+                          ? primaryColor
+                          : getStepStatus("info") === "completed"
+                          ? primaryColor
+                          : textColor,
+                    }}
+                  >
                     Thông tin
                   </span>
                 </div>
                 <ArrowRight className="w-4 h-4 text-gray-400" />
-                <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${currentStep === "confirm" ? "bg-white shadow-md" : "bg-gray-200"}`}>
-                  <CheckCircle className="w-4 h-4" style={{ color: currentStep === "confirm" ? accentColor : "#9CA3AF" }} />
-                  <span className={`text-sm font-semibold ${currentStep === "confirm" ? "text-gray-900" : "text-gray-500"}`}>
+                <div
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all ${
+                    getStepStatus("confirm") === "active" ? "shadow-lg" : ""
+                  }`}
+                  style={{
+                    backgroundColor:
+                      getStepStatus("confirm") === "active"
+                        ? secondaryColor
+                        : accentColor,
+                    border:
+                      getStepStatus("confirm") === "completed"
+                        ? `2px solid ${primaryColor}`
+                        : getStepStatus("confirm") === "inactive"
+                        ? `2px solid ${textColor}`
+                        : "none",
+                    boxShadow:
+                      getStepStatus("confirm") === "active"
+                        ? `0 0 5px ${secondaryColor}60`
+                        : undefined,
+                  }}
+                >
+                  <CheckCircle
+                    className="w-4 h-4"
+                    style={{
+                      color:
+                        getStepStatus("confirm") === "active"
+                          ? primaryColor
+                          : getStepStatus("confirm") === "completed"
+                          ? primaryColor
+                          : textColor,
+                    }}
+                  />
+                  <span
+                    className="text-sm font-semibold"
+                    style={{
+                      color:
+                        getStepStatus("confirm") === "active"
+                          ? primaryColor
+                          : getStepStatus("confirm") === "completed"
+                          ? primaryColor
+                          : textColor,
+                    }}
+                  >
                     Xác nhận
                   </span>
                 </div>
@@ -306,18 +441,18 @@ export function CheckoutFlow({
                             : "border-gray-200 hover:border-gray-300 hover:shadow-md"
                         }`}
                         style={{
-                          borderColor: selectedDate === date ? accentColor : undefined,
-                          backgroundColor: selectedDate === date ? `${accentColor}10` : undefined,
+                          borderColor: selectedDate === date ? primaryColor : undefined,
+                          backgroundColor: selectedDate === date ? `${secondaryColor}33` : undefined,
                         }}
                       >
                         <div className="text-center">
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs" style={{ color: selectedDate === date ? primaryColor : "#6B7280" }}>
                             {new Date(date).toLocaleDateString('vi-VN', { weekday: 'short' })}
                           </div>
-                          <div className="text-lg font-bold" style={{ color: selectedDate === date ? accentColor : "#374151" }}>
+                          <div className="text-lg font-bold" style={{ color: selectedDate === date ? primaryColor : "#374151" }}>
                             {new Date(date).getDate()}
                           </div>
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs" style={{ color: selectedDate === date ? primaryColor : "#6B7280" }}>
                             Tháng {new Date(date).getMonth() + 1}
                           </div>
                         </div>
@@ -344,9 +479,9 @@ export function CheckoutFlow({
                               : "border-gray-200 hover:border-gray-300"
                           }`}
                           style={{
-                            borderColor: selectedTime === time ? accentColor : undefined,
-                            backgroundColor: selectedTime === time ? `${accentColor}10` : undefined,
-                            color: selectedTime === time ? accentColor : "#374151",
+                            borderColor: selectedTime === time ? secondaryColor : undefined,
+                            backgroundColor: selectedTime === time ? secondaryColor : undefined,
+                            color: selectedTime === time ? primaryColor : "#374151",
                           }}
                         >
                           {time}
@@ -430,50 +565,71 @@ export function CheckoutFlow({
               <div className="space-y-6">
                 {/* Date & Time Info (if services) */}
                 {hasServices && (
-                  <div className="bg-gray-50 rounded-2xl p-5">
+                  <div
+                    className="rounded-2xl p-5 border-3"
+                    style={{
+                      backgroundColor: `${accentColor}`,
+                      borderColor: secondaryColor,
+                      boxShadow: `0 4px 12px ${secondaryColor}30`,
+                    }}
+                  >
                     <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                      <Calendar className="w-5 h-5" style={{ color: accentColor }} />
+                      <Calendar className="w-5 h-5" style={{ color: primaryColor }} />
                       Thời gian đặt lịch
                     </h3>
                     <div className="space-y-2">
-                      <p className="text-gray-700">
-                        <span className="font-semibold">Ngày:</span> {formatDate(selectedDate)}
+                      <p className="text-gray-800 font-semibold">
+                        <span className="font-bold">Ngày:</span> {formatDate(selectedDate)}
                       </p>
-                      <p className="text-gray-700">
-                        <span className="font-semibold">Giờ:</span> {selectedTime}
+                      <p className="text-gray-800 font-semibold">
+                        <span className="font-bold">Giờ:</span> {selectedTime}
                       </p>
                     </div>
                   </div>
                 )}
 
                 {/* Customer Info */}
-                <div className="bg-gray-50 rounded-2xl p-5">
+                <div
+                  className="rounded-2xl p-5 border-3"
+                  style={{
+                    backgroundColor: `${accentColor}`,
+                    borderColor: secondaryColor,
+                    boxShadow: `0 4px 12px ${secondaryColor}30`,
+                  }}
+                >
                   <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                    <User className="w-5 h-5" style={{ color: accentColor }} />
+                    <User className="w-5 h-5" style={{ color: primaryColor }} />
                     Thông tin khách hàng
                   </h3>
                   <div className="space-y-2">
-                    <p className="text-gray-700">
-                      <span className="font-semibold">Họ tên:</span> {customerName}
+                    <p className="text-gray-800 font-semibold">
+                      <span className="font-bold">Họ tên:</span> {customerName}
                     </p>
-                    <p className="text-gray-700">
-                      <span className="font-semibold">SĐT:</span> {customerPhone}
+                    <p className="text-gray-800 font-semibold">
+                      <span className="font-bold">SĐT:</span> {customerPhone}
                     </p>
                     {customerEmail && (
-                      <p className="text-gray-700">
-                        <span className="font-semibold">Email:</span> {customerEmail}
+                      <p className="text-gray-800 font-semibold">
+                        <span className="font-bold">Email:</span> {customerEmail}
                       </p>
                     )}
                     {notes && (
-                      <p className="text-gray-700">
-                        <span className="font-semibold">Ghi chú:</span> {notes}
+                      <p className="text-gray-800 font-semibold">
+                        <span className="font-bold">Ghi chú:</span> {notes}
                       </p>
                     )}
                   </div>
                 </div>
 
                 {/* Cart Items */}
-                <div className="bg-gray-50 rounded-2xl p-5">
+                <div
+                  className="rounded-2xl p-5 border-3"
+                  style={{
+                    backgroundColor: `${accentColor}`,
+                    borderColor: secondaryColor,
+                    boxShadow: `0 4px 12px ${secondaryColor}30`,
+                  }}
+                >
                   <h3 className="font-bold text-gray-900 mb-3">Chi tiết đơn hàng</h3>
                   <div className="space-y-3">
                     {cart.cart.map((item) => (
@@ -486,7 +642,13 @@ export function CheckoutFlow({
                             <p className="text-sm text-gray-600">Số lượng: {item.quantity}</p>
                           )}
                         </div>
-                        <p className="font-bold" style={{ color: accentColor }}>
+                        <p
+                          className="font-black text-lg"
+                          style={{
+                            color: secondaryColor,
+                            textShadow: `1px 1px 0 ${textColor}, -1px -1px 0 ${textColor}, 1px -1px 0 ${textColor}, -1px 1px 0 ${textColor}`,
+                          }}
+                        >
                           {formatPrice(
                             item.type === "service"
                               ? item.service.price
@@ -495,9 +657,22 @@ export function CheckoutFlow({
                         </p>
                       </div>
                     ))}
-                    <div className="pt-3 border-t-2 border-gray-200 flex justify-between items-center">
+                    <div
+                      className="pt-3 border-t-3 flex justify-between items-center"
+                      style={{
+                        borderColor: secondaryColor,
+                      }}
+                    >
                       <span className="text-lg font-bold text-gray-900">Tổng cộng:</span>
-                      <span className="text-2xl font-black" style={{ color: accentColor }}>
+                      <span
+                        className="text-3xl font-black"
+                        style={{
+                          color: primaryColor,
+                          WebkitTextStroke: `1px ${textColor}`,
+                          paintOrder: 'stroke fill',
+                          textShadow: `0 2px 4px ${textColor}40`,
+                        }}
+                      >
                         {formatPrice(calculateTotal())}
                       </span>
                     </div>
@@ -510,18 +685,36 @@ export function CheckoutFlow({
             {currentStep === "success" && (
               <div className="text-center py-12">
                 <div
-                  className="w-24 h-24 rounded-full mx-auto mb-6 flex items-center justify-center"
-                  style={{ backgroundColor: `${accentColor}20` }}
+                  className="w-28 h-28 rounded-full mx-auto mb-6 flex items-center justify-center relative"
+                  style={{
+                    background: `linear-gradient(135deg, ${secondaryColor}, ${accentColor})`,
+                    border: `4px solid ${primaryColor}`,
+                    boxShadow: `0 10px 40px ${secondaryColor}60, 0 0 0 8px ${secondaryColor}20`,
+                  }}
                 >
-                  <CheckCircle className="w-16 h-16" style={{ color: accentColor }} />
+                  {/* Glow effect */}
+                  <div
+                    className="absolute inset-0 rounded-full blur-xl opacity-60"
+                    style={{
+                      background: `linear-gradient(135deg, ${secondaryColor}, ${accentColor})`,
+                    }}
+                  />
+                  <CheckCircle
+                    className="w-16 h-16 relative z-10"
+                    style={{
+                      color: primaryColor,
+                      filter: 'drop-shadow(0 2px 8px rgba(255,255,255,0.5))',
+                      strokeWidth: 3,
+                    }}
+                  />
                 </div>
-                <h3 className="text-2xl font-black text-gray-900 mb-3">
+                <h3 className="text-3xl font-black mb-3" style={{ color: primaryColor }}>
                   Đặt hàng thành công!
                 </h3>
-                <p className="text-gray-600 mb-2">
+                <p className="text-gray-700 mb-2 text-lg font-semibold">
                   Cảm ơn bạn đã đặt hàng tại {merchantName}
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-base text-gray-600">
                   Chúng tôi sẽ liên hệ với bạn sớm nhất có thể.
                 </p>
               </div>
@@ -529,7 +722,26 @@ export function CheckoutFlow({
           </div>
 
           {/* Footer */}
-          {currentStep !== "success" && (
+          {currentStep === "success" ? (
+            <div className="px-6 py-5 border-t border-gray-200 bg-gray-50">
+              <button
+                onClick={() => {
+                  onClose();
+                  setCurrentStep(initialStep);
+                }}
+                className="w-full py-4 rounded-xl font-black transition-all hover:scale-105 flex items-center justify-center gap-2"
+                style={{
+                  background: `linear-gradient(135deg, ${secondaryColor}, ${accentColor})`,
+                  color: primaryColor,
+                  border: `3px solid ${primaryColor}`,
+                  boxShadow: `0 4px 20px ${secondaryColor}60`,
+                  textShadow: '0 1px 2px rgba(255,255,255,0.3)',
+                }}
+              >
+                Đóng
+              </button>
+            </div>
+          ) : (
             <div className="px-6 py-5 border-t border-gray-200 bg-gray-50 flex gap-3">
               {/* Back Button */}
               {((currentStep === "info" && hasServices) || currentStep === "confirm") && (
@@ -564,9 +776,11 @@ export function CheckoutFlow({
                   (currentStep === "info" && !canProceedFromInfo()) ||
                   isSubmitting
                 }
-                className="flex-1 py-3 rounded-xl font-black text-white transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+                className="flex-1 py-3 rounded-xl font-black transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
                 style={{
-                  backgroundColor: accentColor,
+                  backgroundColor: secondaryColor,
+                  color: primaryColor,
+                  boxShadow: `0 0 10px ${secondaryColor}60`,
                 }}
               >
                 {isSubmitting ? (

@@ -25,6 +25,10 @@ const ShowcaseGridTheme = dynamic(() => import("./themes/showcasegrid").then(mod
   ssr: true,
 });
 
+const TetHolidayTheme = dynamic(() => import("./themes/tetholiday").then(mod => ({ default: mod.TetHolidayTheme })), {
+  ssr: true,
+});
+
 
 interface BookingPageProps {
   merchant: Merchant;
@@ -163,6 +167,7 @@ export function BookingPageDynamic({
   // Select theme component based on layout
   const ThemeComponent =
     theme.layoutTemplate === "christmas" ? ChristmasTheme :
+    theme.layoutTemplate === "tetholiday" ? TetHolidayTheme :
     theme.layoutTemplate === "elegancegrid" ? EleganceGridTheme :
     theme.layoutTemplate === "showcasegrid" ? ShowcaseGridTheme :
     StarterTheme; // Default fallback
@@ -186,7 +191,10 @@ export function BookingPageDynamic({
         currency={merchant.currency}
         merchantId={merchant.id}
         merchantName={merchant.business_name}
-        accentColor={colors.accentColor}
+        accentColor={colors.secondaryColor}
+        primaryColor={colors.primaryColor}
+        secondaryColor={colors.secondaryColor}
+        textColor={colors.textColor}
         onOpenCheckout={() => {
           setShowCart(false);
           setShowCheckout(true);
@@ -202,6 +210,9 @@ export function BookingPageDynamic({
         merchantName={merchant.business_name}
         currency={merchant.currency}
         accentColor={colors.accentColor}
+        primaryColor={colors.primaryColor}
+        secondaryColor={colors.secondaryColor}
+        textColor={colors.textColor}
       />
     </div>
   );
