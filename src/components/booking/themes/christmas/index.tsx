@@ -14,8 +14,10 @@ import { getYouTubeVideoId, scrollToElement } from "../utils";
 
 export function ChristmasTheme({ data, colors, cart }: ThemeComponentProps) {
   const [scrollY, setScrollY] = useState(0);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const handleScroll = () => {
       setScrollY(window.scrollY);
     };
@@ -53,23 +55,25 @@ export function ChristmasTheme({ data, colors, cart }: ThemeComponentProps) {
       />
 
       {/* Animated Snowflakes - Optional CSS Animation */}
-      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        {[...Array(15)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute text-white opacity-60 animate-snowfall"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `-${Math.random() * 20}%`,
-              fontSize: `${Math.random() * 10 + 10}px`,
-              animationDelay: `${Math.random() * 5}s`,
-              animationDuration: `${Math.random() * 10 + 10}s`,
-            }}
-          >
-            ❄
-          </div>
-        ))}
-      </div>
+      {mounted && (
+        <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+          {[...Array(15)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute text-white opacity-60 animate-snowfall"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `-${Math.random() * 20}%`,
+                fontSize: `${Math.random() * 10 + 10}px`,
+                animationDelay: `${Math.random() * 5}s`,
+                animationDuration: `${Math.random() * 10 + 10}s`,
+              }}
+            >
+              ❄
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Festive Top Border */}
       <div
