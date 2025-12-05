@@ -1,7 +1,7 @@
 "use client";
 
 import { SocialSectionProps } from "../types";
-import { Facebook, Instagram, Twitter, Linkedin, Youtube, Music } from "lucide-react";
+import { Facebook, Instagram, Twitter, Linkedin, Youtube, Music, Globe } from "lucide-react";
 
 export function ChristmasSocialSection({ socialLinks, colors }: SocialSectionProps) {
   if (socialLinks.length === 0) return null;
@@ -21,8 +21,10 @@ export function ChristmasSocialSection({ socialLinks, colors }: SocialSectionPro
         return <Youtube {...iconProps} />;
       case "tiktok":
         return <Music {...iconProps} />;
+      case "website":
+        return <Globe {...iconProps} />;
       default:
-        return null;
+        return <Globe {...iconProps} />;
     }
   };
 
