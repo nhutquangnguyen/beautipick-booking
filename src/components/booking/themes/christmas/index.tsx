@@ -88,7 +88,7 @@ export function ChristmasTheme({ data, colors, cart }: ThemeComponentProps) {
             ${colors.accentColor} 40px,
             ${colors.accentColor} 60px
           )`,
-          opacity: scrollY > 100 ? 1 : 0.7,
+          opacity: mounted && scrollY > 100 ? 1 : 0.7,
         }}
       />
 
