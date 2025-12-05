@@ -10,6 +10,7 @@ import { ShowcaseGridWorkSection } from "./WorkSection";
 import { ShowcaseGridProductsSection } from "./ProductsSection";
 import { ShowcaseGridContactSection } from "./ContactSection";
 import { ShowcaseColors } from "@/config/ShowcaseColors";
+import { LanguageSwitcher } from "../../LanguageSwitcher";
 
 export function ShowcaseGridTheme({ data, colors, cart, locale, currency, onOpenCart }: ThemeComponentProps) {
   // Override with Showcase Grid color palette using constants
@@ -96,6 +97,9 @@ export function ShowcaseGridTheme({ data, colors, cart, locale, currency, onOpen
         merchant={data.merchant}
         colors={showcaseColors}
       />
+
+      {/* Language Switcher */}
+      <LanguageSwitcher accentColor={showcaseColors.accentColor} position="top-right" />
 
       {/* Floating Cart Button */}
       {cart.cart.length > 0 && (

@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { ProductsSectionProps } from "../types";
 import { ChevronRight, Plus, Minus } from "lucide-react";
 
 export function StarterProductsSection({ products, merchant, colors, cart }: ProductsSectionProps) {
+  const t = useTranslations("common");
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   if (products.length === 0) return null;
@@ -21,7 +23,7 @@ export function StarterProductsSection({ products, merchant, colors, cart }: Pro
       {/* Section Title */}
       <div className="mb-4">
         <h2 className="text-2xl font-semibold text-center" style={{ color: colors.primaryColor }}>
-          Products
+          {t("products")}
         </h2>
       </div>
 
@@ -65,7 +67,7 @@ export function StarterProductsSection({ products, merchant, colors, cart }: Pro
                       style={{ backgroundColor: colors.primaryColor }}
                     >
                       <Plus className="w-4 h-4" />
-                      <span className="hidden sm:inline">Add</span>
+                      <span className="hidden sm:inline">{t("add")}</span>
                     </button>
                   ) : (
                     <div className="ml-4 flex items-center gap-3">

@@ -289,7 +289,7 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
   return (
     <>
       {/* Mobile Header */}
-      <header className="sticky top-0 z-50 flex h-16 items-center justify-between border-b bg-white px-4 lg:hidden">
+      <header className="sticky top-0 z-50 flex h-16 items-center justify-between bg-white px-4 lg:hidden shadow-sm">
         <div className="flex items-center gap-3">
           {logoDisplayUrl ? (
             <img

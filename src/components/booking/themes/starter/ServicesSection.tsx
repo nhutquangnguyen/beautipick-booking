@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { ServicesSectionProps } from "../types";
-import { ChevronRight } from "lucide-react";
+import { Calendar } from "lucide-react";
 
 export function StarterServicesSection({ services, merchant, colors, cart }: ServicesSectionProps) {
+  const t = useTranslations("common");
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   if (services.length === 0) return null;
@@ -21,7 +23,7 @@ export function StarterServicesSection({ services, merchant, colors, cart }: Ser
       {/* Section Title */}
       <div className="mb-4">
         <h2 className="text-2xl font-semibold text-center" style={{ color: colors.primaryColor }}>
-          Services
+          {t("services")}
         </h2>
       </div>
 
@@ -59,23 +61,27 @@ export function StarterServicesSection({ services, merchant, colors, cart }: Ser
                 )}
                 <div className="text-sm font-medium mt-2" style={{ color: colors.primaryColor }}>
                   {formatPrice(service.price)}
-                  {service.duration_minutes && ` • ${service.duration_minutes} min`}
+                  {service.duration_minutes && ` • ${service.duration_minutes} ${t("min")}`}
                 </div>
               </div>
 
               <div className="ml-4 flex items-center gap-2">
-                {isInCart && (
-                  <span className="text-xs font-medium px-2 py-1 rounded-full" style={{
+                {isInCart ? (
+                  <span className="text-xs font-medium px-3 py-1.5 rounded-lg" style={{
                     backgroundColor: colors.primaryColor,
                     color: '#FFFFFF'
                   }}>
-                    Added
+                    {t("added")}
                   </span>
+                ) : (
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all duration-200" style={{
+                    backgroundColor: colors.primaryColor,
+                    color: '#FFFFFF',
+                  }}>
+                    <Calendar className="w-4 h-4" />
+                    <span className="text-sm font-medium">{t("book")}</span>
+                  </div>
                 )}
-                <ChevronRight
-                  className="w-5 h-5"
-                  style={{ color: isHovered ? colors.primaryColor : '#9CA3AF' }}
-                />
               </div>
             </button>
           );

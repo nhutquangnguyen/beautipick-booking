@@ -1,17 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { ContactSectionProps } from "../types";
-import { Phone, Mail, MapPin, ChevronRight } from "lucide-react";
+import { Phone, Mail, MapPin, ChevronRight, Map } from "lucide-react";
 
 export function StarterContactSection({ merchant, colors }: ContactSectionProps) {
+  const t = useTranslations("common");
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [mapButtonHovered, setMapButtonHovered] = useState(false);
 
   const contactItems = [
     {
       id: 'phone',
       icon: Phone,
-      label: 'Phone',
+      label: t('phone'),
       value: merchant.phone,
       href: `tel:${merchant.phone}`,
       show: !!merchant.phone,
@@ -19,7 +22,7 @@ export function StarterContactSection({ merchant, colors }: ContactSectionProps)
     {
       id: 'email',
       icon: Mail,
-      label: 'Email',
+      label: t('email'),
       value: merchant.email,
       href: `mailto:${merchant.email}`,
       show: !!merchant.email,
@@ -27,7 +30,7 @@ export function StarterContactSection({ merchant, colors }: ContactSectionProps)
     {
       id: 'address',
       icon: MapPin,
-      label: 'Address',
+      label: t('address'),
       value: merchant.address,
       href: merchant.address ? `https://maps.google.com/?q=${encodeURIComponent(merchant.address)}` : undefined,
       show: !!merchant.address,
@@ -41,7 +44,7 @@ export function StarterContactSection({ merchant, colors }: ContactSectionProps)
       {/* Section Title */}
       <div className="mb-4">
         <h2 className="text-2xl font-semibold text-center" style={{ color: colors.primaryColor }}>
-          Contact
+          {t("contact")}
         </h2>
       </div>
 
@@ -84,6 +87,25 @@ export function StarterContactSection({ merchant, colors }: ContactSectionProps)
           );
         })}
       </div>
+
+      {/* Google Maps Button */}
+      {merchant.google_maps_url && (
+        <a
+          href={merchant.google_maps_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          onMouseEnter={() => setMapButtonHovered(true)}
+          onMouseLeave={() => setMapButtonHovered(false)}
+          className="mt-4 w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium text-white transition-all duration-200 shadow-md hover:shadow-lg"
+          style={{
+            backgroundColor: colors.primaryColor,
+            transform: mapButtonHovered ? 'scale(1.02)' : 'scale(1)',
+          }}
+        >
+          <Map className="w-5 h-5" />
+          <span>{t("viewOnMap")}</span>
+        </a>
+      )}
     </div>
   );
 }

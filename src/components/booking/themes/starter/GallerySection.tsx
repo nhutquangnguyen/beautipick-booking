@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { GallerySectionProps } from "../types";
-import { X, ChevronLeft, ChevronRight, Images } from "lucide-react";
+import { X, ChevronLeft, ChevronRight } from "lucide-react";
 
 export function StarterGallerySection({ gallery, colors }: GallerySectionProps) {
+  const t = useTranslations("common");
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [hoveredCard, setHoveredCard] = useState(false);
 
   if (gallery.length === 0) return null;
 
@@ -33,65 +34,40 @@ export function StarterGallerySection({ gallery, colors }: GallerySectionProps) 
       {/* Section Title */}
       <div className="mb-4">
         <h2 className="text-2xl font-semibold text-center" style={{ color: colors.primaryColor }}>
-          Gallery
+          {t("gallery")}
         </h2>
       </div>
 
       {/* Gallery Preview Grid */}
-      {gallery.length <= 3 ? (
-        // Simple card button for few images
-        <button
-          onClick={() => openLightbox(0)}
-          onMouseEnter={() => setHoveredCard(true)}
-          onMouseLeave={() => setHoveredCard(false)}
-          className="w-full bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 p-6 flex items-center justify-between cursor-pointer border border-gray-200"
-          style={{
-            transform: hoveredCard ? 'scale(1.02)' : 'scale(1)',
-          }}
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: colors.primaryColor + '15' }}>
-              <Images className="w-5 h-5" style={{ color: colors.primaryColor }} />
-            </div>
-            <div className="text-left">
-              <div className="font-semibold text-gray-900">View Gallery</div>
-              <div className="text-sm text-gray-600">{gallery.length} {gallery.length === 1 ? 'photo' : 'photos'}</div>
-            </div>
-          </div>
-          <ChevronRight className="w-5 h-5" style={{ color: hoveredCard ? colors.primaryColor : '#9CA3AF' }} />
-        </button>
-      ) : (
-        // Grid preview for more images
-        <div className="grid grid-cols-3 gap-2 sm:gap-3">
-          {gallery.slice(0, 6).map((image, index) => (
-            <button
-              key={image.id}
-              onClick={() => openLightbox(index)}
-              className="aspect-square rounded-lg overflow-hidden relative group cursor-pointer shadow-sm hover:shadow-md transition-all duration-200"
-              style={{
-                transform: 'scale(1)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'scale(1.05)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-              }}
-            >
-              <img
-                src={image.image_url}
-                alt={image.caption || `Gallery image ${index + 1}`}
-                className="w-full h-full object-cover"
-              />
-              {index === 5 && gallery.length > 6 && (
-                <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center">
-                  <span className="text-white text-2xl font-semibold">+{gallery.length - 6}</span>
-                </div>
-              )}
-            </button>
-          ))}
-        </div>
-      )}
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        {gallery.slice(0, 6).map((image, index) => (
+          <button
+            key={image.id}
+            onClick={() => openLightbox(index)}
+            className="aspect-square rounded-lg overflow-hidden relative group cursor-pointer shadow-sm hover:shadow-md transition-all duration-200"
+            style={{
+              transform: 'scale(1)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            <img
+              src={image.image_url}
+              alt={image.caption || `Gallery image ${index + 1}`}
+              className="w-full h-full object-cover"
+            />
+            {index === 5 && gallery.length > 6 && (
+              <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center">
+                <span className="text-white text-2xl font-semibold">+{gallery.length - 6}</span>
+              </div>
+            )}
+          </button>
+        ))}
+      </div>
 
       {/* Lightbox */}
       {lightboxOpen && (

@@ -116,7 +116,20 @@
     "filter": "Lọc",
     "noResults": "Không tìm thấy kết quả",
     "required": "Bắt buộc",
-    "optional": "Tùy chọn"
+    "optional": "Tùy chọn",
+    "about": "Giới thiệu",
+    "services": "Dịch vụ",
+    "products": "Sản phẩm",
+    "gallery": "Thư viện ảnh",
+    "contact": "Liên hệ",
+    "social": "Liên kết mạng xã hội",
+    "phone": "Điện thoại",
+    "email": "Email",
+    "address": "Địa chỉ",
+    "book": "Đặt lịch",
+    "added": "Đã thêm",
+    "min": "phút",
+    "viewOnMap": "Xem trên bản đồ"
   },
   "nav": {
     "home": "Trang chủ",
@@ -374,6 +387,10 @@
     "logoRec": "Khuyến nghị: 200 x 200 pixels",
     "chooseTheme": "Chọn giao diện",
     "chooseLayoutColors": "Chọn Bố Cục & Màu Sắc",
+    "saveChanges": "Lưu Thay Đổi",
+    "saving": "Đang lưu...",
+    "savedSuccessfully": "Đã lưu thành công",
+    "unsavedChanges": "Bạn có thay đổi chưa lưu",
     "chooseLayoutColorsDesc": "Đầu tiên, chọn kiểu bố cục phù hợp với doanh nghiệp của bạn. Sau đó chọn từ các bảng màu được thiết kế cho bố cục đó.",
     "contentOrder": "Thứ tự nội dung",
     "contentOrderDesc": "Kéo để sắp xếp các mục trên trang đặt lịch",
@@ -866,6 +883,38 @@
       "minimal": {
         "name": "Tối Giản",
         "description": "Xám nhẹ với điểm nhấn tinh tế"
+      },
+      "rose": {
+        "name": "Hồng Phấn",
+        "description": "Hồng phấn ấm áp với điểm nhấn thanh lịch"
+      },
+      "ocean": {
+        "name": "Đại Dương",
+        "description": "Xanh đại dương mát mẻ với điểm nhấn xanh mòng két"
+      },
+      "sunset": {
+        "name": "Hoàng Hôn",
+        "description": "Cam ấm và san hô phong cách hoàng hôn"
+      },
+      "lavender": {
+        "name": "Hoa Oải Hương",
+        "description": "Tím nhẹ với tông màu êm dịu"
+      },
+      "forest": {
+        "name": "Rừng Xanh",
+        "description": "Xanh tự nhiên với tông màu đất"
+      },
+      "berry": {
+        "name": "Quả Mọng",
+        "description": "Tím quả mọng đậm với điểm nhấn sống động"
+      },
+      "midnight": {
+        "name": "Nửa Đêm",
+        "description": "Xanh navy đậm với điểm nhấn sáng"
+      },
+      "coral": {
+        "name": "San Hô",
+        "description": "San hô sống động với cảm giác nhiệt đới"
       },
       "elegance": {
         "name": "Thanh Lịch",

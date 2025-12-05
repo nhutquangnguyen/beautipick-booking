@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { X, Calendar, Clock, User, Phone, Mail, MessageSquare, ArrowRight, ArrowLeft, CheckCircle } from "lucide-react";
 import { CartItem } from "./themes/types";
 import { ThemeCartHandlers } from "./themes/types";
@@ -34,6 +34,9 @@ export function CheckoutFlow({
   const [currentStep, setCurrentStep] = useState<Step>(initialStep);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Ref for time selection section
+  const timeSelectionRef = useRef<HTMLDivElement>(null);
+
   // Reset step when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -44,6 +47,15 @@ export function CheckoutFlow({
   // Form data
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
+
+  // Auto-scroll to time selection when date is selected
+  useEffect(() => {
+    if (selectedDate && timeSelectionRef.current) {
+      setTimeout(() => {
+        timeSelectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 100);
+    }
+  }, [selectedDate]);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
@@ -316,7 +328,7 @@ export function CheckoutFlow({
 
                 {/* Time Selection */}
                 {selectedDate && (
-                  <div>
+                  <div ref={timeSelectionRef}>
                     <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
                       <Clock className="w-5 h-5" style={{ color: accentColor }} />
                       Chọn giờ

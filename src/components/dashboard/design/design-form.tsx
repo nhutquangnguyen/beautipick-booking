@@ -41,13 +41,19 @@ export function DesignForm({
   const [saved, setSaved] = useState(false);
   const [formData, setFormData] = useState<MerchantTheme>(ensureCompleteTheme(theme));
   const [previewTheme, setPreviewTheme] = useState<ThemePreset | null>(null);
+  const [hasChanges, setHasChanges] = useState(false);
 
-  // Track if this is the initial render to prevent auto-save on mount
-  const isInitialMount = useRef(true);
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Track original theme to detect changes
+  const originalTheme = useRef<MerchantTheme>(ensureCompleteTheme(theme));
 
-  // Auto-save function
-  const autoSave = useCallback(async () => {
+  // Detect changes
+  useEffect(() => {
+    const changed = JSON.stringify(formData) !== JSON.stringify(originalTheme.current);
+    setHasChanges(changed);
+  }, [formData]);
+
+  // Manual save function
+  const handleSave = async () => {
     setSaving(true);
     setSaved(false);
 
@@ -60,6 +66,8 @@ export function DesignForm({
         .eq("id", merchantId);
 
       setSaved(true);
+      setHasChanges(false);
+      originalTheme.current = formData;
       router.refresh();
 
       // Hide "Saved" message after 2 seconds
@@ -67,33 +75,7 @@ export function DesignForm({
     } finally {
       setSaving(false);
     }
-  }, [formData, merchantId, supabase, router]);
-
-  // Auto-save with debounce when formData changes
-  useEffect(() => {
-    // Skip auto-save on initial mount
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
-    }
-
-    // Clear existing timeout
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-
-    // Set new timeout for auto-save (debounce 1 second)
-    saveTimeoutRef.current = setTimeout(() => {
-      autoSave();
-    }, 1000);
-
-    // Cleanup on unmount
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-    };
-  }, [formData, autoSave]);
+  };
 
   const selectPreset = (presetId: string) => {
     const preset = themePresets.find((p) => p.id === presetId);
@@ -170,23 +152,36 @@ export function DesignForm({
         />
       </div>
 
-      {/* Auto-save Status */}
-      <div className="flex items-center justify-center gap-2 py-4 text-sm text-gray-500">
-        {saving && (
-          <>
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-purple-600" />
-            <span>Saving...</span>
-          </>
-        )}
-        {saved && !saving && (
-          <>
-            <Check className="h-4 w-4 text-green-600" />
-            <span className="text-green-600">Saved</span>
-          </>
-        )}
-        {!saving && !saved && (
-          <span className="text-gray-400">Changes are auto-saved</span>
-        )}
+      {/* Save Button */}
+      <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4 -mx-4 sm:-mx-6 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2 text-sm">
+          {saved && !saving && (
+            <>
+              <Check className="h-4 w-4 text-green-600" />
+              <span className="text-green-600">{t("savedSuccessfully")}</span>
+            </>
+          )}
+          {hasChanges && !saving && !saved && (
+            <span className="text-amber-600">{t("unsavedChanges")}</span>
+          )}
+        </div>
+        <button
+          onClick={handleSave}
+          disabled={!hasChanges || saving}
+          className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+        >
+          {saving ? (
+            <>
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              <span>{t("saving")}</span>
+            </>
+          ) : (
+            <>
+              <Check className="h-4 w-4" />
+              <span>{t("saveChanges")}</span>
+            </>
+          )}
+        </button>
       </div>
     </div>
   );

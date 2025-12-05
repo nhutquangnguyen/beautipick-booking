@@ -116,7 +116,20 @@
     "filter": "Filter",
     "noResults": "No results found",
     "required": "Required",
-    "optional": "Optional"
+    "optional": "Optional",
+    "about": "About",
+    "services": "Services",
+    "products": "Products",
+    "gallery": "Gallery",
+    "contact": "Contact",
+    "social": "Social Links",
+    "phone": "Phone",
+    "email": "Email",
+    "address": "Address",
+    "book": "Book",
+    "added": "Added",
+    "min": "min",
+    "viewOnMap": "View on Map"
   },
   "nav": {
     "home": "Home",
@@ -371,6 +384,10 @@
     "logoRec": "Recommended: 200 x 200 pixels",
     "chooseTheme": "Choose a Theme",
     "chooseLayoutColors": "Choose Your Layout & Colors",
+    "saveChanges": "Save Changes",
+    "saving": "Saving...",
+    "savedSuccessfully": "Saved successfully",
+    "unsavedChanges": "You have unsaved changes",
     "chooseLayoutColorsDesc": "First, select a layout style that matches your business. Then choose from curated color schemes designed for that layout.",
     "contentOrder": "Content Order",
     "contentOrderDesc": "Drag to reorder sections on your booking page",
@@ -865,6 +882,38 @@
       "minimal": {
         "name": "Minimal",
         "description": "Soft gray with subtle accent"
+      },
+      "rose": {
+        "name": "Rose",
+        "description": "Warm rose pink with elegant accents"
+      },
+      "ocean": {
+        "name": "Ocean",
+        "description": "Cool ocean blue with teal accents"
+      },
+      "sunset": {
+        "name": "Sunset",
+        "description": "Warm orange and coral sunset vibes"
+      },
+      "lavender": {
+        "name": "Lavender",
+        "description": "Soft purple with calming tones"
+      },
+      "forest": {
+        "name": "Forest",
+        "description": "Natural green with earthy tones"
+      },
+      "berry": {
+        "name": "Berry",
+        "description": "Rich berry purple with vibrant accents"
+      },
+      "midnight": {
+        "name": "Midnight",
+        "description": "Deep navy with bright accents"
+      },
+      "coral": {
+        "name": "Coral",
+        "description": "Vibrant coral with tropical feel"
       },
       "elegance": {
         "name": "Elegance",

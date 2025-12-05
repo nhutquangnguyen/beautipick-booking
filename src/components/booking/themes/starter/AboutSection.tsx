@@ -1,8 +1,11 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { AboutSectionProps } from "../types";
 
 export function StarterAboutSection({ merchant, colors }: AboutSectionProps) {
+  const t = useTranslations("common");
+
   // Use description field which exists in the database
   if (!merchant.description) return null;
 
@@ -11,7 +14,7 @@ export function StarterAboutSection({ merchant, colors }: AboutSectionProps) {
       {/* Section Title */}
       <div className="mb-4">
         <h2 className="text-2xl font-semibold text-center" style={{ color: colors.primaryColor }}>
-          About
+          {t("about")}
         </h2>
       </div>
 
