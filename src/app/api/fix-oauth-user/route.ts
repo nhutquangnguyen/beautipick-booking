@@ -77,8 +77,8 @@ export async function GET(request: NextRequest) {
       email,
       business_name: businessName,
       slug: finalSlug,
-      theme: defaultTheme,
-      settings: defaultSettings,
+      theme: defaultTheme as any,
+      settings: defaultSettings as any,
       timezone: 'America/New_York',
       currency: 'USD',
     }).select().single();
