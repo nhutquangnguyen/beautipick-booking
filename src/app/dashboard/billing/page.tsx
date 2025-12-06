@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentSubscription } from "@/lib/pricing/subscriptions";
 import { getQuotaInfo } from "@/lib/pricing/enforcement";
 import { UsageMetrics } from "@/components/billing/usage-metrics";
+import { BrandingToggle } from "@/components/billing/branding-toggle";
 import { getTranslations } from "next-intl/server";
 import { formatDistanceToNow } from "date-fns";
 import { redirect } from "next/navigation";
@@ -31,6 +32,16 @@ export default async function BillingPage() {
       </div>
     );
   }
+
+  // Get merchant info for branding setting
+  const { data: merchant } = await supabase
+    .from("merchants")
+    .select("id, settings")
+    .eq("id", user.id)
+    .single();
+
+  const showBranding = (merchant?.settings as any)?.showBranding !== false;
+  const isPro = subscription.tier.tier_key === "pro";
 
   const isExpired = subscription.expires_at && new Date(subscription.expires_at) < new Date();
   const statusColor = isExpired ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800";
@@ -89,9 +100,18 @@ export default async function BillingPage() {
       </div>
 
       {/* Usage Metrics */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
         <UsageMetrics quota={quota} />
       </div>
+
+      {/* Branding Settings */}
+      {merchant && (
+        <BrandingToggle
+          merchantId={merchant.id}
+          currentValue={showBranding}
+          isPro={isPro}
+        />
+      )}
     </div>
   );
 }

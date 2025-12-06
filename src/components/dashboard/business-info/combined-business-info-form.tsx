@@ -109,7 +109,21 @@ export function CombinedBusinessInfoForm({ merchant }: { merchant: Merchant }) {
       .eq("id", merchant.id)
       .single();
 
-    setSocialLinks((data?.social_links as SocialLink[]) ?? []);
+    // Handle both array and object formats for backward compatibility
+    const links = data?.social_links;
+    if (Array.isArray(links)) {
+      setSocialLinks(links as SocialLink[]);
+    } else if (links && typeof links === 'object') {
+      // Convert old object format to array format
+      const linksArray: SocialLink[] = Object.entries(links).map(([type, url]) => ({
+        id: crypto.randomUUID(),
+        type: type as any,
+        url: url as string,
+      }));
+      setSocialLinks(linksArray);
+    } else {
+      setSocialLinks([]);
+    }
   };
 
   const toggleSection = (section: string) => {

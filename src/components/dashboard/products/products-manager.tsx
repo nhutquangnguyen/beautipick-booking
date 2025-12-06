@@ -91,6 +91,28 @@ export function ProductsManager({
     router.refresh();
   };
 
+  const loadSampleProducts = async (category: "hair" | "nail" | "spa") => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/add-sample-products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category }),
+      });
+
+      if (response.ok) {
+        router.refresh();
+      } else {
+        const error = await response.json();
+        alert(`Error: ${error.error || "Failed to load sample products"}`);
+      }
+    } catch (error) {
+      alert("Failed to load sample products");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       {products.length > 0 ? (
@@ -211,13 +233,42 @@ export function ProductsManager({
           <p className="mt-2 text-gray-500">
             {t("noProductsDesc")}
           </p>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="mt-4 inline-flex items-center gap-2 rounded-xl bg-purple-600 px-4 py-2 font-medium text-white hover:bg-purple-700"
-          >
-            <Plus className="h-5 w-5" />
-            {t("addProduct")}
-          </button>
+
+          <div className="mt-6 space-y-3">
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="inline-flex items-center gap-2 rounded-xl bg-purple-600 px-4 py-2 font-medium text-white hover:bg-purple-700"
+            >
+              <Plus className="h-5 w-5" />
+              {t("addProduct")}
+            </button>
+
+            <div className="text-sm text-gray-500">or load sample products:</div>
+
+            <div className="flex gap-2 justify-center flex-wrap">
+              <button
+                onClick={() => loadSampleProducts("hair")}
+                disabled={loading}
+                className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
+              >
+                💇 Hair Salon (5)
+              </button>
+              <button
+                onClick={() => loadSampleProducts("nail")}
+                disabled={loading}
+                className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
+              >
+                💅 Nail Salon (5)
+              </button>
+              <button
+                onClick={() => loadSampleProducts("spa")}
+                disabled={loading}
+                className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
+              >
+                🧖 Spa & Wellness (5)
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

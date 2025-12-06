@@ -4,25 +4,98 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
-import { Check, ChevronRight, Clock, Scissors, Store, Palette } from "lucide-react";
-import { themePresets, ThemePreset } from "@/types/database";
-import { ThemeGallery } from "@/components/dashboard/design/theme-gallery";
-import { ThemePreviewModal } from "@/components/dashboard/design/theme-preview-modal";
+import { Check, ChevronRight, Clock, Scissors, Store, Palette, Sparkles, Languages } from "lucide-react";
+import { layoutOptions } from "@/types/database";
 
-type Step = "theme" | "business" | "services" | "hours" | "complete";
+type Step = "business" | "theme" | "category" | "hours" | "complete";
 
-const COMMON_SERVICES = [
-  { name: "Haircut", translationKey: "haircut", duration: 45, price: 35, category: "Hair", categoryKey: "hair" },
-  { name: "Hair Coloring", translationKey: "hairColoring", duration: 120, price: 85, category: "Hair", categoryKey: "hair" },
-  { name: "Blowout", translationKey: "blowout", duration: 45, price: 45, category: "Hair", categoryKey: "hair" },
-  { name: "Manicure", translationKey: "manicure", duration: 30, price: 25, category: "Nails", categoryKey: "nails" },
-  { name: "Pedicure", translationKey: "pedicure", duration: 45, price: 35, category: "Nails", categoryKey: "nails" },
-  { name: "Gel Nails", translationKey: "gelNails", duration: 60, price: 45, category: "Nails", categoryKey: "nails" },
-  { name: "Facial", translationKey: "facial", duration: 60, price: 65, category: "Skincare", categoryKey: "skincare" },
-  { name: "Eyebrow Wax", translationKey: "eyebrowWax", duration: 15, price: 15, category: "Waxing", categoryKey: "waxing" },
-  { name: "Makeup Application", translationKey: "makeupApplication", duration: 45, price: 55, category: "Makeup", categoryKey: "makeup" },
-  { name: "Lash Extensions", translationKey: "lashExtensions", duration: 90, price: 120, category: "Lashes", categoryKey: "lashes" },
-];
+// Category-based services and products templates with translations
+const CATEGORY_DATA = {
+  hair: {
+    services: {
+      en: [
+        { name: "Haircut", duration: 45, price: 35 },
+        { name: "Hair Coloring", duration: 120, price: 85 },
+        { name: "Blowout", duration: 45, price: 45 },
+        { name: "Hair Treatment", duration: 60, price: 55 },
+      ],
+      vi: [
+        { name: "Cắt tóc", duration: 45, price: 35 },
+        { name: "Nhuộm tóc", duration: 120, price: 85 },
+        { name: "Sấy tóc", duration: 45, price: 45 },
+        { name: "Ủ tóc dưỡng sinh", duration: 60, price: 55 },
+      ],
+    },
+    products: {
+      en: [
+        { name: "Professional Shampoo", price: 28 },
+        { name: "Hair Conditioner", price: 25 },
+        { name: "Hair Serum", price: 38 },
+      ],
+      vi: [
+        { name: "Dầu gội chuyên nghiệp", price: 28 },
+        { name: "Dầu xả dưỡng tóc", price: 25 },
+        { name: "Serum dưỡng tóc", price: 38 },
+      ],
+    },
+  },
+  nail: {
+    services: {
+      en: [
+        { name: "Manicure", duration: 30, price: 25 },
+        { name: "Pedicure", duration: 45, price: 35 },
+        { name: "Gel Nails", duration: 60, price: 45 },
+        { name: "Nail Art", duration: 30, price: 30 },
+      ],
+      vi: [
+        { name: "Làm móng tay", duration: 30, price: 25 },
+        { name: "Làm móng chân", duration: 45, price: 35 },
+        { name: "Sơn gel", duration: 60, price: 45 },
+        { name: "Vẽ móng nghệ thuật", duration: 30, price: 30 },
+      ],
+    },
+    products: {
+      en: [
+        { name: "Premium Nail Polish", price: 18 },
+        { name: "Cuticle Oil", price: 16 },
+        { name: "Hand Cream", price: 20 },
+      ],
+      vi: [
+        { name: "Sơn móng cao cấp", price: 18 },
+        { name: "Dầu dưỡng da móng", price: 16 },
+        { name: "Kem dưỡng tay", price: 20 },
+      ],
+    },
+  },
+  spa: {
+    services: {
+      en: [
+        { name: "Facial Treatment", duration: 60, price: 65 },
+        { name: "Body Massage", duration: 90, price: 85 },
+        { name: "Hot Stone Massage", duration: 75, price: 95 },
+        { name: "Aromatherapy", duration: 60, price: 70 },
+      ],
+      vi: [
+        { name: "Chăm sóc da mặt", duration: 60, price: 65 },
+        { name: "Massage toàn thân", duration: 90, price: 85 },
+        { name: "Massage đá nóng", duration: 75, price: 95 },
+        { name: "Liệu pháp hương thơm", duration: 60, price: 70 },
+      ],
+    },
+    products: {
+      en: [
+        { name: "Luxury Face Cream", price: 52 },
+        { name: "Body Lotion", price: 35 },
+        { name: "Essential Oil Set", price: 45 },
+      ],
+      vi: [
+        { name: "Kem dưỡng da mặt cao cấp", price: 52 },
+        { name: "Sữa dưỡng thể", price: 35 },
+        { name: "Bộ tinh dầu thiên nhiên", price: 45 },
+      ],
+    },
+  },
+};
 
 const DEFAULT_HOURS = [
   { day: 1, name: "Monday", open: "09:00", close: "18:00", enabled: true },
@@ -35,45 +108,88 @@ const DEFAULT_HOURS = [
 ];
 
 export default function OnboardingPage() {
-  const [step, setStep] = useState<Step>("theme");
+  const [step, setStep] = useState<Step>("business");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const locale = useLocale();
+  const defaultLocale = useLocale();
   const t = useTranslations("onboarding");
   const supabase = createClient();
 
-  // Set currency based on locale
-  const currency = locale === "vi" ? "VND" : "USD";
+  // Language selection state (default to current locale)
+  const [selectedLanguage, setSelectedLanguage] = useState<"en" | "vi">(defaultLocale as "en" | "vi");
+
+  // Set currency and timezone based on selected language
+  const currency = selectedLanguage === "vi" ? "VND" : "USD";
+  const timezone = selectedLanguage === "vi" ? "Asia/Ho_Chi_Minh" : "America/New_York";
   const priceMultiplier = currency === "VND" ? 25000 : 1;
 
-  // Convert services prices based on currency
-  const localizedServices = COMMON_SERVICES.map(service => ({
-    ...service,
-    price: Math.round(service.price * priceMultiplier)
-  }));
+  // Dynamic labels based on selected language
+  const labels = {
+    setupTitle: selectedLanguage === "vi" ? "Thiết lập doanh nghiệp của bạn" : "Set up your business",
+    setupSubtitle: selectedLanguage === "vi" ? "Hãy cho chúng tôi biết về doanh nghiệp của bạn" : "Tell us about your business",
+    languageLabel: selectedLanguage === "vi" ? "Ngôn ngữ" : "Language",
+    businessNameLabel: selectedLanguage === "vi" ? "Tên doanh nghiệp" : "Business Name",
+    businessNamePlaceholder: selectedLanguage === "vi" ? "VD: Salon Bella" : "e.g., Bella Salon",
+    phoneLabel: selectedLanguage === "vi" ? "Số điện thoại" : "Phone Number",
+    phonePlaceholder: selectedLanguage === "vi" ? "+84 xxx xxx xxx" : "+1 (555) 123-4567",
+    addressLabel: selectedLanguage === "vi" ? "Địa chỉ" : "Address",
+    addressPlaceholder: selectedLanguage === "vi" ? "123 Nguyễn Huệ, Q.1" : "123 Main St, City",
+    continue: selectedLanguage === "vi" ? "Tiếp tục" : "Continue",
+    skipForNow: selectedLanguage === "vi" ? "Bỏ qua bây giờ" : "Skip for now",
+  };
 
-  // Theme selection
-  const [selectedThemeId, setSelectedThemeId] = useState<string>("modern");
-  const [previewTheme, setPreviewTheme] = useState<ThemePreset | null>(null);
+  // Theme selection - use Starter layout with clean color scheme
+  const [selectedColorScheme, setSelectedColorScheme] = useState<string>("clean");
+  const starterLayout = layoutOptions.find(l => l.id === "starter")!;
 
   // Business info
   const [businessInfo, setBusinessInfo] = useState({
+    businessName: "",
     phone: "",
     address: "",
   });
 
-  // Services
-  const [selectedServices, setSelectedServices] = useState<typeof COMMON_SERVICES>([]);
+  // Category selection (hair, nail, spa)
+  const [selectedCategory, setSelectedCategory] = useState<"hair" | "nail" | "spa" | null>(null);
 
   // Hours
   const [hours, setHours] = useState(DEFAULT_HOURS);
 
-  const toggleService = (service: (typeof COMMON_SERVICES)[0]) => {
-    setSelectedServices((prev) =>
-      prev.find((s) => s.name === service.name)
-        ? prev.filter((s) => s.name !== service.name)
-        : [...prev, service]
-    );
+  const handleBusinessSubmit = async () => {
+    // Validate required fields
+    if (!businessInfo.businessName || !businessInfo.phone) {
+      alert(selectedLanguage === "vi" ? "Vui lòng nhập tên doanh nghiệp và số điện thoại" : "Please enter business name and phone number");
+      return;
+    }
+
+    setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (user) {
+      const updates: any = {
+        business_name: businessInfo.businessName || null,
+        phone: businessInfo.phone || null,
+        address: businessInfo.address || null,
+        currency: currency,
+        timezone: timezone,
+      };
+
+      // Auto-add Zalo link if phone number is provided (for Vietnamese users)
+      if (businessInfo.phone && selectedLanguage === "vi") {
+        const phoneNumber = businessInfo.phone.replace(/\D/g, ''); // Remove non-digits
+        updates.social_links = [
+          {
+            type: "zalo",
+            url: `https://zalo.me/${phoneNumber}`,
+          },
+        ];
+      }
+
+      await supabase.from("merchants").update(updates).eq("id", user.id);
+    }
+
+    setLoading(false);
+    setStep("theme");
   };
 
   const handleThemeSubmit = async () => {
@@ -81,52 +197,118 @@ export default function OnboardingPage() {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (user) {
-      const selectedPreset = themePresets.find(p => p.id === selectedThemeId);
-      if (selectedPreset) {
+      const selectedColor = starterLayout.colorSchemes.find(c => c.id === selectedColorScheme);
+      if (selectedColor) {
         await supabase.from("merchants").update({
           theme: {
-            themeId: selectedThemeId,
-            ...selectedPreset.theme
+            layoutTemplate: "starter",
+            primaryColor: selectedColor.primaryColor,
+            secondaryColor: selectedColor.secondaryColor,
+            accentColor: selectedColor.accentColor,
+            backgroundColor: selectedColor.backgroundColor,
+            textColor: selectedColor.textColor,
+            fontFamily: selectedColor.fontFamily,
+            borderRadius: "lg",
+            buttonStyle: "solid",
+            headerStyle: "stacked",
+            contentOrder: ["about", "services", "gallery", "products", "video", "contact", "social"],
+            showSectionTitles: true,
           }
         }).eq("id", user.id);
       }
     }
 
     setLoading(false);
-    setStep("business");
+    setStep("category");
   };
 
-  const handleBusinessSubmit = async () => {
+  const handleCategorySubmit = async () => {
+    if (!selectedCategory) {
+      setStep("hours");
+      return;
+    }
+
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
 
     if (user) {
+      const categoryData = CATEGORY_DATA[selectedCategory];
+
+      // Set default images based on category
+      const defaultImages = {
+        hair: {
+          logo: "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&h=400&fit=crop",
+          cover: "https://images.unsplash.com/photo-1562322140-8baeececf3df?w=1200&h=600&fit=crop",
+          gallery: [
+            "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&h=600&fit=crop",
+            "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=800&h=600&fit=crop",
+            "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=800&h=600&fit=crop",
+            "https://images.unsplash.com/photo-1582095133179-bfd08e2fc6b3?w=800&h=600&fit=crop",
+          ],
+        },
+        nail: {
+          logo: "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400&h=400&fit=crop",
+          cover: "https://images.unsplash.com/photo-1610992015732-2449b76344bc?w=1200&h=600&fit=crop",
+          gallery: [
+            "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=800&h=600&fit=crop",
+            "https://images.unsplash.com/photo-1610992015732-2449b76344bc?w=800&h=600&fit=crop",
+            "https://images.unsplash.com/photo-1632345031435-8727f6897d53?w=800&h=600&fit=crop",
+            "https://images.unsplash.com/photo-1519014816548-bf5fe059798b?w=800&h=600&fit=crop",
+          ],
+        },
+        spa: {
+          logo: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=400&h=400&fit=crop",
+          cover: "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=1200&h=600&fit=crop",
+          gallery: [
+            "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&h=600&fit=crop",
+            "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800&h=600&fit=crop",
+            "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=600&fit=crop",
+            "https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=800&h=600&fit=crop",
+          ],
+        },
+      };
+
+      // Update merchant with logo and cover image
       await supabase.from("merchants").update({
-        phone: businessInfo.phone || null,
-        address: businessInfo.address || null,
-        currency: currency,
+        logo_url: defaultImages[selectedCategory].logo,
+        cover_image_url: defaultImages[selectedCategory].cover,
       }).eq("id", user.id);
-    }
 
-    setLoading(false);
-    setStep("services");
-  };
+      // Get services and products in selected language
+      const services = categoryData.services[selectedLanguage];
+      const products = categoryData.products[selectedLanguage];
 
-  const handleServicesSubmit = async () => {
-    setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (user && selectedServices.length > 0) {
-      const servicesToInsert = selectedServices.map((service, index) => ({
+      // Insert services with translated names
+      const servicesToInsert = services.map((service, index) => ({
         merchant_id: user.id,
         name: service.name,
         duration_minutes: service.duration,
-        price: service.price,
-        category: service.category,
+        price: Math.round(service.price * priceMultiplier),
+        category: selectedCategory === "hair" ? (selectedLanguage === "vi" ? "Tóc" : "Hair") :
+                 selectedCategory === "nail" ? (selectedLanguage === "vi" ? "Móng" : "Nails") :
+                 (selectedLanguage === "vi" ? "Spa" : "Spa"),
         display_order: index,
       }));
 
       await supabase.from("services").insert(servicesToInsert);
+
+      // Insert products with translated names
+      const productsToInsert = products.map((product) => ({
+        merchant_id: user.id,
+        name: product.name,
+        price: Math.round(product.price * priceMultiplier),
+      }));
+
+      await supabase.from("products").insert(productsToInsert);
+
+      // Insert gallery images
+      const galleryToInsert = defaultImages[selectedCategory].gallery.map((imageUrl, index) => ({
+        merchant_id: user.id,
+        image_url: imageUrl,
+        display_order: index,
+      }));
+
+      await supabase.from("gallery").insert(galleryToInsert);
     }
 
     setLoading(false);
@@ -165,9 +347,9 @@ export default function OnboardingPage() {
         <div className="mb-6 sm:mb-8">
           <div className="flex items-center justify-center gap-1.5 sm:gap-2">
             {[
-              { key: "theme", icon: Palette, label: "Theme" },
               { key: "business", icon: Store, label: "Info" },
-              { key: "services", icon: Scissors, label: "Services" },
+              { key: "theme", icon: Palette, label: "Theme" },
+              { key: "category", icon: Sparkles, label: "Category" },
               { key: "hours", icon: Clock, label: "Hours" },
             ].map((s, i, arr) => (
               <div key={s.key} className="flex items-center">
@@ -210,14 +392,32 @@ export default function OnboardingPage() {
               Pick a beautiful theme for your booking page. You can customize colors and fonts later.
             </p>
 
-            <div className="mt-8">
-              <ThemeGallery
-                themes={themePresets}
-                selectedThemeId={selectedThemeId}
-                onSelectTheme={setSelectedThemeId}
-                onPreviewTheme={setPreviewTheme}
-                compact={false}
-              />
+            <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+              {starterLayout.colorSchemes.map((scheme) => (
+                <button
+                  key={scheme.id}
+                  onClick={() => setSelectedColorScheme(scheme.id)}
+                  className={`relative rounded-xl border-2 p-4 text-left transition-all ${
+                    selectedColorScheme === scheme.id
+                      ? "border-purple-600 bg-purple-50"
+                      : "border-gray-200 hover:border-gray-300"
+                  }`}
+                >
+                  <div
+                    className="h-16 w-full rounded-lg mb-3"
+                    style={{ background: scheme.preview }}
+                  />
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-semibold text-gray-900 text-sm">{scheme.name}</p>
+                      <p className="text-xs text-gray-500 mt-1">{scheme.description}</p>
+                    </div>
+                    {selectedColorScheme === scheme.id && (
+                      <Check className="h-5 w-5 text-purple-600 flex-shrink-0" />
+                    )}
+                  </div>
+                </button>
+              ))}
             </div>
 
             <button
@@ -231,32 +431,51 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Theme Preview Modal */}
-        <ThemePreviewModal
-          theme={previewTheme}
-          isOpen={!!previewTheme}
-          onClose={() => setPreviewTheme(null)}
-          onApply={(themeId) => {
-            setSelectedThemeId(themeId);
-            setPreviewTheme(null);
-          }}
-          currentThemeId={selectedThemeId}
-        />
-
         {/* Step: Business Info */}
         {step === "business" && (
           <div className="rounded-2xl bg-white p-4 sm:p-8 shadow-sm">
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-              {t("setupTitle")}
+              {labels.setupTitle}
             </h1>
             <p className="mt-2 text-sm sm:text-base text-gray-600">
-              {t("setupSubtitle")}
+              {labels.setupSubtitle}
             </p>
 
             <div className="mt-8 space-y-6">
+              {/* Language Selection Dropdown */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  {t("phoneLabel")}
+                  {labels.languageLabel} *
+                </label>
+                <select
+                  value={selectedLanguage}
+                  onChange={(e) => setSelectedLanguage(e.target.value as "en" | "vi")}
+                  className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200"
+                >
+                  <option value="en">🇺🇸 English (USD)</option>
+                  <option value="vi">🇻🇳 Tiếng Việt (VND)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  {labels.businessNameLabel} *
+                </label>
+                <input
+                  type="text"
+                  value={businessInfo.businessName}
+                  onChange={(e) =>
+                    setBusinessInfo({ ...businessInfo, businessName: e.target.value })
+                  }
+                  className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-lg sm:text-2xl font-bold focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200"
+                  placeholder={labels.businessNamePlaceholder}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  {labels.phoneLabel} *
                 </label>
                 <input
                   type="tel"
@@ -265,13 +484,14 @@ export default function OnboardingPage() {
                     setBusinessInfo({ ...businessInfo, phone: e.target.value })
                   }
                   className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200"
-                  placeholder={t("phonePlaceholder")}
+                  placeholder={labels.phonePlaceholder}
+                  required
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  {t("addressLabel")}
+                  {labels.addressLabel}
                 </label>
                 <input
                   type="text"
@@ -280,7 +500,7 @@ export default function OnboardingPage() {
                     setBusinessInfo({ ...businessInfo, address: e.target.value })
                   }
                   className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200"
-                  placeholder={t("addressPlaceholder")}
+                  placeholder={labels.addressPlaceholder}
                 />
               </div>
             </div>
@@ -288,76 +508,90 @@ export default function OnboardingPage() {
             <button
               onClick={handleBusinessSubmit}
               disabled={loading}
-              className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 py-4 font-semibold text-white hover:bg-purple-700"
+              className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 py-4 font-semibold text-white hover:bg-purple-700 disabled:opacity-50"
             >
-              {loading ? t("saving") : t("continue")}
+              {loading ? (selectedLanguage === "vi" ? "Đang lưu..." : "Saving...") : labels.continue}
               <ChevronRight className="h-5 w-5" />
             </button>
 
             <button
-              onClick={() => setStep("services")}
+              onClick={() => setStep("theme")}
               className="mt-3 w-full py-2 text-sm text-gray-500 hover:text-gray-700"
             >
-              {t("skipForNow")}
+              {labels.skipForNow}
             </button>
           </div>
         )}
 
-        {/* Step: Services */}
-        {step === "services" && (
+        {/* Step: Category Selection */}
+        {step === "category" && (
           <div className="rounded-2xl bg-white p-4 sm:p-8 shadow-sm">
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-              {t("servicesTitle")}
+              What services do you offer?
             </h1>
             <p className="mt-2 text-sm sm:text-base text-gray-600">
-              {t("servicesSubtitle")}
+              Select your business category. We'll add sample services and products for you.
             </p>
 
-            <div className="mt-6 grid grid-cols-2 gap-3">
-              {localizedServices.map((service) => {
-                const isSelected = selectedServices.find(
-                  (s) => s.name === service.name
-                );
-                return (
-                  <button
-                    key={service.name}
-                    onClick={() => toggleService(service)}
-                    className={`rounded-xl border-2 p-4 text-left transition-all ${
-                      isSelected
-                        ? "border-purple-600 bg-purple-50"
-                        : "border-gray-100 hover:border-gray-200"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <span className="font-medium text-gray-900">
-                        {t(`services.${service.translationKey}`)}
-                      </span>
-                      {isSelected && (
-                        <Check className="h-5 w-5 text-purple-600" />
-                      )}
+            <div className="mt-8 grid gap-4">
+              {[
+                {
+                  key: "hair" as const,
+                  icon: "💇",
+                  title: "Hair Salon",
+                  description: "Haircuts, coloring, styling services",
+                  services: "4 services • 3 products"
+                },
+                {
+                  key: "nail" as const,
+                  icon: "💅",
+                  title: "Nail Salon",
+                  description: "Manicure, pedicure, nail art",
+                  services: "4 services • 3 products"
+                },
+                {
+                  key: "spa" as const,
+                  icon: "🧖",
+                  title: "Spa & Wellness",
+                  description: "Massage, facial, body treatments",
+                  services: "4 services • 3 products"
+                },
+              ].map((category) => (
+                <button
+                  key={category.key}
+                  onClick={() => setSelectedCategory(category.key)}
+                  className={`relative rounded-xl border-2 p-6 text-left transition-all ${
+                    selectedCategory === category.key
+                      ? "border-purple-600 bg-purple-50"
+                      : "border-gray-200 hover:border-gray-300"
+                  }`}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="text-4xl">{category.icon}</div>
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-semibold text-gray-900 text-lg">{category.title}</h3>
+                          <p className="text-sm text-gray-600 mt-1">{category.description}</p>
+                          <p className="text-xs text-gray-500 mt-2">{category.services}</p>
+                        </div>
+                        {selectedCategory === category.key && (
+                          <Check className="h-6 w-6 text-purple-600 flex-shrink-0" />
+                        )}
+                      </div>
                     </div>
-                    <div className="mt-1 text-sm text-gray-500">
-                      {service.duration} min · {currency === "VND" ? `${service.price.toLocaleString()} đ` : `$${service.price}`}
-                    </div>
-                  </button>
-                );
-              })}
+                  </div>
+                </button>
+              ))}
             </div>
 
             <button
-              onClick={handleServicesSubmit}
+              onClick={handleCategorySubmit}
               disabled={loading}
-              className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 py-4 font-semibold text-white hover:bg-purple-700"
+              className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 py-4 font-semibold text-white hover:bg-purple-700 disabled:opacity-50"
             >
-              {loading ? t("saving") : t("continueWithServices", { count: selectedServices.length })}
+              {loading ? t("saving") : selectedCategory ? "Continue" : "Skip"}
               <ChevronRight className="h-5 w-5" />
-            </button>
-
-            <button
-              onClick={() => setStep("hours")}
-              className="mt-3 w-full py-2 text-sm text-gray-500 hover:text-gray-700"
-            >
-              {t("skipForNow")}
             </button>
           </div>
         )}

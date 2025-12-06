@@ -272,7 +272,13 @@
         "design": "Thiết kế",
         "designDesc": "Tùy chỉnh giao diện trang đặt lịch",
         "account": "Tài khoản",
-        "accountDesc": "Đăng xuất khỏi tài khoản"
+        "accountDesc": "Đăng xuất khỏi tài khoản",
+        "customDomainProFeature": "Tên Miền Riêng Là Tính Năng Pro",
+        "customDomainProDescription": "Kết nối tên miền riêng của bạn (ví dụ: salon-cua-ban.com) để tạo trang đặt lịch chuyên nghiệp với thương hiệu riêng. Nâng cấp lên Pro để mở khóa tính năng này.",
+        "upgradeToPro": "Nâng Cấp Lên Pro",
+        "showBranding": "Hiển thị \"Powered by BeautiPick\"",
+        "showBrandingDesc": "Hiển thị thương hiệu BeautiPick ở chân trang đặt lịch. Người dùng miễn phí luôn hiển thị thương hiệu.",
+        "showBrandingDescFree": "Người dùng miễn phí phải hiển thị thương hiệu BeautiPick. Nâng cấp lên Pro để gỡ bỏ."
     },
     "businessForm": {
         "title": "Thông tin doanh nghiệp",
@@ -1122,7 +1128,11 @@
     "galleryLimit": "hình ảnh gallery",
     "features": "Tính Năng",
     "upgradeSuccess": "Nâng cấp lên Pro thành công!",
-    "upgradeError": "Nâng cấp thất bại. Vui lòng thử lại."
+    "upgradeError": "Nâng cấp thất bại. Vui lòng thử lại.",
+    "brandingSettings": "Cài Đặt Thương Hiệu",
+    "showBranding": "Hiển thị \"Powered by BeautiPick\"",
+    "showBrandingDescPro": "Hiển thị thương hiệu BeautiPick ở chân trang đặt lịch. Bỏ chọn để ẩn.",
+    "showBrandingDescFree": "Người dùng miễn phí phải hiển thị thương hiệu BeautiPick. Nâng cấp lên Pro để xóa."
   },
   "themePreview": {
     "previewMode": "Chế Độ Xem Trước",

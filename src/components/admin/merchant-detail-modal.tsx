@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
-import { X, Calendar, Users, ShoppingBag, Scissors, Image, CreditCard, Mail, Phone, Globe, Edit2 } from "lucide-react";
+import { X, Calendar, Users, ShoppingBag, Scissors, Image, CreditCard, Mail, Phone, Globe, Edit2, Trash2 } from "lucide-react";
 import { UpgradeMerchantModal } from "./upgrade-merchant-modal";
+import { DeleteMerchantModal } from "./delete-merchant-modal";
 
 interface MerchantDetailModalProps {
   merchant: {
@@ -51,6 +52,7 @@ interface MerchantDetailModalProps {
 export function MerchantDetailModal({ merchant, onClose }: MerchantDetailModalProps) {
   const router = useRouter();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Handle both array and object formats for merchant_subscriptions
   const subscription = Array.isArray(merchant.merchant_subscriptions)
@@ -320,7 +322,14 @@ export function MerchantDetailModal({ merchant, onClose }: MerchantDetailModalPr
           </div>
 
           {/* Footer */}
-          <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 p-4 flex justify-end">
+          <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 p-4 flex justify-between">
+            <button
+              onClick={() => setShowDeleteModal(true)}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center gap-2"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete Merchant
+            </button>
             <button
               onClick={onClose}
               className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
@@ -338,6 +347,17 @@ export function MerchantDetailModal({ merchant, onClose }: MerchantDetailModalPr
           onClose={() => {
             setShowUpgradeModal(false);
             router.refresh();
+          }}
+        />
+      )}
+
+      {/* Delete Modal */}
+      {showDeleteModal && (
+        <DeleteMerchantModal
+          merchant={merchant}
+          onClose={() => {
+            setShowDeleteModal(false);
+            onClose(); // Close the parent modal too
           }}
         />
       )}

@@ -121,7 +121,21 @@ export default async function PublicBookingPage({
     };
   }
 
-  // Pass merchant with public URLs
+  // Handle social links - ensure it's an array format
+  let socialLinks = merchant.social_links;
+  if (socialLinks && !Array.isArray(socialLinks)) {
+    // Convert object format to array format
+    // Use deterministic ID based on merchant ID and type for stable keys
+    socialLinks = Object.entries(socialLinks).map(([type, url]) => ({
+      id: `${merchant.id}-${type}`,
+      type: type as any,
+      url: url as string,
+    }));
+  } else if (!socialLinks) {
+    socialLinks = [];
+  }
+
+  // Pass merchant with public URLs and normalized social links
   const merchantWithUrls = {
     ...merchant,
     logo_url: logoUrl,
@@ -129,6 +143,7 @@ export default async function PublicBookingPage({
     cover_image_1: coverImage1Url,
     cover_image_2: coverImage2Url,
     cover_image_3: coverImage3Url,
+    social_links: socialLinks,
   };
 
   return (

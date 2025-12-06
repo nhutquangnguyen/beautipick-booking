@@ -12,6 +12,7 @@ import Link from "next/link";
 
 export function BusinessInfoForm({ merchant }: { merchant: Merchant }) {
   const t = useTranslations("businessForm");
+  const tSettings = useTranslations("settings");
   const router = useRouter();
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
@@ -253,16 +254,16 @@ export function BusinessInfoForm({ merchant }: { merchant: Merchant }) {
                     <Crown className="h-5 w-5 text-white" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 mb-1">Custom Domain is a Pro Feature</h4>
+                    <h4 className="font-semibold text-gray-900 mb-1">{tSettings("customDomainProFeature")}</h4>
                     <p className="text-sm text-gray-600 mb-3">
-                      Connect your own domain (e.g., yoursalon.com) to create a professional branded booking page. Upgrade to Pro to unlock this feature.
+                      {tSettings("customDomainProDescription")}
                     </p>
                     <Link
                       href="/dashboard/settings"
                       className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-semibold rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all"
                     >
                       <Crown className="h-4 w-4" />
-                      Upgrade to Pro
+                      {tSettings("upgradeToPro")}
                     </Link>
                   </div>
                 </div>

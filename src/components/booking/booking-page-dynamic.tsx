@@ -1,12 +1,15 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { Merchant, Service, Staff, Availability, MerchantTheme, MerchantSettings, SocialLink } from "@/types/database";
 import type { ThemeData, ThemeColors, ThemeCartHandlers } from "./themes/types";
 import type { GalleryImage, Product, CartItem, CartServiceItem, CartProductItem } from "./themes/types";
 import { CartDrawer } from "./CartDrawer";
 import { CheckoutFlow } from "./CheckoutFlow";
+import { PoweredByFooter } from "./PoweredByFooter";
+import { FloatingZaloButton } from "./FloatingZaloButton";
+import { createClient } from "@/lib/supabase/client";
 
 // Dynamic imports for theme components - Tailwind-based versions
 const ChristmasTheme = dynamic(() => import("./themes/christmas").then(mod => ({ default: mod.ChristmasTheme })), {
@@ -55,6 +58,24 @@ export function BookingPageDynamic({
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
+  const [isPro, setIsPro] = useState(false);
+  const supabase = createClient();
+
+  // Check subscription tier
+  useEffect(() => {
+    const checkTier = async () => {
+      const { data: subscription } = await supabase
+        .from("merchant_subscriptions")
+        .select("pricing_tiers(tier_key)")
+        .eq("merchant_id", merchant.id)
+        .eq("status", "active")
+        .maybeSingle();
+
+      const tierKey = (subscription?.pricing_tiers as any)?.tier_key || "free";
+      setIsPro(tierKey === "pro");
+    };
+    checkTier();
+  }, [merchant.id, supabase]);
 
   // Cart helper functions with useCallback
   const isServiceInCart = useCallback((serviceId: string): boolean => {
@@ -172,15 +193,28 @@ export function BookingPageDynamic({
     theme.layoutTemplate === "showcasegrid" ? ShowcaseGridTheme :
     StarterTheme; // Default fallback
 
+  // Determine if we should show branding
+  // Free users: always show
+  // Pro users: show only if settings.showBranding is not explicitly false
+  const showBranding = !isPro || (settings.showBranding !== false);
+
   return (
-    <div className="min-h-screen">
-      <ThemeComponent
-        data={themeData}
-        colors={colors}
-        cart={cartHandlers}
-        locale="en"
-        currency={merchant.currency}
-        onOpenCart={() => setShowCart(true)}
+    <div className="min-h-screen flex flex-col">
+      <div className="flex-1 -mt-0">
+        <ThemeComponent
+          data={themeData}
+          colors={colors}
+          cart={cartHandlers}
+          locale="en"
+          currency={merchant.currency}
+          onOpenCart={() => setShowCart(true)}
+        />
+      </div>
+
+      {/* Powered by BeautiPick Footer */}
+      <PoweredByFooter
+        show={showBranding}
+        accentColor={colors.accentColor}
       />
 
       {/* Cart Drawer */}
@@ -214,6 +248,14 @@ export function BookingPageDynamic({
         secondaryColor={colors.secondaryColor}
         textColor={colors.textColor}
       />
+
+      {/* Floating Zalo Button */}
+      {merchant.phone && (
+        <FloatingZaloButton
+          phoneNumber={merchant.phone}
+          accentColor="#0068FF"
+        />
+      )}
     </div>
   );
 }

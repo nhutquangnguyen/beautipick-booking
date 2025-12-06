@@ -656,6 +656,7 @@ export interface MerchantSettings {
   showStaffSelection: boolean;
   requirePhoneNumber: boolean;
   allowNotes: boolean;
+  showBranding?: boolean; // Show "Powered by BeautiPick" footer (Pro users can hide)
 }
 
 export const defaultContentOrder: ContentSection[] = [

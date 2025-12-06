@@ -270,7 +270,15 @@
         "design": "Design",
         "designDesc": "Customize the look of your booking page",
         "account": "Account",
-        "accountDesc": "Sign out of your account"
+        "accountDesc": "Sign out of your account",
+        "saving": "Saving...",
+        "savedSuccessfully": "Saved successfully",
+        "customDomainProFeature": "Custom Domain is a Pro Feature",
+        "customDomainProDescription": "Connect your own domain (e.g., yoursalon.com) to create a professional branded booking page. Upgrade to Pro to unlock this feature.",
+        "upgradeToPro": "Upgrade to Pro",
+        "showBranding": "Show \"Powered by BeautiPick\"",
+        "showBrandingDesc": "Display BeautiPick branding in your booking page footer. Free users always show branding.",
+        "showBrandingDescFree": "Free users must display BeautiPick branding. Upgrade to Pro to remove it."
     },
     "businessForm": {
         "title": "Business Information",
@@ -1121,7 +1129,11 @@
     "galleryLimit": "gallery images",
     "features": "Features",
     "upgradeSuccess": "Successfully upgraded to Pro!",
-    "upgradeError": "Failed to upgrade. Please try again."
+    "upgradeError": "Failed to upgrade. Please try again.",
+    "brandingSettings": "Branding Settings",
+    "showBranding": "Show \"Powered by BeautiPick\"",
+    "showBrandingDescPro": "Display BeautiPick branding in your booking page footer. Uncheck to hide it.",
+    "showBrandingDescFree": "Free users must display BeautiPick branding. Upgrade to Pro to remove it."
   },
   "themePreview": {
     "previewMode": "Preview Mode",

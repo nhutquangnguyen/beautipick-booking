@@ -39,7 +39,7 @@ export function StarterTheme({ data, colors, cart, onOpenCart }: ThemeComponentP
       {/* Sticky Header - Only visible when scrolled past hero */}
       <header
         className={`sticky top-0 z-40 bg-white shadow-sm transition-all duration-300 ${
-          showHeader ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
+          showHeader ? "translate-y-0 opacity-100" : "hidden"
         }`}
       >
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -53,13 +53,83 @@ export function StarterTheme({ data, colors, cart, onOpenCart }: ThemeComponentP
             )}
             <span className="font-semibold text-gray-900">{data.merchant.business_name}</span>
           </div>
-          <LanguageSwitcher accentColor={colors.primaryColor} position="inline" />
+          <div className="flex items-center gap-3">
+            <LanguageSwitcher accentColor={colors.primaryColor} position="inline" />
+            {cart.cart.length > 0 && (
+              <button
+                onClick={onOpenCart}
+                className="relative w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 group"
+                style={{
+                  backgroundColor: colors.primaryColor,
+                }}
+              >
+                <svg
+                  className="w-5 h-5 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                  />
+                </svg>
+                <div
+                  className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-md border-2 border-white"
+                  style={{
+                    backgroundColor: colors.accentColor || '#FF4757',
+                  }}
+                >
+                  {cart.cart.length}
+                </div>
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
-      {/* Floating Language Switcher - Only visible when header is hidden */}
+      {/* Floating Language Switcher & Cart - Only visible when header is hidden */}
       {!showHeader && (
-        <LanguageSwitcher accentColor={colors.primaryColor} position="top-right" />
+        <>
+          {cart.cart.length > 0 ? (
+            <div className="fixed top-8 right-8 z-50 flex items-center gap-3">
+              <LanguageSwitcher accentColor={colors.primaryColor} position="inline" />
+              <button
+                onClick={onOpenCart}
+                className="relative w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 group"
+                style={{
+                  backgroundColor: colors.primaryColor,
+                }}
+              >
+                <svg
+                  className="w-6 h-6 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                  />
+                </svg>
+                <div
+                  className="absolute -top-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-md border-2 border-white"
+                  style={{
+                    backgroundColor: colors.accentColor || '#FF4757',
+                  }}
+                >
+                  {cart.cart.length}
+                </div>
+              </button>
+            </div>
+          ) : (
+            <LanguageSwitcher accentColor={colors.primaryColor} position="top-right" />
+          )}
+        </>
       )}
 
       {/* Hero Section - Full width to allow decorative elements */}
@@ -109,50 +179,6 @@ export function StarterTheme({ data, colors, cart, onOpenCart }: ThemeComponentP
           )}
         </div>
       </div>
-
-      {/* Floating Cart Button - Clean & Simple Linktree Style */}
-      {cart.cart.length > 0 && (
-        <button
-          onClick={onOpenCart}
-          className="fixed bottom-8 right-8 w-16 h-16 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 z-50 group"
-          style={{
-            backgroundColor: colors.primaryColor,
-          }}
-        >
-          {/* Simple glow on hover */}
-          <div
-            className="absolute -inset-1 blur-sm opacity-0 group-hover:opacity-50 rounded-full transition-opacity duration-300"
-            style={{
-              backgroundColor: colors.primaryColor,
-            }}
-          />
-
-          {/* Shopping Cart Icon */}
-          <svg
-            className="w-7 h-7 text-white relative z-10 transition-transform duration-300 group-hover:scale-110"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-            />
-          </svg>
-
-          {/* Item Count Badge - Simple & Clean */}
-          <div
-            className="absolute -top-2 -right-2 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-md border-2 border-white"
-            style={{
-              backgroundColor: colors.accentColor || '#FF4757',
-            }}
-          >
-            {cart.cart.length}
-          </div>
-        </button>
-      )}
     </div>
   );
 }

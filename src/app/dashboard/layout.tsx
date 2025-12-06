@@ -32,14 +32,21 @@ export default async function DashboardLayout({
 
   // Fetch merchant data using admin client (bypasses RLS)
   const adminClient = createAdminClient();
-  const { data: merchant } = await (adminClient as any)
+  const { data: merchant, error: merchantError } = await (adminClient as any)
     .from("merchants")
     .select("*")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
 
+  // If no merchant profile exists, there might be a race condition from OAuth signup
+  // Log the error and redirect to a signup completion page
   if (!merchant) {
-    redirect("/login");
+    console.error('[Dashboard Layout] No merchant profile found for authenticated user:', user.id);
+    console.error('[Dashboard Layout] Error:', merchantError?.message);
+
+    // User is authenticated but has no merchant profile
+    // This shouldn't happen in normal flow, redirect to login with error
+    redirect("/login?error=no_profile");
   }
 
   // Generate public URL for merchant logo

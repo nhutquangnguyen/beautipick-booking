@@ -15,6 +15,7 @@ export default function SignupPage() {
   const [businessName, setBusinessName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
   const router = useRouter();
   const locale = useLocale();
   const supabase = createClient();
@@ -33,6 +34,9 @@ export default function SignupPage() {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard/onboarding`,
+        },
       });
 
       if (authError) {
@@ -63,6 +67,14 @@ export default function SignupPage() {
         return;
       }
 
+      // Check if email confirmation is required
+      // If user.identities is empty, it means email confirmation is required
+      if (!authData.session) {
+        setSuccess(true);
+        return;
+      }
+
+      // If no email confirmation required, redirect to onboarding
       router.push("/dashboard/onboarding");
       router.refresh();
     } catch {
@@ -71,6 +83,48 @@ export default function SignupPage() {
       setLoading(false);
     }
   };
+
+  // Show success message if email confirmation is required
+  if (success) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 px-4">
+        <div className="w-full max-w-md">
+          <div className="mb-8 text-center">
+            <Link href="/" className="inline-flex items-center gap-2">
+              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-purple-600 to-pink-600" />
+              <span className="text-xl font-bold text-gray-900">BeautiPick</span>
+            </Link>
+          </div>
+
+          <div className="card p-8 text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+              <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h1 className="mt-4 text-2xl font-bold text-gray-900">Check your email</h1>
+            <p className="mt-2 text-gray-600">
+              We've sent a confirmation link to <strong>{email}</strong>
+            </p>
+            <p className="mt-4 text-sm text-gray-500">
+              Click the link in the email to verify your account and complete your registration.
+            </p>
+            <div className="mt-6 rounded-lg bg-blue-50 p-4">
+              <p className="text-sm text-blue-800">
+                <strong>Note:</strong> If you don't see the email, check your spam folder.
+              </p>
+            </div>
+            <Link
+              href="/login"
+              className="mt-6 inline-block text-sm font-medium text-purple-600 hover:text-purple-500"
+            >
+              Back to login
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 px-4">

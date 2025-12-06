@@ -4,7 +4,7 @@ import { HeroSectionProps } from "../types";
 
 export function StarterHeroSection({ merchant, colors }: HeroSectionProps) {
   return (
-    <div className="flex flex-col items-center text-center py-16 sm:py-24 lg:py-32 relative min-h-[70vh] lg:min-h-[80vh] justify-center overflow-hidden">
+    <div className="flex flex-col items-center text-center pt-20 pb-12 sm:pb-16 lg:pb-20 relative min-h-[70vh] lg:min-h-[80vh] justify-center overflow-hidden">
       {/* Cover Image Background */}
       {merchant.cover_image_url && (
         <>

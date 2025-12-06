@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Globe, Info, ClipboardList, QrCode as QrCodeIcon, ChevronDown, ChevronUp, Download } from "lucide-react";
+import { Globe, Info, ClipboardList, QrCode as QrCodeIcon, ChevronDown, ChevronUp, Download, Crown } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Merchant } from "@/types/database";
 import { generateSlug } from "@/lib/utils";
 import { QRCodeSVG } from "qrcode.react";
+import Link from "next/link";
 
 export function UnifiedSettingsForm({ merchant }: { merchant: Merchant }) {
   const t = useTranslations("settings");
@@ -16,6 +17,7 @@ export function UnifiedSettingsForm({ merchant }: { merchant: Merchant }) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [origin, setOrigin] = useState("");
+  const [isPro, setIsPro] = useState(false);
 
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(["url"])
@@ -39,9 +41,28 @@ export function UnifiedSettingsForm({ merchant }: { merchant: Merchant }) {
     }
   );
 
+  // Branding setting (default to true to show branding)
+  const [showBranding, setShowBranding] = useState<boolean>(
+    (merchant.settings as any)?.showBranding !== false
+  );
+
   useEffect(() => {
     setOrigin(window.location.origin);
-  }, []);
+
+    // Check subscription tier
+    const checkTier = async () => {
+      const { data: subscription } = await supabase
+        .from("merchant_subscriptions")
+        .select("pricing_tiers(tier_key)")
+        .eq("merchant_id", merchant.id)
+        .eq("status", "active")
+        .maybeSingle();
+
+      const tierKey = (subscription?.pricing_tiers as any)?.tier_key || "free";
+      setIsPro(tierKey === "pro");
+    };
+    checkTier();
+  }, [merchant.id, supabase]);
 
   const normalizeCustomDomain = (domain: string): string | null => {
     if (!domain) return null;
@@ -70,7 +91,8 @@ export function UnifiedSettingsForm({ merchant }: { merchant: Merchant }) {
     setSuccess(false);
 
     try {
-      const normalizedDomain = normalizeCustomDomain(urlSettings.custom_domain);
+      // Only allow custom domain for Pro users
+      const normalizedDomain = isPro ? normalizeCustomDomain(urlSettings.custom_domain) : null;
 
       await supabase
         .from("merchants")
@@ -80,6 +102,7 @@ export function UnifiedSettingsForm({ merchant }: { merchant: Merchant }) {
           settings: {
             ...(merchant.settings as any || {}),
             booking_rules: bookingRules,
+            showBranding: showBranding,
           },
         })
         .eq("id", merchant.id);
@@ -168,31 +191,94 @@ export function UnifiedSettingsForm({ merchant }: { merchant: Merchant }) {
               <label className="label flex items-center gap-2">
                 <Globe className="h-4 w-4" />
                 {t("customDomainOptional")}
+                {!isPro && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-semibold rounded-full">
+                    <Crown className="h-3 w-3" />
+                    Pro
+                  </span>
+                )}
               </label>
-              <input
-                type="text"
-                value={urlSettings.custom_domain}
-                onChange={(e) =>
-                  setUrlSettings({ ...urlSettings, custom_domain: e.target.value })
-                }
-                className="input mt-1"
-                placeholder="yourdomain.com"
-              />
-              <p className="mt-1 text-xs text-gray-500">
-                {t("customDomainDesc", { origin })}
-              </p>
-              <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                <div className="flex gap-2">
-                  <Info className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <div className="text-xs text-blue-800 space-y-2">
-                    <p className="font-medium">{t("dnsSetupRequired")}</p>
-                    <div className="space-y-1 p-2 bg-white rounded border border-blue-300 font-mono text-[11px]">
-                      <div><strong>A Record:</strong> @ → 216.198.79.1</div>
-                      <div><strong>CNAME:</strong> www → d05236ba666bbb6a.vercel-dns-017.com.</div>
+
+              {!isPro ? (
+                <div className="mt-1 p-4 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 flex items-center justify-center">
+                      <Crown className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900 mb-1">{t("customDomainProFeature")}</h4>
+                      <p className="text-sm text-gray-600 mb-3">
+                        {t("customDomainProDescription")}
+                      </p>
+                      <Link
+                        href="/dashboard/settings"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-semibold rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all"
+                      >
+                        <Crown className="h-4 w-4" />
+                        {t("upgradeToPro")}
+                      </Link>
                     </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <>
+                  <input
+                    type="text"
+                    value={urlSettings.custom_domain}
+                    onChange={(e) =>
+                      setUrlSettings({ ...urlSettings, custom_domain: e.target.value })
+                    }
+                    className="input mt-1"
+                    placeholder="yourdomain.com"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    {t("customDomainDesc", { origin })}
+                  </p>
+                  <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                    <div className="flex gap-2">
+                      <Info className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <div className="text-xs text-blue-800 space-y-2">
+                        <p className="font-medium">{t("dnsSetupRequired")}</p>
+                        <div className="space-y-1 p-2 bg-white rounded border border-blue-300 font-mono text-[11px]">
+                          <div><strong>A Record:</strong> @ → 216.198.79.1</div>
+                          <div><strong>CNAME:</strong> www → d05236ba666bbb6a.vercel-dns-017.com.</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Show Branding Toggle */}
+            <div className="pt-4 border-t border-gray-200">
+              <label className={`flex items-center gap-3 p-4 rounded-lg cursor-pointer ${
+                isPro ? 'bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200' : 'bg-gray-100 border-2 border-gray-300'
+              }`}>
+                <input
+                  type="checkbox"
+                  checked={isPro ? showBranding : true}
+                  onChange={(e) => isPro && setShowBranding(e.target.checked)}
+                  disabled={!isPro}
+                  className={`h-5 w-5 rounded ${isPro ? 'text-purple-600 cursor-pointer' : 'text-gray-400 cursor-not-allowed'}`}
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className={`text-sm font-medium ${isPro ? 'text-gray-900' : 'text-gray-500'}`}>
+                      {t("showBranding")}
+                    </p>
+                    {isPro && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-semibold rounded-full">
+                        <Crown className="h-3 w-3" />
+                        Pro
+                      </span>
+                    )}
+                  </div>
+                  <p className={`text-xs mt-1 ${isPro ? 'text-gray-600' : 'text-gray-500'}`}>
+                    {isPro ? t("showBrandingDesc") : t("showBrandingDescFree")}
+                  </p>
+                </div>
+              </label>
             </div>
           </div>
         )}

@@ -11,6 +11,7 @@ import {
   Globe,
   MessageCircle,
   Music,
+  Send,
   LucideIcon,
 } from "lucide-react";
 
@@ -21,7 +22,8 @@ const socialIconMap: Record<string, LucideIcon> = {
   linkedin: Linkedin,
   youtube: Youtube,
   tiktok: Music,
-  whatsapp: MessageCircle,
+  whatsapp: Send,
+  zalo: MessageCircle,
   website: Globe,
 };
 
@@ -33,6 +35,7 @@ const socialColorMap: Record<string, string> = {
   youtube: "#FF0000",
   tiktok: "#000000",
   whatsapp: "#25D366",
+  zalo: "#0068FF",
   website: "#6B7280",
 };
 
@@ -45,18 +48,19 @@ export function StarterSocialSection({ socialLinks, colors }: SocialSectionProps
     <div className="w-full py-8">
       {/* Social Icons Row */}
       <div className="flex justify-center items-center gap-4 flex-wrap">
-        {socialLinks.map((link) => {
+        {socialLinks.map((link, index) => {
           const Icon = socialIconMap[link.type] || Globe;
           const socialColor = socialColorMap[link.type] || colors.primaryColor;
-          const isHovered = hoveredId === link.id;
+          const linkId = link.id || `${link.type}-${index}`;
+          const isHovered = hoveredId === linkId;
 
           return (
             <a
-              key={link.id}
+              key={linkId}
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
-              onMouseEnter={() => setHoveredId(link.id)}
+              onMouseEnter={() => setHoveredId(linkId)}
               onMouseLeave={() => setHoveredId(null)}
               className="w-12 h-12 rounded-full flex items-center justify-center shadow-md hover:shadow-lg transition-all duration-200"
               style={{
