@@ -72,13 +72,13 @@ export async function GET(request: NextRequest) {
       slug: finalSlug,
     });
 
-    const { data: newMerchant, error: insertError } = await adminClient.from("merchants").insert({
+    const { data: newMerchant, error: insertError } = await (adminClient as any).from("merchants").insert({
       id: user.id,
       email,
       business_name: businessName,
       slug: finalSlug,
-      theme: defaultTheme as any,
-      settings: defaultSettings as any,
+      theme: defaultTheme,
+      settings: defaultSettings,
       timezone: 'America/New_York',
       currency: 'USD',
     }).select().single();
