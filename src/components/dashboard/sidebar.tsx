@@ -81,7 +81,7 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
         .eq("status", "active")
         .maybeSingle();
 
-      const tierKey = subscription?.pricing_tiers?.tier_key || "free";
+      const tierKey = (subscription?.pricing_tiers as any)?.tier_key || "free";
       setIsPro(tierKey === "pro");
     };
     checkAdminAndTier();
