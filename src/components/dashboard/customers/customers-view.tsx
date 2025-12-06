@@ -126,7 +126,7 @@ export function CustomersView({ customers }: { customers: Customer[] }) {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {filteredCustomers.map((customer) => (
-                  <tr key={customer.email} className="hover:bg-gray-50">
+                  <tr key={customer.id} className="hover:bg-gray-50">
                     <td className="px-4 py-4">
                       <div>
                         <p className="font-medium text-gray-900">{customer.name}</p>
