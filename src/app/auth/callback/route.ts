@@ -105,7 +105,7 @@ export async function GET(request: Request) {
         allowNotes: true,
       };
 
-      const { error: insertError } = await adminClient.from("merchants").insert({
+      const { error: insertError } = await (adminClient as any).from("merchants").insert({
         id: data.user.id,
         email,
         business_name: businessName,

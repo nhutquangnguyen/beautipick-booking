@@ -118,6 +118,7 @@ export function CombinedBusinessInfoForm({ merchant }: { merchant: Merchant }) {
       const linksArray: SocialLink[] = Object.entries(links).map(([type, url]) => ({
         id: crypto.randomUUID(),
         type: type as any,
+        title: type.charAt(0).toUpperCase() + type.slice(1),
         url: url as string,
       }));
       setSocialLinks(linksArray);

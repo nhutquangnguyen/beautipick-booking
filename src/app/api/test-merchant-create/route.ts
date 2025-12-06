@@ -18,7 +18,7 @@ export async function GET() {
     });
 
     const adminClient = createAdminClient();
-    const { data, error: insertError } = await adminClient.from("merchants").insert({
+    const { data, error: insertError } = await (adminClient as any).from("merchants").insert({
       id: testUserId,
       email,
       business_name: businessName,
