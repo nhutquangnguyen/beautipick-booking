@@ -59,6 +59,9 @@ export function LayoutSelector({
     const tryKey = `${layoutId}-${colorSchemeId}`;
     setTryingOn(tryKey);
 
+    // Open window immediately (before async call) to avoid popup blockers on mobile
+    const previewWindow = window.open("about:blank", "_blank");
+
     try {
       // Get the layout and color scheme
       const layout = layouts.find((l) => l.id === layoutId);
@@ -105,10 +108,19 @@ export function LayoutSelector({
 
       const { hash } = await response.json();
 
-      // Open preview in new tab
-      window.open(`/try-on/${hash}/${merchantSlug}`, "_blank");
+      // Navigate the already-opened window to the preview URL
+      if (previewWindow) {
+        previewWindow.location.href = `/try-on/${hash}/${merchantSlug}`;
+      } else {
+        // Fallback if popup was blocked
+        window.location.href = `/try-on/${hash}/${merchantSlug}`;
+      }
     } catch (error) {
       console.error("Error creating preview:", error);
+      // Close the blank window if we opened one
+      if (previewWindow) {
+        previewWindow.close();
+      }
       alert("Failed to create preview. Please try again.");
     } finally {
       setTryingOn(null);
