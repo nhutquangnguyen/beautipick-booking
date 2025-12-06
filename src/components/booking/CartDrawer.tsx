@@ -56,17 +56,14 @@ export function CartDrawer({ isOpen, onClose, cart, currency, merchantId, mercha
         }}
       >
         {/* Header */}
-        <div
-          className="px-6 py-5 border-b border-gray-200"
-          style={{ backgroundColor: `${secondaryColor}05` }}
-        >
+        <div className="px-6 py-5 border-b border-gray-200 bg-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div
                 className="p-2 rounded-full"
-                style={{ backgroundColor: secondaryColor }}
+                style={{ backgroundColor: primaryColor }}
               >
-                <ShoppingCart className="w-5 h-5" style={{ color: primaryColor }} />
+                <ShoppingCart className="w-5 h-5 text-white" />
               </div>
               <div>
                 <h2 className="text-xl font-black text-gray-900">{t("cart")}</h2>
@@ -87,10 +84,9 @@ export function CartDrawer({ isOpen, onClose, cart, currency, merchantId, mercha
           {cart.cart.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center py-12">
               <div
-                className="p-6 rounded-full mb-4"
-                style={{ backgroundColor: `${secondaryColor}10` }}
+                className="p-6 rounded-full mb-4 bg-gray-100"
               >
-                <ShoppingCart className="w-12 h-12 opacity-30" style={{ color: secondaryColor }} />
+                <ShoppingCart className="w-12 h-12 text-gray-400" />
               </div>
               <p className="text-gray-500 text-lg font-medium mb-2">{t("cartEmpty")}</p>
               <p className="text-gray-400 text-sm">{t("cartEmptyDesc")}</p>
@@ -130,10 +126,7 @@ export function CartDrawer({ isOpen, onClose, cart, currency, merchantId, mercha
                         <div className="flex items-center justify-end">
                           <span
                             className="text-xl font-bold"
-                            style={{
-                              color: secondaryColor,
-                              textShadow: `1px 1px 0 ${textColor}, -1px -1px 0 ${textColor}, 1px -1px 0 ${textColor}, -1px 1px 0 ${textColor}, 0 2px 5px ${textColor}50, 0 0 5px #fff, 0 0 15px ${secondaryColor}, 0 0 30px ${secondaryColor}`,
-                            }}
+                            style={{ color: primaryColor }}
                           >
                             {formatPrice(item.service.price)}
                           </span>
@@ -176,44 +169,30 @@ export function CartDrawer({ isOpen, onClose, cart, currency, merchantId, mercha
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => cart.updateProductQuantity(item.id, item.quantity - 1)}
-                              className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
-                              style={{
-                                backgroundColor: secondaryColor,
-                                color: primaryColor,
-                              }}
+                              className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:opacity-80 text-white"
+                              style={{ backgroundColor: primaryColor }}
                             >
-                              <Minus size={14} />
+                              <Minus size={16} />
                             </button>
                             <span
-                              className="text-3xl font-black min-w-[2rem] text-center"
-                              style={{
-                                color: primaryColor,
-                                WebkitTextStroke: `1.5px ${textColor}`,
-                                paintOrder: 'stroke fill',
-                                textShadow: `0 2px 4px ${textColor}40`,
-                              }}
+                              className="text-2xl font-bold min-w-[2.5rem] text-center"
+                              style={{ color: primaryColor }}
                             >
                               {item.quantity}
                             </span>
                             <button
                               onClick={() => cart.updateProductQuantity(item.id, item.quantity + 1)}
-                              className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
-                              style={{
-                                backgroundColor: secondaryColor,
-                                color: primaryColor,
-                              }}
+                              className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:opacity-80 text-white"
+                              style={{ backgroundColor: primaryColor }}
                             >
-                              <Plus size={14} />
+                              <Plus size={16} />
                             </button>
                           </div>
 
                           {/* Price - bottom right */}
                           <span
                             className="text-lg font-bold"
-                            style={{
-                              color: secondaryColor,
-                              textShadow: `1px 1px 0 ${textColor}, -1px -1px 0 ${textColor}, 1px -1px 0 ${textColor}, -1px 1px 0 ${textColor}, 0 2px 5px ${textColor}50, 0 0 5px #fff, 0 0 15px ${secondaryColor}, 0 0 30px ${secondaryColor}`,
-                            }}
+                            style={{ color: primaryColor }}
                           >
                             {formatPrice(item.product.price * item.quantity)}
                           </span>
@@ -241,12 +220,8 @@ export function CartDrawer({ isOpen, onClose, cart, currency, merchantId, mercha
             {/* Checkout Button */}
             <button
               onClick={onOpenCheckout}
-              className="w-full py-4 rounded-2xl font-black text-lg transition-all duration-300 hover:scale-105 hover:shadow-xl"
-              style={{
-                background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}dd)`,
-                color: accentColor,
-                border: `2px solid ${accentColor}`,
-              }}
+              className="w-full py-4 rounded-2xl font-bold text-lg text-white transition-all hover:opacity-90"
+              style={{ backgroundColor: primaryColor }}
             >
               {t("proceedToCheckout")}
             </button>

@@ -67,9 +67,10 @@ export function StarterServicesSection({ services, merchant, colors, cart }: Ser
 
               <div className="ml-4 flex items-center gap-2">
                 {isInCart ? (
-                  <span className="text-xs font-medium px-3 py-1.5 rounded-lg" style={{
-                    backgroundColor: colors.primaryColor,
-                    color: '#FFFFFF'
+                  <span className="text-xs font-medium px-3 py-1.5 rounded-lg border-2" style={{
+                    backgroundColor: '#FFFFFF',
+                    color: colors.primaryColor,
+                    borderColor: colors.primaryColor
                   }}>
                     {t("added")}
                   </span>

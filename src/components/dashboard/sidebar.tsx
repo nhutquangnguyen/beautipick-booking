@@ -211,7 +211,7 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
   const sidebarContent = (
     <>
       {/* Logo */}
-      <div className="flex h-16 items-center gap-3 px-4">
+      <Link href="/dashboard" className="flex h-16 items-center gap-3 px-4 hover:bg-gray-50 transition-colors cursor-pointer">
         {logoDisplayUrl ? (
           <img
             src={logoDisplayUrl}
@@ -233,10 +233,10 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
             <p className="font-semibold text-gray-900 truncate">{merchant.business_name}</p>
           </div>
         </div>
-      </div>
+      </Link>
 
-      {/* Booking Page Actions */}
-      <div className="px-3 pb-2">
+      {/* Booking Page Actions - Desktop Only */}
+      <div className="hidden lg:block px-3 pb-2">
         <div className="flex gap-1.5">
           <button
             onClick={handleCopy}
@@ -311,7 +311,7 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
     <>
       {/* Mobile Header */}
       <header className="sticky top-0 z-50 flex h-16 items-center justify-between bg-white px-4 lg:hidden shadow-sm">
-        <div className="flex items-center gap-2">
+        <Link href="/dashboard" className="flex items-center gap-2">
           {logoDisplayUrl ? (
             <img
               src={logoDisplayUrl}
@@ -329,13 +329,44 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
             </span>
           )}
           <span className="font-semibold text-gray-900">{merchant.business_name}</span>
+        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleCopy}
+            className={cn(
+              "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
+              copied
+                ? "bg-green-50 text-green-600"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            )}
+          >
+            {copied ? (
+              <>
+                <Check className="h-3.5 w-3.5" />
+                {tSidebar("copied")}
+              </>
+            ) : (
+              <>
+                <Copy className="h-3.5 w-3.5" />
+                {tSidebar("copyLink")}
+              </>
+            )}
+          </button>
+          <Link
+            href={`/${merchant.slug}`}
+            target="_blank"
+            className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 transition-opacity"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            {tDashboard("preview")}
+          </Link>
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="rounded-lg p-2 text-gray-600 hover:bg-gray-100"
+          >
+            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
         </div>
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="rounded-lg p-2 text-gray-600 hover:bg-gray-100"
-        >
-          {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
       </header>
 
       {/* Mobile Sidebar Overlay */}

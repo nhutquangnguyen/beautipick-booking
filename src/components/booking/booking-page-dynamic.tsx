@@ -6,9 +6,9 @@ import { Merchant, Service, Staff, Availability, MerchantTheme, MerchantSettings
 import type { ThemeData, ThemeColors, ThemeCartHandlers } from "./themes/types";
 import type { GalleryImage, Product, CartItem, CartServiceItem, CartProductItem } from "./themes/types";
 import { CartDrawer } from "./CartDrawer";
-import { CheckoutFlow } from "./CheckoutFlow";
 import { PoweredByFooter } from "./PoweredByFooter";
 import { FloatingZaloButton } from "./FloatingZaloButton";
+import { CheckoutFlow } from "./CheckoutFlow";
 import { createClient } from "@/lib/supabase/client";
 
 // Dynamic imports for theme components - Tailwind-based versions
@@ -235,7 +235,7 @@ export function BookingPageDynamic({
         }}
       />
 
-      {/* Checkout Flow */}
+      {/* Checkout Flow - Shared across all themes */}
       <CheckoutFlow
         isOpen={showCheckout}
         onClose={() => setShowCheckout(false)}
@@ -243,10 +243,7 @@ export function BookingPageDynamic({
         merchantId={merchant.id}
         merchantName={merchant.business_name}
         currency={merchant.currency}
-        accentColor={colors.accentColor}
         primaryColor={colors.primaryColor}
-        secondaryColor={colors.secondaryColor}
-        textColor={colors.textColor}
       />
 
       {/* Floating Zalo Button */}
