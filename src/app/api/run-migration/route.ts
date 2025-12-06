@@ -34,7 +34,7 @@ export async function POST() {
     const migrationSQL = fs.readFileSync(migrationPath, "utf8");
 
     // Execute migration using admin client
-    const { createClient: createAdminClient } = await import("@/lib/supabase/admin");
+    const { createClient: createAdminClient } = await import("@/lib/supabase/server-admin");
     const adminClient = createAdminClient();
 
     // Split SQL by statements and execute them
