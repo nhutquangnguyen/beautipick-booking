@@ -29,6 +29,7 @@ import {
   QrCode,
   ClipboardList,
   Shield,
+  Crown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Merchant } from "@/types/database";
@@ -51,6 +52,7 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
   const [copied, setCopied] = useState(false);
   const [logoDisplayUrl, setLogoDisplayUrl] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isPro, setIsPro] = useState(false);
   const pathname = usePathname();
   const t = useTranslations("nav");
   const tDashboard = useTranslations("dashboard");
@@ -60,17 +62,29 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
 
   const bookingPageUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/${merchant.slug}`;
 
-  // Check if user is admin
+  // Check if user is admin and Pro tier
   useEffect(() => {
-    const checkAdmin = async () => {
-      const { data } = await supabase
+    const checkAdminAndTier = async () => {
+      // Check admin status
+      const { data: adminData } = await supabase
         .from("admins")
         .select("user_id")
         .eq("user_id", merchant.id)
         .maybeSingle();
-      setIsAdmin(!!data);
+      setIsAdmin(!!adminData);
+
+      // Check subscription tier
+      const { data: subscription } = await supabase
+        .from("merchant_subscriptions")
+        .select("pricing_tiers(tier_key)")
+        .eq("merchant_id", merchant.id)
+        .eq("status", "active")
+        .maybeSingle();
+
+      const tierKey = subscription?.pricing_tiers?.tier_key || "free";
+      setIsPro(tierKey === "pro");
     };
-    checkAdmin();
+    checkAdminAndTier();
   }, [merchant.id, supabase]);
 
   // Fetch signed URL for logo if it's a storage key
@@ -210,7 +224,14 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
           </div>
         )}
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-gray-900 truncate">{merchant.business_name}</p>
+          <div className="flex items-center gap-2">
+            {isPro && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-semibold rounded">
+                <Crown className="h-3 w-3" />
+              </span>
+            )}
+            <p className="font-semibold text-gray-900 truncate">{merchant.business_name}</p>
+          </div>
         </div>
       </div>
 
@@ -290,7 +311,7 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
     <>
       {/* Mobile Header */}
       <header className="sticky top-0 z-50 flex h-16 items-center justify-between bg-white px-4 lg:hidden shadow-sm">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {logoDisplayUrl ? (
             <img
               src={logoDisplayUrl}
@@ -301,6 +322,11 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
             <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white font-bold text-sm">
               {merchant.business_name.charAt(0)}
             </div>
+          )}
+          {isPro && (
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-semibold rounded">
+              <Crown className="h-3 w-3" />
+            </span>
           )}
           <span className="font-semibold text-gray-900">{merchant.business_name}</span>
         </div>

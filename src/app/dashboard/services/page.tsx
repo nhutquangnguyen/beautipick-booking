@@ -4,6 +4,8 @@ import { getTranslations } from "next-intl/server";
 import { Scissors } from "lucide-react";
 import { SimpleServiceList } from "@/components/dashboard/services/simple-service-list";
 import { AddServiceModal } from "@/components/dashboard/services/add-service-modal";
+import { QuotaBanner } from "@/components/dashboard/quota-banner";
+import { getCurrentSubscription } from "@/lib/pricing/subscriptions";
 
 export default async function ServicesPage() {
   const t = await getTranslations("servicesForm");
@@ -20,6 +22,12 @@ export default async function ServicesPage() {
     .eq("merchant_id", user.id)
     .order("display_order", { ascending: true });
 
+  // Get subscription info for quota banner
+  const subscription = await getCurrentSubscription(user.id);
+  const tierKey = subscription?.tier?.tier_key || "free";
+  const tierName = subscription?.tier?.tier_name || "Free";
+  const limit = subscription?.tier?.max_services || 100;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -30,6 +38,15 @@ export default async function ServicesPage() {
         </div>
         <AddServiceModal merchantId={user.id} />
       </div>
+
+      {/* Quota Banner */}
+      <QuotaBanner
+        resourceType="services"
+        currentCount={services?.length || 0}
+        limit={limit}
+        tierName={tierName}
+        isFree={tierKey === "free"}
+      />
 
       {/* Services List */}
       {services && services.length > 0 ? (

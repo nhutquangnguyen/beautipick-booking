@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { DesignForm } from "@/components/dashboard/design/design-form";
 import { MerchantTheme, defaultTheme } from "@/types/database";
+import { getCurrentSubscription } from "@/lib/pricing/subscriptions";
 
 export default async function MyPageThemesPage() {
   const supabase = await createClient();
@@ -20,6 +21,10 @@ export default async function MyPageThemesPage() {
 
   if (!merchant) redirect("/login");
 
+  // Get subscription info to determine if user is on free tier
+  const subscription = await getCurrentSubscription(user.id);
+  const isFree = !subscription || subscription.tier?.tier_key === "free";
+
   const theme = (merchant.theme as MerchantTheme) ?? defaultTheme;
   const t = await getTranslations("nav");
 
@@ -32,7 +37,7 @@ export default async function MyPageThemesPage() {
         </p>
       </div>
 
-      <DesignForm merchantId={user.id} theme={theme} />
+      <DesignForm merchantId={user.id} theme={theme} isFree={isFree} />
     </div>
   );
 }

@@ -30,9 +30,11 @@ function ensureCompleteTheme(theme: Partial<MerchantTheme>): MerchantTheme {
 export function DesignForm({
   merchantId,
   theme,
+  isFree = false,
 }: {
   merchantId: string;
   theme: MerchantTheme;
+  isFree?: boolean;
 }) {
   const t = useTranslations("designForm");
   const router = useRouter();
@@ -42,9 +44,25 @@ export function DesignForm({
   const [formData, setFormData] = useState<MerchantTheme>(ensureCompleteTheme(theme));
   const [previewTheme, setPreviewTheme] = useState<ThemePreset | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
+  const [merchantSlug, setMerchantSlug] = useState<string>("");
 
   // Track original theme to detect changes
   const originalTheme = useRef<MerchantTheme>(ensureCompleteTheme(theme));
+
+  // Fetch merchant slug for preview
+  useEffect(() => {
+    const fetchMerchantSlug = async () => {
+      const { data } = await supabase
+        .from("merchants")
+        .select("slug")
+        .eq("id", merchantId)
+        .single();
+      if (data) {
+        setMerchantSlug(data.slug);
+      }
+    };
+    fetchMerchantSlug();
+  }, [merchantId, supabase]);
 
   // Detect changes
   useEffect(() => {
@@ -54,6 +72,12 @@ export function DesignForm({
 
   // Manual save function
   const handleSave = async () => {
+    // Prevent free users from saving premium themes
+    if (isFree && formData.layoutTemplate !== "starter") {
+      alert("Free plan users can only use the Starter theme. Please upgrade to Pro to use premium themes.");
+      return;
+    }
+
     setSaving(true);
     setSaved(false);
 
@@ -149,6 +173,9 @@ export function DesignForm({
           selectedLayout={formData.layoutTemplate}
           selectedColorScheme={getCurrentColorScheme()}
           onLayoutChange={handleLayoutChange}
+          isFree={isFree}
+          merchantId={merchantId}
+          merchantSlug={merchantSlug}
         />
       </div>
 

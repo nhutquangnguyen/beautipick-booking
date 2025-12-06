@@ -13,10 +13,13 @@ import {
   UserCheck,
   Globe,
   ArrowUpRight,
-  BookOpen
+  BookOpen,
+  CreditCard,
+  Crown
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
+import { MerchantDetailModal } from "./merchant-detail-modal";
 
 interface MerchantWithStats {
   id: string;
@@ -30,9 +33,31 @@ interface MerchantWithStats {
   total_bookings: number;
   total_customers: number;
   total_services: number;
+  total_products: number;
   total_staff: number;
   total_gallery_images: number;
   total_revenue: number;
+  merchant_subscriptions?: Array<{
+    id: string;
+    status: string;
+    subscription_started_at: string;
+    expires_at: string | null;
+    notes: string | null;
+    pricing_tiers: Array<{
+      tier_key: string;
+      tier_name: string;
+      tier_name_vi: string;
+    }> | {
+      tier_key: string;
+      tier_name: string;
+      tier_name_vi: string;
+    };
+  }>;
+  subscription_usage?: Array<{
+    services_count: number;
+    products_count: number;
+    gallery_images_count: number;
+  }>;
 }
 
 interface AdminDashboardProps {
@@ -41,6 +66,7 @@ interface AdminDashboardProps {
 
 export function AdminDashboard({ merchants }: AdminDashboardProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedMerchant, setSelectedMerchant] = useState<MerchantWithStats | null>(null);
 
   // Filter merchants based on search
   const filteredMerchants = merchants.filter((merchant) => {
@@ -181,6 +207,9 @@ export function AdminDashboard({ merchants }: AdminDashboardProps) {
                   Contact
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Tier
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Stats
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -195,45 +224,77 @@ export function AdminDashboard({ merchants }: AdminDashboardProps) {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {filteredMerchants.map((merchant) => (
-                <tr key={merchant.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-4">
-                    <div>
-                      <p className="font-medium text-gray-900">{merchant.business_name}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Link
-                          href={`/${merchant.slug}`}
-                          target="_blank"
-                          className="text-xs text-purple-600 hover:text-purple-700 flex items-center gap-1"
-                        >
-                          /{merchant.slug}
-                          <ArrowUpRight className="h-3 w-3" />
-                        </Link>
-                        {merchant.custom_domain && (
-                          <span className="flex items-center gap-1 text-xs text-gray-500">
-                            <Globe className="h-3 w-3" />
-                            {merchant.custom_domain}
+              {filteredMerchants.map((merchant) => {
+                // Handle both array and object formats for merchant_subscriptions
+                const subscription = Array.isArray(merchant.merchant_subscriptions)
+                  ? merchant.merchant_subscriptions[0]
+                  : merchant.merchant_subscriptions;
+
+                const pricingTiers = Array.isArray(subscription?.pricing_tiers)
+                  ? subscription?.pricing_tiers[0]
+                  : subscription?.pricing_tiers;
+                const tierKey = pricingTiers?.tier_key || "free";
+
+                return (
+                  <tr key={merchant.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-4">
+                      <div>
+                        {/* Pro badge for Pro tier merchants */}
+                        <div className="flex items-center gap-2">
+                          {tierKey === "pro" && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-semibold rounded">
+                              <Crown className="h-3 w-3" />
+                              Pro
+                            </span>
+                          )}
+                          <p className="font-medium text-gray-900">{merchant.business_name}</p>
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Link
+                            href={`/${merchant.slug}`}
+                            target="_blank"
+                            className="text-xs text-purple-600 hover:text-purple-700 flex items-center gap-1"
+                          >
+                            /{merchant.slug}
+                            <ArrowUpRight className="h-3 w-3" />
+                          </Link>
+                          {merchant.custom_domain && (
+                            <span className="flex items-center gap-1 text-xs text-gray-500">
+                              <Globe className="h-3 w-3" />
+                              {merchant.custom_domain}
+                            </span>
+                          )}
+                        </div>
+                        {!merchant.is_active && (
+                          <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 rounded">
+                            Inactive
                           </span>
                         )}
                       </div>
-                      {!merchant.is_active && (
-                        <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 rounded">
-                          Inactive
+                    </td>
+
+                    <td className="px-4 py-4">
+                      <div className="text-sm">
+                        <p className="text-gray-900">{merchant.email}</p>
+                        {merchant.phone && (
+                          <p className="text-gray-500">{merchant.phone}</p>
+                        )}
+                      </div>
+                    </td>
+
+                    <td className="px-4 py-4">
+                      {tierKey === "free" ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                          Free
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                          Pro
                         </span>
                       )}
-                    </div>
-                  </td>
+                    </td>
 
-                  <td className="px-4 py-4">
-                    <div className="text-sm">
-                      <p className="text-gray-900">{merchant.email}</p>
-                      {merchant.phone && (
-                        <p className="text-gray-500">{merchant.phone}</p>
-                      )}
-                    </div>
-                  </td>
-
-                  <td className="px-4 py-4">
+                    <td className="px-4 py-4">
                     <div className="flex flex-wrap gap-2">
                       <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 rounded text-xs">
                         <ShoppingBag className="h-3 w-3 text-blue-600" />
@@ -268,17 +329,27 @@ export function AdminDashboard({ merchants }: AdminDashboardProps) {
                     </p>
                   </td>
 
-                  <td className="px-4 py-4">
-                    <Link
-                      href={`/${merchant.slug}`}
-                      target="_blank"
-                      className="text-sm text-purple-600 hover:text-purple-700 font-medium"
-                    >
-                      View Page
-                    </Link>
-                  </td>
-                </tr>
-              ))}
+                    <td className="px-4 py-4">
+                      <div className="flex gap-2">
+                        <Link
+                          href={`/${merchant.slug}`}
+                          target="_blank"
+                          className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+                        >
+                          View Page
+                        </Link>
+                        <span className="text-gray-300">|</span>
+                        <button
+                          onClick={() => setSelectedMerchant(merchant)}
+                          className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                        >
+                          Details
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -296,6 +367,14 @@ export function AdminDashboard({ merchants }: AdminDashboardProps) {
       <div className="text-sm text-gray-600 text-center">
         Showing {filteredMerchants.length} of {totalMerchants} merchants
       </div>
+
+      {/* Merchant Detail Modal */}
+      {selectedMerchant && (
+        <MerchantDetailModal
+          merchant={selectedMerchant}
+          onClose={() => setSelectedMerchant(null)}
+        />
+      )}
     </div>
   );
 }

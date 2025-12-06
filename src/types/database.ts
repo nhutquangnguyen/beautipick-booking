@@ -411,6 +411,129 @@ export type Database = {
           cart_items?: Json | null;
         };
       };
+      pricing_tiers: {
+        Row: {
+          id: string;
+          created_at: string;
+          updated_at: string;
+          tier_key: "free" | "pro";
+          tier_name: string;
+          tier_name_vi: string;
+          description: string | null;
+          description_vi: string | null;
+          display_order: number;
+          is_active: boolean;
+          price_monthly: number;
+          price_annual: number;
+          max_services: number;
+          max_products: number;
+          max_gallery_images: number;
+          max_themes: number;
+          features: Json;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+          tier_key: "free" | "pro";
+          tier_name: string;
+          tier_name_vi: string;
+          description?: string | null;
+          description_vi?: string | null;
+          display_order: number;
+          is_active?: boolean;
+          price_monthly?: number;
+          price_annual?: number;
+          max_services?: number;
+          max_products?: number;
+          max_gallery_images?: number;
+          max_themes?: number;
+          features?: Json;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+          tier_key?: "free" | "pro";
+          tier_name?: string;
+          tier_name_vi?: string;
+          description?: string | null;
+          description_vi?: string | null;
+          display_order?: number;
+          is_active?: boolean;
+          price_monthly?: number;
+          price_annual?: number;
+          max_services?: number;
+          max_products?: number;
+          max_gallery_images?: number;
+          max_themes?: number;
+          features?: Json;
+        };
+      };
+      merchant_subscriptions: {
+        Row: {
+          id: string;
+          created_at: string;
+          updated_at: string;
+          merchant_id: string;
+          pricing_tier_id: string;
+          status: "active" | "expired" | "cancelled";
+          subscription_started_at: string;
+          expires_at: string | null;
+          notes: string | null;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+          merchant_id: string;
+          pricing_tier_id: string;
+          status?: "active" | "expired" | "cancelled";
+          subscription_started_at?: string;
+          expires_at?: string | null;
+          notes?: string | null;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+          merchant_id?: string;
+          pricing_tier_id?: string;
+          status?: "active" | "expired" | "cancelled";
+          subscription_started_at?: string;
+          expires_at?: string | null;
+          notes?: string | null;
+        };
+      };
+      subscription_usage: {
+        Row: {
+          id: string;
+          created_at: string;
+          updated_at: string;
+          merchant_id: string;
+          services_count: number;
+          products_count: number;
+          gallery_images_count: number;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+          merchant_id: string;
+          services_count?: number;
+          products_count?: number;
+          gallery_images_count?: number;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+          merchant_id?: string;
+          services_count?: number;
+          products_count?: number;
+          gallery_images_count?: number;
+        };
+      };
     };
     Views: {
       [_ in never]: never;
@@ -1278,42 +1401,6 @@ export const layoutOptions: LayoutOption[] = [
         backgroundColor: "#FFF5F7",
         textColor: "#4E342E",
         fontFamily: "Georgia",
-      },
-      {
-        id: "apricotgold",
-        name: "Apricot Gold",
-        description: "Golden apricot blossoms with deep red",
-        preview: "linear-gradient(135deg, #FFA500 0%, #FFD700 50%, #C62828 100%)",
-        primaryColor: "#FFA500",
-        secondaryColor: "#FFD700",
-        accentColor: "#C62828",
-        backgroundColor: "#FFFBEB",
-        textColor: "#451A03",
-        fontFamily: "Georgia",
-      },
-      {
-        id: "royaltet",
-        name: "Royal Tết",
-        description: "Deep burgundy and imperial gold",
-        preview: "linear-gradient(135deg, #7F0000 0%, #FFD700 50%, #FFFFF0 100%)",
-        primaryColor: "#7F0000",
-        secondaryColor: "#FFD700",
-        accentColor: "#FFA500",
-        backgroundColor: "#FFFFF0",
-        textColor: "#3C1414",
-        fontFamily: "Playfair Display",
-      },
-      {
-        id: "fortunered",
-        name: "Fortune Red",
-        description: "Vibrant lucky red with golden highlights",
-        preview: "linear-gradient(135deg, #D32F2F 0%, #FFEB3B 50%, #FFF9C4 100%)",
-        primaryColor: "#D32F2F",
-        secondaryColor: "#FFEB3B",
-        accentColor: "#FFA000",
-        backgroundColor: "#FFFDE7",
-        textColor: "#4E342E",
-        fontFamily: "Inter",
       },
     ],
   },

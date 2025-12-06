@@ -283,7 +283,7 @@ export default async function Home() {
             {/* Free Trial Card */}
             <div className="relative group">
               <div className="absolute inset-0 bg-gradient-to-r from-green-400 to-emerald-500 rounded-3xl blur opacity-25 group-hover:opacity-40 transition-opacity"></div>
-              <div className="relative bg-white rounded-3xl p-8 shadow-lg border-2 border-green-200 hover:border-green-300 transition-all">
+              <div className="relative bg-white rounded-3xl p-8 shadow-lg border-2 border-green-200 hover:border-green-300 transition-all h-full flex flex-col">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-2xl font-bold text-gray-900">{t("pricingFreeTrialTitle")}</h3>
                   <div className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full">
@@ -296,9 +296,34 @@ export default async function Home() {
                   </div>
                   <p className="text-gray-600 mt-2">{t("pricingFreeTrialDesc")}</p>
                 </div>
+
+                {/* Free Plan Features */}
+                <div className="space-y-3 mb-6 flex-grow">
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">{t("pricingFeatureStarterPack")}</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">{t("pricingFeatureFreeImages")}</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">{t("pricingFeatureFreeServices")}</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">{t("pricingFeatureFreeProducts")}</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">{t("pricingFeatureBookings")}</span>
+                  </div>
+                </div>
+
                 <Link
                   href="/signup"
-                  className="block w-full text-center py-3 rounded-full bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors shadow-md"
+                  className="block w-full text-center py-3 rounded-full bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors shadow-md mt-auto"
                 >
                   {t("startFreeTrial")}
                 </Link>
@@ -308,7 +333,7 @@ export default async function Home() {
             {/* Standard Plan Card */}
             <div className="relative group">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-cyan-500 rounded-3xl blur opacity-25 group-hover:opacity-40 transition-opacity"></div>
-              <div className="relative bg-white rounded-3xl p-8 shadow-lg border-2 border-blue-200 hover:border-blue-300 transition-all">
+              <div className="relative bg-white rounded-3xl p-8 shadow-lg border-2 border-blue-200 hover:border-blue-300 transition-all h-full flex flex-col">
                 <h3 className="text-2xl font-bold text-gray-900 mb-4">{t("pricingStandardTitle")}</h3>
                 <div className="mb-6">
                   <div className="flex items-baseline gap-2">
@@ -318,9 +343,42 @@ export default async function Home() {
                   <p className="text-gray-600 mt-2">{t("pricingStandardDesc")}</p>
                   <p className="text-sm text-gray-500 mt-1">{t("pricingStandardPerDay")}</p>
                 </div>
+
+                {/* Pro Plan Features */}
+                <div className="space-y-3 mb-6 flex-grow">
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">{t("pricingFeatureAllThemes")}</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">{t("pricingFeatureProImages")}</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">{t("pricingFeatureUnlimitedServices")}</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">{t("pricingFeatureUnlimitedProducts")}</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">{t("pricingFeatureBookings")}</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">{t("pricingFeatureCustomDomain")}</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">{t("pricingFeatureRemoveBranding")}</span>
+                  </div>
+                </div>
+
                 <Link
                   href="/signup"
-                  className="block w-full text-center py-3 rounded-full bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-colors shadow-md"
+                  className="block w-full text-center py-3 rounded-full bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-colors shadow-md mt-auto"
                 >
                   {t("pricingChoosePlan")}
                 </Link>
@@ -330,90 +388,60 @@ export default async function Home() {
             {/* Annual Plan Card - Most Popular */}
             <div className="relative group lg:scale-105">
               <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 rounded-3xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity animate-pulse"></div>
-              <div className="relative bg-gradient-to-br from-purple-600 to-pink-600 rounded-3xl p-8 shadow-2xl">
+              <div className="relative bg-gradient-to-br from-purple-600 to-pink-600 rounded-3xl p-8 shadow-2xl h-full flex flex-col">
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-orange-500 text-white text-sm font-bold px-6 py-2 rounded-full shadow-lg whitespace-nowrap">
                   {t("pricingMostPopular")}
                 </div>
                 <h3 className="text-2xl font-bold text-white mb-4 mt-2">{t("pricingAnnualTitle")}</h3>
                 <div className="mb-6">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-6xl font-bold text-white">{t("pricingAnnualPriceShort")}</span>
-                    <span className="text-xl text-purple-100">{t("pricingAnnualPricePerYear")}</span>
+                    <span className="text-6xl font-bold text-white">160k</span>
+                    <span className="text-xl text-purple-100">{t("pricingAnnualPricePerMonthShort")}</span>
                   </div>
                   <div className="mt-4 bg-white/20 backdrop-blur rounded-xl p-3">
                     <p className="text-white font-semibold">{t("pricingAnnualDesc")}</p>
                     <p className="text-purple-100 text-sm mt-1">{t("pricingAnnualEffective")}</p>
                   </div>
                 </div>
+
+                {/* Pro Year Features - Same as Pro Monthly */}
+                <div className="space-y-3 mb-6 flex-grow">
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-white flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-white/90">{t("pricingFeatureAllThemes")}</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-white flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-white/90">{t("pricingFeatureProImages")}</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-white flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-white/90">{t("pricingFeatureUnlimitedServices")}</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-white flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-white/90">{t("pricingFeatureUnlimitedProducts")}</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-white flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-white/90">{t("pricingFeatureBookings")}</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-white flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-white/90">{t("pricingFeatureCustomDomain")}</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-white flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-white/90">{t("pricingFeatureRemoveBranding")}</span>
+                  </div>
+                </div>
+
                 <Link
                   href="/signup"
-                  className="block w-full text-center py-3 rounded-full bg-white text-purple-600 font-bold hover:bg-purple-50 transition-colors shadow-lg"
+                  className="block w-full text-center py-3 rounded-full bg-white text-purple-600 font-bold hover:bg-purple-50 transition-colors shadow-lg mt-auto"
                 >
                   {t("pricingChoosePlanArrow")}
                 </Link>
-              </div>
-            </div>
-          </div>
-
-          {/* Features List */}
-          <div className="max-w-4xl mx-auto">
-            <h3 className="text-2xl font-bold text-center text-gray-900 mb-10">
-              {t("pricingFeatureTitle")}
-            </h3>
-            <div className="grid sm:grid-cols-2 gap-6">
-              <div className="flex items-start gap-4 bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                  <Check className="h-6 w-6 text-green-600" />
-                </div>
-                <div>
-                  <div className="font-semibold text-gray-900">{t("pricingFeatureUnlimited")}</div>
-                  <div className="text-sm text-gray-600">{t("pricingFeatureUnlimitedDesc")}</div>
-                </div>
-              </div>
-              <div className="flex items-start gap-4 bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                  <Check className="h-6 w-6 text-green-600" />
-                </div>
-                <div>
-                  <div className="font-semibold text-gray-900">{t("pricingFeatureBookings")}</div>
-                  <div className="text-sm text-gray-600">{t("pricingFeatureBookingsDesc")}</div>
-                </div>
-              </div>
-              <div className="flex items-start gap-4 bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                  <Check className="h-6 w-6 text-green-600" />
-                </div>
-                <div>
-                  <div className="font-semibold text-gray-900">{t("pricingFeatureGallery")}</div>
-                  <div className="text-sm text-gray-600">{t("pricingFeatureGalleryDesc")}</div>
-                </div>
-              </div>
-              <div className="flex items-start gap-4 bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                  <Check className="h-6 w-6 text-green-600" />
-                </div>
-                <div>
-                  <div className="font-semibold text-gray-900">{t("pricingFeatureCustomDomain")}</div>
-                  <div className="text-sm text-gray-600">{t("pricingFeatureCustomDomainDesc")}</div>
-                </div>
-              </div>
-              <div className="flex items-start gap-4 bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                  <Check className="h-6 w-6 text-green-600" />
-                </div>
-                <div>
-                  <div className="font-semibold text-gray-900">{t("pricingFeatureNoFees")}</div>
-                  <div className="text-sm text-gray-600">{t("pricingFeatureNoFeesDesc")}</div>
-                </div>
-              </div>
-              <div className="flex items-start gap-4 bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                  <Check className="h-6 w-6 text-green-600" />
-                </div>
-                <div>
-                  <div className="font-semibold text-gray-900">{t("pricingFeatureSupport")}</div>
-                  <div className="text-sm text-gray-600">{t("pricingFeatureSupportDesc")}</div>
-                </div>
               </div>
             </div>
           </div>
@@ -509,7 +537,9 @@ export default async function Home() {
                     )}
                     <div className="mt-4 flex items-center gap-2 text-sm text-gray-500">
                       <Clock className="h-4 w-4" />
-                      {post.published_at && formatDistanceToNow(new Date(post.published_at), { addSuffix: true })}
+                      <span suppressHydrationWarning>
+                        {post.published_at && formatDistanceToNow(new Date(post.published_at), { addSuffix: true })}
+                      </span>
                     </div>
                     <div className="mt-4 flex items-center gap-2 text-purple-600 font-semibold text-sm group-hover:gap-3 transition-all">
                       Read more

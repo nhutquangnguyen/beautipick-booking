@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, X, Images, Trash2, Upload, Loader2 } from "lucide-react";
+import { Plus, X, Images, Trash2, Upload, Loader2, Crown, AlertCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
 
 interface GalleryImage {
   id: string;
@@ -33,13 +34,101 @@ export function GalleryManager({
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
+  const [tierInfo, setTierInfo] = useState<{
+    tierKey: string;
+    tierName: string;
+    limit: number;
+    currentCount: number;
+  } | null>(null);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const supabase = createClient();
 
+  // Fetch tier info on mount
+  useEffect(() => {
+    async function fetchTierInfo() {
+      const { data: subscription } = await supabase
+        .from("merchant_subscriptions")
+        .select(`
+          *,
+          pricing_tiers (
+            tier_key,
+            tier_name,
+            max_gallery_images
+          )
+        `)
+        .eq("merchant_id", merchantId)
+        .single();
+
+      const tierData = Array.isArray(subscription?.pricing_tiers)
+        ? subscription.pricing_tiers[0]
+        : subscription?.pricing_tiers;
+
+      if (tierData) {
+        setTierInfo({
+          tierKey: tierData.tier_key,
+          tierName: tierData.tier_name,
+          limit: tierData.max_gallery_images,
+          currentCount: images.length,
+        });
+      }
+    }
+
+    fetchTierInfo();
+  }, [merchantId, images.length, supabase]);
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
+
+    // Check quota before allowing upload
+    const { count } = await supabase
+      .from("gallery")
+      .select("id", { count: "exact" })
+      .eq("merchant_id", merchantId);
+
+    const currentCount = count || 0;
+
+    // Get subscription to check limit
+    const { data: subscription } = await supabase
+      .from("merchant_subscriptions")
+      .select(`
+        *,
+        pricing_tiers (
+          max_gallery_images
+        )
+      `)
+      .eq("merchant_id", merchantId)
+      .single();
+
+    const tierData = Array.isArray(subscription?.pricing_tiers)
+      ? subscription.pricing_tiers[0]
+      : subscription?.pricing_tiers;
+
+    const limit = tierData?.max_gallery_images || 20;
+    const isUnlimited = limit === -1;
+
+    // Calculate how many slots are available
+    const availableSlots = isUnlimited ? Infinity : limit - currentCount;
+
+    if (availableSlots <= 0) {
+      setError(`Gallery image limit reached (${limit} images). Upgrade to Pro for 500 images.`);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      return;
+    }
+
+    // Warn if trying to upload more than available slots
+    if (files.length > availableSlots) {
+      setError(`You can only upload ${availableSlots} more image(s). You're at ${currentCount}/${limit}.`);
+      setShowUpgradePrompt(true);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      return;
+    }
 
     setIsUploading(true);
     setError(null);
@@ -122,22 +211,60 @@ export function GalleryManager({
     if (uploadedImages.length === 0) return;
 
     setIsUploading(true);
+    setError(null);
 
-    // Insert all images
-    const insertData = uploadedImages.map((img, index) => ({
-      merchant_id: merchantId,
-      image_url: img.key, // Store the key in image_url
-      caption: img.caption || null,
-      display_order: images.length + index,
-    }));
+    // Check quota before inserting each image
+    for (let i = 0; i < uploadedImages.length; i++) {
+      const img = uploadedImages[i];
 
-    const { error } = await supabase.from("gallery").insert(insertData);
+      // Check if we can upload this image (quota check)
+      const { count } = await supabase
+        .from("gallery")
+        .select("id", { count: "exact" })
+        .eq("merchant_id", merchantId);
 
-    if (error) {
-      console.error("Failed to save images:", error);
-      setError("Failed to save images. Please try again.");
-      setIsUploading(false);
-      return;
+      const currentCount = count || 0;
+
+      // Get subscription to check limit
+      const { data: subscription } = await supabase
+        .from("merchant_subscriptions")
+        .select(`
+          *,
+          pricing_tiers (
+            max_gallery_images
+          )
+        `)
+        .eq("merchant_id", merchantId)
+        .single();
+
+      const tierData = Array.isArray(subscription?.pricing_tiers)
+        ? subscription.pricing_tiers[0]
+        : subscription?.pricing_tiers;
+
+      const limit = tierData?.max_gallery_images || 20;
+      const isUnlimited = limit === -1;
+
+      // Check if limit reached
+      if (!isUnlimited && currentCount >= limit) {
+        setError(`Gallery image limit reached (${limit} images). Upgrade to Pro for 500 images.`);
+        setIsUploading(false);
+        return;
+      }
+
+      // Insert this image
+      const { error } = await supabase.from("gallery").insert({
+        merchant_id: merchantId,
+        image_url: img.key,
+        caption: img.caption || null,
+        display_order: images.length + i,
+      });
+
+      if (error) {
+        console.error("Failed to save image:", error);
+        setError(`Failed to save image ${i + 1}. Please try again.`);
+        setIsUploading(false);
+        return;
+      }
     }
 
     setUploadedImages([]);
@@ -182,8 +309,79 @@ export function GalleryManager({
     setShowAddModal(false);
   };
 
+  const isFree = tierInfo?.tierKey === "free";
+  const isUnlimited = tierInfo && tierInfo.limit === -1;
+  const usagePercentage = tierInfo && !isUnlimited
+    ? (tierInfo.currentCount / tierInfo.limit) * 100
+    : 0;
+
   return (
     <>
+      {/* Tier Usage Notice Banner */}
+      {tierInfo && isFree && (
+        <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertCircle className="w-5 h-5 text-purple-600" />
+                <h3 className="font-semibold text-purple-900">
+                  {tierInfo.tierName} Plan - Gallery Limit
+                </h3>
+              </div>
+              <p className="text-sm text-purple-700 mb-3">
+                You're using {tierInfo.currentCount} of {tierInfo.limit} gallery images
+              </p>
+              <div className="w-full bg-purple-200 rounded-full h-2 mb-3">
+                <div
+                  className={`h-2 rounded-full transition-all ${
+                    usagePercentage >= 90
+                      ? "bg-red-500"
+                      : usagePercentage >= 70
+                      ? "bg-yellow-500"
+                      : "bg-purple-500"
+                  }`}
+                  style={{ width: `${Math.min(usagePercentage, 100)}%` }}
+                />
+              </div>
+              {usagePercentage >= 90 && (
+                <p className="text-sm text-purple-700 font-medium">
+                  You're close to your limit! Upgrade to Pro for 500 images.
+                </p>
+              )}
+            </div>
+            <Link
+              href="/dashboard/settings"
+              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors whitespace-nowrap"
+            >
+              <Crown className="w-4 h-4" />
+              Upgrade to Pro
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Error/Upgrade Prompt */}
+      {error && showUpgradePrompt && (
+        <div className="mb-6 p-4 bg-red-50 rounded-lg border border-red-200">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <h3 className="font-semibold text-red-900">Upload Limit Reached</h3>
+              </div>
+              <p className="text-sm text-red-700 mb-3">{error}</p>
+            </div>
+            <Link
+              href="/dashboard/settings"
+              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors whitespace-nowrap"
+            >
+              <Crown className="w-4 h-4" />
+              Upgrade to Pro
+            </Link>
+          </div>
+        </div>
+      )}
+
       {images.length > 0 ? (
         <div className="space-y-4">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -294,7 +492,23 @@ export function GalleryManager({
                 </button>
 
                 {error && (
-                  <p className="mt-2 text-sm text-red-600">{error}</p>
+                  <div className="mt-3 p-3 bg-red-50 rounded-lg border border-red-200">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-sm text-red-700 font-medium">{error}</p>
+                        {showUpgradePrompt && (
+                          <Link
+                            href="/dashboard/settings"
+                            className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors"
+                          >
+                            <Crown className="w-4 h-4" />
+                            Upgrade to Pro
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
 

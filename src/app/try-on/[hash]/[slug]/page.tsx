@@ -1,8 +1,10 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { BookingPageDynamic } from "@/components/booking/booking-page-dynamic";
 import { MerchantTheme, MerchantSettings, defaultTheme, defaultSettings } from "@/types/database";
-import { getCurrentSubscription } from "@/lib/pricing/subscriptions";
+import Link from "next/link";
+import { Crown, Eye } from "lucide-react";
+import { getLocale, getTranslations } from "next-intl/server";
 
 const BUCKET_NAME = "images";
 
@@ -15,7 +17,7 @@ function getImageUrl(supabase: Awaited<ReturnType<typeof createClient>>, value: 
   return data.publicUrl;
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+export async function generateMetadata({ params }: { params: Promise<{ hash: string; slug: string }> }) {
   const { slug } = await params;
   const supabase = await createClient();
 
@@ -31,22 +33,50 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 
   return {
-    title: `Book with ${merchant.business_name}`,
-    description: merchant.description || `Book your appointment with ${merchant.business_name}`,
+    title: `Theme Preview - ${merchant.business_name}`,
+    description: `Preview theme for ${merchant.business_name}`,
   };
 }
 
-export default async function PublicBookingPage({
+export default async function ThemePreviewPage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ hash: string; slug: string }>;
 }) {
-  const { slug } = await params;
+  const { hash, slug } = await params;
   const supabase = await createClient();
+  const t = await getTranslations("themePreview");
 
+  // Fetch the preview data
+  const { data: preview, error: previewError } = await supabase
+    .from("theme_previews")
+    .select("*")
+    .eq("hash", hash)
+    .single();
+
+  console.log("=== Theme Preview Debug ===");
+  console.log("Hash:", hash);
+  console.log("Slug:", slug);
+  console.log("Preview data:", preview);
+  console.log("Preview error:", previewError);
+  console.log("========================");
+
+  if (previewError || !preview) {
+    console.error("Preview not found or error:", previewError);
+    notFound();
+  }
+
+  // Check if preview has expired
+  if (new Date(preview.expires_at) < new Date()) {
+    console.error("Preview expired:", preview.expires_at);
+    notFound();
+  }
+
+  // Fetch merchant data
   const { data: merchant } = await supabase
     .from("merchants")
     .select("*")
+    .eq("id", preview.merchant_id)
     .eq("slug", slug)
     .eq("is_active", true)
     .single();
@@ -55,6 +85,7 @@ export default async function PublicBookingPage({
     notFound();
   }
 
+  // Fetch all merchant data (same as regular booking page)
   const [servicesResult, staffResult, availabilityResult, galleryResult, productsResult] = await Promise.all([
     supabase
       .from("services")
@@ -105,21 +136,9 @@ export default async function PublicBookingPage({
     image_url: getImageUrl(supabase, product.image_url),
   }));
 
-  let theme = (merchant.theme as MerchantTheme) ?? defaultTheme;
+  // Use the preview theme data
+  const theme = (preview.theme_data as MerchantTheme) ?? defaultTheme;
   const settings = (merchant.settings as MerchantSettings) ?? defaultSettings;
-
-  // Check subscription and enforce theme restrictions
-  const subscription = await getCurrentSubscription(merchant.id);
-  const isFree = !subscription || subscription.tier?.tier_key === "free";
-
-  // Force free users to use starter theme
-  if (isFree && theme.layoutTemplate !== "starter") {
-    theme = {
-      ...theme,
-      layoutTemplate: "starter",
-      themeId: "starter-clean",
-    };
-  }
 
   // Pass merchant with public URLs
   const merchantWithUrls = {
@@ -132,15 +151,41 @@ export default async function PublicBookingPage({
   };
 
   return (
-    <BookingPageDynamic
-      merchant={merchantWithUrls}
-      services={servicesResult.data ?? []}
-      staff={staffResult.data ?? []}
-      availability={availabilityResult.data ?? []}
-      gallery={galleryWithUrls}
-      products={productsWithUrls}
-      theme={theme}
-      settings={settings}
-    />
+    <>
+      {/* Floating Preview Badge - Bottom Left */}
+      <div
+        className="fixed bottom-6 left-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-2xl rounded-2xl overflow-hidden"
+        style={{ zIndex: 999999 }}
+      >
+        <div className="px-5 py-3">
+          <div className="flex items-center gap-2 mb-3">
+            <Eye className="h-5 w-5 animate-pulse" />
+            <div>
+              <p className="font-bold text-sm">{t("previewMode")}</p>
+              <p className="text-xs text-white/80">{t("notLivePage")}</p>
+            </div>
+          </div>
+          <Link
+            href="/dashboard/settings"
+            className="w-full px-4 py-2 bg-white text-purple-600 hover:bg-white/90 rounded-lg transition-colors font-bold text-sm flex items-center justify-center gap-2 shadow-lg"
+          >
+            <Crown className="h-4 w-4" />
+            {t("upgrade")}
+          </Link>
+        </div>
+      </div>
+
+      {/* Booking page content - no overlay */}
+      <BookingPageDynamic
+          merchant={merchantWithUrls}
+          services={servicesResult.data ?? []}
+          staff={staffResult.data ?? []}
+          availability={availabilityResult.data ?? []}
+          gallery={galleryWithUrls}
+          products={productsWithUrls}
+          theme={theme}
+          settings={settings}
+        />
+    </>
   );
 }

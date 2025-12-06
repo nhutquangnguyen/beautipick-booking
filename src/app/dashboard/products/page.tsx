@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ProductsManager } from "@/components/dashboard/products/products-manager";
+import { QuotaBanner } from "@/components/dashboard/quota-banner";
+import { getCurrentSubscription } from "@/lib/pricing/subscriptions";
 
 const BUCKET_NAME = "images";
 
@@ -35,12 +37,27 @@ export default async function ProductsPage() {
     display_url: getImageUrl(supabase, product.image_url),
   }));
 
+  // Get subscription info for quota banner
+  const subscription = await getCurrentSubscription(user.id);
+  const tierKey = subscription?.tier?.tier_key || "free";
+  const tierName = subscription?.tier?.tier_name || "Free";
+  const limit = subscription?.tier?.max_products || 100;
+
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-gray-900">{t("title")}</h2>
         <p className="text-sm text-gray-600">{t("subtitle")}</p>
       </div>
+
+      {/* Quota Banner */}
+      <QuotaBanner
+        resourceType="products"
+        currentCount={products?.length || 0}
+        limit={limit}
+        tierName={tierName}
+        isFree={tierKey === "free"}
+      />
 
       <ProductsManager merchantId={user.id} products={productsWithUrls} />
     </div>
