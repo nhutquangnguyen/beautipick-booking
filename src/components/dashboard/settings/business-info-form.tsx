@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Youtube, Globe, Info } from "lucide-react";
+import { Youtube, Globe, Info, Crown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { Merchant } from "@/types/database";
 import { generateSlug } from "@/lib/utils";
 import { ImageUpload } from "@/components/ui/image-upload";
+import Link from "next/link";
 
 export function BusinessInfoForm({ merchant }: { merchant: Merchant }) {
   const t = useTranslations("businessForm");
@@ -16,6 +17,7 @@ export function BusinessInfoForm({ merchant }: { merchant: Merchant }) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [origin, setOrigin] = useState("");
+  const [isPro, setIsPro] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(merchant.logo_url);
   const [coverUrl, setCoverUrl] = useState<string | null>(merchant.cover_image_url);
   const [coverUrl1, setCoverUrl1] = useState<string | null>(merchant.cover_image_1);
@@ -34,7 +36,21 @@ export function BusinessInfoForm({ merchant }: { merchant: Merchant }) {
 
   useEffect(() => {
     setOrigin(window.location.origin);
-  }, []);
+
+    // Check subscription tier
+    const checkTier = async () => {
+      const { data: subscription } = await supabase
+        .from("merchant_subscriptions")
+        .select("pricing_tiers(tier_key)")
+        .eq("merchant_id", merchant.id)
+        .eq("status", "active")
+        .maybeSingle();
+
+      const tierKey = (subscription?.pricing_tiers as any)?.tier_key || "free";
+      setIsPro(tierKey === "pro");
+    };
+    checkTier();
+  }, [merchant.id, supabase]);
 
   const normalizeCustomDomain = (domain: string): string | null => {
     if (!domain) return null;
@@ -60,7 +76,8 @@ export function BusinessInfoForm({ merchant }: { merchant: Merchant }) {
     setSuccess(false);
 
     try {
-      const normalizedDomain = normalizeCustomDomain(businessInfo.custom_domain);
+      // Only allow custom domain for Pro users
+      const normalizedDomain = isPro ? normalizeCustomDomain(businessInfo.custom_domain) : null;
 
       await supabase
         .from("merchants")
@@ -221,47 +238,79 @@ export function BusinessInfoForm({ merchant }: { merchant: Merchant }) {
             <label className="label flex items-center gap-2">
               <Globe className="h-4 w-4" />
               {t("customDomain")}
+              {!isPro && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-semibold rounded-full">
+                  <Crown className="h-3 w-3" />
+                  Pro
+                </span>
+              )}
             </label>
-            <input
-              type="text"
-              value={businessInfo.custom_domain}
-              onChange={(e) =>
-                setBusinessInfo({ ...businessInfo, custom_domain: e.target.value })
-              }
-              className="input mt-1"
-              placeholder="yourdomain.com or www.yourdomain.com"
-            />
-            <p className="mt-1 text-xs text-gray-500">
-              {t("customDomainNote")}
-            </p>
-            <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
-              <div className="flex gap-2">
-                <Info className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
-                <div className="text-xs text-blue-800 space-y-3">
-                  <p className="font-medium">{t("customDomainSetup")}</p>
-                  <ol className="list-decimal ml-4 space-y-2">
-                    <li>{t("customDomainStep1")}</li>
-                    <li>{t("customDomainStep2")}</li>
-                    <li>{t("customDomainStep3")}</li>
-                  </ol>
-                  <div className="space-y-2 p-2 bg-white rounded border border-blue-300">
-                    <p className="font-semibold text-blue-900">{t("dnsRecords")}:</p>
-                    <div className="space-y-1.5">
-                      <div className="font-mono text-[11px]">
-                        <span className="font-semibold">Host:</span> @ <span className="mx-2">|</span>
-                        <span className="font-semibold">Type:</span> A <span className="mx-2">|</span>
-                        <span className="font-semibold">Value:</span> 216.198.79.1
-                      </div>
-                      <div className="font-mono text-[11px]">
-                        <span className="font-semibold">Host:</span> www <span className="mx-2">|</span>
-                        <span className="font-semibold">Type:</span> CNAME <span className="mx-2">|</span>
-                        <span className="font-semibold">Value:</span> d05236ba666bbb6a.vercel-dns-017.com.
+
+            {!isPro ? (
+              <div className="mt-1 p-4 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 flex items-center justify-center">
+                    <Crown className="h-5 w-5 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-gray-900 mb-1">Custom Domain is a Pro Feature</h4>
+                    <p className="text-sm text-gray-600 mb-3">
+                      Connect your own domain (e.g., yoursalon.com) to create a professional branded booking page. Upgrade to Pro to unlock this feature.
+                    </p>
+                    <Link
+                      href="/dashboard/settings"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-semibold rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all"
+                    >
+                      <Crown className="h-4 w-4" />
+                      Upgrade to Pro
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                <input
+                  type="text"
+                  value={businessInfo.custom_domain}
+                  onChange={(e) =>
+                    setBusinessInfo({ ...businessInfo, custom_domain: e.target.value })
+                  }
+                  className="input mt-1"
+                  placeholder="yourdomain.com or www.yourdomain.com"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  {t("customDomainNote")}
+                </p>
+                <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <div className="flex gap-2">
+                    <Info className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <div className="text-xs text-blue-800 space-y-3">
+                      <p className="font-medium">{t("customDomainSetup")}</p>
+                      <ol className="list-decimal ml-4 space-y-2">
+                        <li>{t("customDomainStep1")}</li>
+                        <li>{t("customDomainStep2")}</li>
+                        <li>{t("customDomainStep3")}</li>
+                      </ol>
+                      <div className="space-y-2 p-2 bg-white rounded border border-blue-300">
+                        <p className="font-semibold text-blue-900">{t("dnsRecords")}:</p>
+                        <div className="space-y-1.5">
+                          <div className="font-mono text-[11px]">
+                            <span className="font-semibold">Host:</span> @ <span className="mx-2">|</span>
+                            <span className="font-semibold">Type:</span> A <span className="mx-2">|</span>
+                            <span className="font-semibold">Value:</span> 216.198.79.1
+                          </div>
+                          <div className="font-mono text-[11px]">
+                            <span className="font-semibold">Host:</span> www <span className="mx-2">|</span>
+                            <span className="font-semibold">Type:</span> CNAME <span className="mx-2">|</span>
+                            <span className="font-semibold">Value:</span> d05236ba666bbb6a.vercel-dns-017.com.
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
+              </>
+            )}
           </div>
 
           <div>
