@@ -46,11 +46,22 @@ export default async function DashboardPage() {
 
   // Get stats
   const today = new Date().toISOString().split("T")[0];
+
+  // Calculate start of this week (Monday)
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // If Sunday, go back 6 days, else go back to Monday
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() + diff);
+  startOfWeek.setHours(0, 0, 0, 0);
+  const startOfWeekStr = startOfWeek.toISOString().split("T")[0];
+
   const [
     todayBookingsResult,
     upcomingBookingsResult,
     servicesCountResult,
     recentBookingsResult,
+    thisWeekRevenueResult,
   ] = await Promise.all([
     supabase
       .from("bookings")
@@ -75,12 +86,24 @@ export default async function DashboardPage() {
       .eq("merchant_id", user.id)
       .order("created_at", { ascending: false })
       .limit(5),
+    supabase
+      .from("bookings")
+      .select("total_price")
+      .eq("merchant_id", user.id)
+      .gte("booking_date", startOfWeekStr)
+      .eq("status", "completed"),
   ]);
 
   const todayBookings = todayBookingsResult.count ?? 0;
   const upcomingBookings = upcomingBookingsResult.count ?? 0;
   const servicesCount = servicesCountResult.count ?? 0;
   const recentBookings = recentBookingsResult.data ?? [];
+
+  // Calculate this week's revenue
+  const thisWeekRevenue = (thisWeekRevenueResult.data ?? []).reduce(
+    (sum, booking) => sum + (booking.total_price ?? 0),
+    0
+  );
 
   return (
     <div className="space-y-8">
@@ -118,7 +141,7 @@ export default async function DashboardPage() {
         <StatCard
           icon={<TrendingUp className="h-6 w-6" />}
           label={t("thisWeek")}
-          value="$0"
+          value={formatCurrency(thisWeekRevenue, merchant.currency)}
           color="green"
         />
       </div>
