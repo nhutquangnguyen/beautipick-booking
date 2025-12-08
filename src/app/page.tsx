@@ -15,8 +15,7 @@ import {
   Clock,
 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import { LanguageSwitcherIcon } from "@/components/language-switcher";
-import { MobileMenu } from "@/components/landing/mobile-menu";
+import { LandingHeader } from "@/components/landing/landing-header";
 import { createClient } from "@/lib/supabase/server";
 import { formatDistanceToNow } from "date-fns";
 
@@ -35,62 +34,21 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md shadow-sm shadow-purple-100/50">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
-                <Sparkles className="h-4 w-4 text-white" />
-              </div>
-              <span className="text-xl font-bold text-gray-900">{t("brand")}</span>
-            </div>
-            <nav className="flex items-center gap-3">
-              {/* Mobile Menu (hamburger) */}
-              <div className="md:hidden">
-                <MobileMenu
-                  loginText={t("login")}
-                  getStartedText={t("getStarted")}
-                  languageText={tNav("language")}
-                />
-              </div>
-
-              {/* Desktop Menu */}
-              <div className="hidden md:flex items-center gap-6">
-                <Link
-                  href="/blog"
-                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all duration-200"
-                >
-                  <BookOpen className="h-4 w-4" />
-                  <span>Blog</span>
-                </Link>
-                <div className="h-6 w-px bg-gray-200" />
-                <LanguageSwitcherIcon />
-                <Link
-                  href="/login"
-                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all duration-200"
-                >
-                  {t("login")}
-                </Link>
-                <Link
-                  href="/signup"
-                  className="rounded-full bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-2.5 text-sm font-semibold text-white hover:shadow-lg hover:scale-105 transition-all duration-200 shadow-md"
-                >
-                  {t("getStarted")}
-                </Link>
-              </div>
-            </nav>
-          </div>
-        </div>
-      </header>
+      <LandingHeader
+        brand={t("brand")}
+        store={t("pricing")}
+        login={t("login")}
+        getStarted={t("getStarted")}
+        language={tNav("language")}
+      />
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 sm:pt-40 sm:pb-32 bg-gradient-to-b from-purple-50 via-pink-50 to-white">
+      <section className="pt-32 pb-20 sm:pt-40 sm:pb-32 bg-gradient-to-b from-green-50 via-emerald-50 to-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            {/* Tag */}
-            <div className="inline-flex items-center gap-2 rounded-full bg-purple-100 px-4 py-1.5 text-sm font-medium text-purple-700 mb-6">
-              <Sparkles className="h-4 w-4" />
+            {/* Tag - Now emphasizing FREE */}
+            <div className="inline-flex items-center gap-2 rounded-full bg-green-100 px-4 py-2 text-sm font-bold text-green-700 mb-6 border border-green-200">
+              <span className="text-lg">🎉</span>
               {t("heroTag")}
             </div>
 
@@ -98,7 +56,7 @@ export default async function Home() {
             <h1 className="text-5xl sm:text-7xl font-bold tracking-tight text-gray-900">
               {t("heroTitle1")}
               <br />
-              <span className="bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-green-600 via-emerald-500 to-teal-500 bg-clip-text text-transparent">
                 {t("heroTitle2")}
               </span>
             </h1>
@@ -108,17 +66,33 @@ export default async function Home() {
               {t("heroSubtitle")}
             </p>
 
+            {/* Key Value Props - NEW */}
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-4 sm:gap-6">
+              <div className="flex items-center gap-2 text-green-700 font-medium">
+                <Check className="h-5 w-5" />
+                <span>{t("pricingFeatureBookings")}</span>
+              </div>
+              <div className="flex items-center gap-2 text-green-700 font-medium">
+                <Check className="h-5 w-5" />
+                <span>{t("pricingFeatureNoFees")}</span>
+              </div>
+              <div className="flex items-center gap-2 text-green-700 font-medium">
+                <Check className="h-5 w-5" />
+                <span>{t("pricingNotATrial")}</span>
+              </div>
+            </div>
+
             {/* CTA Buttons */}
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/signup"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 px-8 py-4 text-lg font-semibold text-white hover:opacity-90 transition-opacity shadow-lg shadow-purple-500/25"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-green-600 to-emerald-600 px-8 py-4 text-lg font-semibold text-white hover:opacity-90 transition-opacity shadow-lg shadow-green-500/25"
               >
                 {t("startFreeTrial")}
                 <ArrowRight className="h-5 w-5" />
               </Link>
               <Link
-                href="#how-it-works"
+                href="#free-features"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full border-2 border-gray-200 px-8 py-4 text-lg font-semibold text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors"
               >
                 {t("learnMore")}
@@ -177,30 +151,96 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="py-20 sm:py-32">
+      {/* What's FREE Section - NEW PROMINENT SECTION */}
+      <section id="free-features" className="py-20 sm:py-32 bg-gradient-to-b from-green-50 to-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
+            <div className="inline-flex items-center gap-2 rounded-full bg-green-100 px-4 py-1.5 text-sm font-bold text-green-700 mb-4">
+              {t("pricingBadge")}
+            </div>
+            <h2 className="text-3xl sm:text-5xl font-bold text-gray-900">
               {t("featuresTitle")}
             </h2>
-            <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="mt-4 text-xl text-gray-600 max-w-2xl mx-auto">
               {t("featuresSubtitle")}
             </p>
           </div>
 
+          {/* FREE Features Box */}
+          <div className="max-w-4xl mx-auto mb-16">
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-green-400 to-emerald-500 rounded-3xl blur-lg opacity-25 group-hover:opacity-40 transition-opacity"></div>
+              <div className="relative bg-white rounded-3xl p-8 sm:p-10 shadow-xl border-2 border-green-200">
+                <div className="flex items-center justify-center gap-3 mb-8">
+                  <span className="text-5xl font-bold text-green-600">$0</span>
+                  <div className="text-left">
+                    <span className="block text-2xl font-bold text-gray-900">{t("pricingFreeTrialTitle")}</span>
+                    <span className="block text-green-600 font-medium">{t("pricingFreeTrialDuration")}</span>
+                  </div>
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50">
+                    <Check className="h-6 w-6 text-green-600 flex-shrink-0" />
+                    <span className="font-medium text-gray-800">{t("pricingFreeWebsite")}</span>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50">
+                    <Check className="h-6 w-6 text-green-600 flex-shrink-0" />
+                    <span className="font-medium text-gray-800">{t("pricingFeatureFreeServices")}</span>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50">
+                    <Check className="h-6 w-6 text-green-600 flex-shrink-0" />
+                    <span className="font-medium text-gray-800">{t("pricingFeatureFreeProducts")}</span>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50">
+                    <Check className="h-6 w-6 text-green-600 flex-shrink-0" />
+                    <span className="font-medium text-gray-800">{t("pricingFeatureFreeImages")}</span>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50">
+                    <Check className="h-6 w-6 text-green-600 flex-shrink-0" />
+                    <span className="font-medium text-gray-800">{t("pricingFeatureBookings")}</span>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50">
+                    <Check className="h-6 w-6 text-green-600 flex-shrink-0" />
+                    <span className="font-medium text-gray-800">{t("pricingFeatureNoFees")}</span>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50">
+                    <Check className="h-6 w-6 text-green-600 flex-shrink-0" />
+                    <span className="font-medium text-gray-800">{t("pricingFeatureStarterPack")}</span>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50">
+                    <Check className="h-6 w-6 text-green-600 flex-shrink-0" />
+                    <span className="font-medium text-gray-800">{t("pricingNotATrial")}</span>
+                  </div>
+                </div>
+
+                <div className="mt-8 text-center">
+                  <Link
+                    href="/signup"
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-green-600 to-emerald-600 px-8 py-4 text-lg font-semibold text-white hover:opacity-90 transition-opacity shadow-lg"
+                  >
+                    {t("startFreeTrial")}
+                    <ArrowRight className="h-5 w-5" />
+                  </Link>
+                  <p className="mt-3 text-sm text-gray-500">{t("ctaNoCard")}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Feature Cards */}
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
             <FeatureCard
               icon={<Images className="h-6 w-6" />}
               title={t("featurePortfolio")}
               description={t("featurePortfolioDesc")}
-              gradient="from-pink-500 to-rose-500"
+              gradient="from-green-500 to-emerald-500"
             />
             <FeatureCard
               icon={<Scissors className="h-6 w-6" />}
               title={t("featureServices")}
               description={t("featureServicesDesc")}
-              gradient="from-purple-500 to-indigo-500"
+              gradient="from-teal-500 to-cyan-500"
             />
             <FeatureCard
               icon={<Calendar className="h-6 w-6" />}
@@ -218,7 +258,7 @@ export default async function Home() {
               icon={<Palette className="h-6 w-6" />}
               title={t("featureBranding")}
               description={t("featureBrandingDesc")}
-              gradient="from-fuchsia-500 to-pink-500"
+              gradient="from-purple-500 to-pink-500"
             />
             <FeatureCard
               icon={<LinkIcon className="h-6 w-6" />}
@@ -262,188 +302,20 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section className="py-20 sm:py-32 bg-gradient-to-b from-white via-purple-50/30 to-pink-50/30">
+      {/* Why FREE Section */}
+      <section className="py-20 sm:py-32 bg-gradient-to-b from-white to-gray-50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 rounded-full bg-purple-100 px-4 py-1.5 text-sm font-medium text-purple-700 mb-4">
-              <Sparkles className="h-4 w-4" />
-              {t("pricingBadge")}
+          <div className="max-w-3xl mx-auto text-center">
+            <div className="inline-flex items-center gap-2 rounded-full bg-green-100 px-4 py-1.5 text-sm font-bold text-green-700 mb-4">
+              <Shield className="h-4 w-4" />
+              {t("pricingWhyFreeTitle")}
             </div>
-            <h2 className="text-3xl sm:text-5xl font-bold text-gray-900">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
               {t("pricingTitle")}
             </h2>
-            <p className="mt-4 text-xl text-gray-600 max-w-2xl mx-auto">
-              {t("pricingSubtitle")}
+            <p className="text-lg text-gray-600 leading-relaxed">
+              {t("pricingWhyFreeDesc")}
             </p>
-          </div>
-
-          {/* Pricing Cards */}
-          <div className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto mb-12 pt-6">
-            {/* Free Trial Card */}
-            <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-r from-green-400 to-emerald-500 rounded-3xl blur opacity-25 group-hover:opacity-40 transition-opacity"></div>
-              <div className="relative bg-white rounded-3xl p-8 shadow-lg border-2 border-green-200 hover:border-green-300 transition-all h-full flex flex-col">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-2xl font-bold text-gray-900">{t("pricingFreeTrialTitle")}</h3>
-                  <div className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full">
-                    {t("pricingFreeTrialDuration")}
-                  </div>
-                </div>
-                <div className="mb-6">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-6xl font-bold text-gray-900">{t("pricingFreeTrialPrice")}</span>
-                  </div>
-                  <p className="text-gray-600 mt-2">{t("pricingFreeTrialDesc")}</p>
-                </div>
-
-                {/* Free Plan Features */}
-                <div className="space-y-3 mb-6 flex-grow">
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">{t("pricingFeatureStarterPack")}</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">{t("pricingFeatureFreeImages")}</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">{t("pricingFeatureFreeServices")}</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">{t("pricingFeatureFreeProducts")}</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">{t("pricingFeatureBookings")}</span>
-                  </div>
-                </div>
-
-                <Link
-                  href="/signup"
-                  className="block w-full text-center py-3 rounded-full bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors shadow-md mt-auto"
-                >
-                  {t("startFreeTrial")}
-                </Link>
-              </div>
-            </div>
-
-            {/* Standard Plan Card */}
-            <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-cyan-500 rounded-3xl blur opacity-25 group-hover:opacity-40 transition-opacity"></div>
-              <div className="relative bg-white rounded-3xl p-8 shadow-lg border-2 border-blue-200 hover:border-blue-300 transition-all h-full flex flex-col">
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">{t("pricingStandardTitle")}</h3>
-                <div className="mb-6">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-6xl font-bold text-gray-900">{t("pricingStandardPriceShort")}</span>
-                    <span className="text-xl text-gray-600">{t("pricingStandardPricePerMonth")}</span>
-                  </div>
-                  <p className="text-gray-600 mt-2">{t("pricingStandardDesc")}</p>
-                  <p className="text-sm text-gray-500 mt-1">{t("pricingStandardPerDay")}</p>
-                </div>
-
-                {/* Pro Plan Features */}
-                <div className="space-y-3 mb-6 flex-grow">
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">{t("pricingFeatureAllThemes")}</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">{t("pricingFeatureProImages")}</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">{t("pricingFeatureUnlimitedServices")}</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">{t("pricingFeatureUnlimitedProducts")}</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">{t("pricingFeatureBookings")}</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">{t("pricingFeatureCustomDomain")}</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">{t("pricingFeatureRemoveBranding")}</span>
-                  </div>
-                </div>
-
-                <Link
-                  href="/signup"
-                  className="block w-full text-center py-3 rounded-full bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-colors shadow-md mt-auto"
-                >
-                  {t("pricingChoosePlan")}
-                </Link>
-              </div>
-            </div>
-
-            {/* Annual Plan Card - Most Popular */}
-            <div className="relative group lg:scale-105">
-              <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 rounded-3xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity animate-pulse"></div>
-              <div className="relative bg-gradient-to-br from-purple-600 to-pink-600 rounded-3xl p-8 shadow-2xl h-full flex flex-col">
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-orange-500 text-white text-sm font-bold px-6 py-2 rounded-full shadow-lg whitespace-nowrap">
-                  {t("pricingMostPopular")}
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-4 mt-2">{t("pricingAnnualTitle")}</h3>
-                <div className="mb-6">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-6xl font-bold text-white">160k</span>
-                    <span className="text-xl text-purple-100">{t("pricingAnnualPricePerMonthShort")}</span>
-                  </div>
-                  <div className="mt-4 bg-white/20 backdrop-blur rounded-xl p-3">
-                    <p className="text-white font-semibold">{t("pricingAnnualDesc")}</p>
-                    <p className="text-purple-100 text-sm mt-1">{t("pricingAnnualEffective")}</p>
-                  </div>
-                </div>
-
-                {/* Pro Year Features - Same as Pro Monthly */}
-                <div className="space-y-3 mb-6 flex-grow">
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-white flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-white/90">{t("pricingFeatureAllThemes")}</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-white flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-white/90">{t("pricingFeatureProImages")}</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-white flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-white/90">{t("pricingFeatureUnlimitedServices")}</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-white flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-white/90">{t("pricingFeatureUnlimitedProducts")}</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-white flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-white/90">{t("pricingFeatureBookings")}</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-white flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-white/90">{t("pricingFeatureCustomDomain")}</span>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-white flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-white/90">{t("pricingFeatureRemoveBranding")}</span>
-                  </div>
-                </div>
-
-                <Link
-                  href="/signup"
-                  className="block w-full text-center py-3 rounded-full bg-white text-purple-600 font-bold hover:bg-purple-50 transition-colors shadow-lg mt-auto"
-                >
-                  {t("pricingChoosePlanArrow")}
-                </Link>
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -566,7 +438,7 @@ export default async function Home() {
       {/* Final CTA */}
       <section className="py-20 sm:py-32">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="rounded-3xl bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 px-8 py-16 sm:py-24 text-center relative overflow-hidden">
+          <div className="rounded-3xl bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-8 py-16 sm:py-24 text-center relative overflow-hidden">
             {/* Background decoration */}
             <div className="absolute inset-0 opacity-10">
               <div className="absolute top-0 left-0 w-72 h-72 bg-white rounded-full -translate-x-1/2 -translate-y-1/2" />
@@ -574,20 +446,24 @@ export default async function Home() {
             </div>
 
             <div className="relative">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-2 text-sm font-bold text-white mb-6">
+                <span className="text-lg">🎉</span>
+                100% FREE
+              </div>
               <h2 className="text-3xl sm:text-5xl font-bold text-white">
                 {t("ctaTitle")}
               </h2>
-              <p className="mt-4 text-lg sm:text-xl text-purple-100 max-w-2xl mx-auto">
+              <p className="mt-4 text-lg sm:text-xl text-green-100 max-w-2xl mx-auto">
                 {t("ctaSubtitle")}
               </p>
               <Link
                 href="/signup"
-                className="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-white px-8 py-4 text-lg font-semibold text-purple-600 hover:bg-purple-50 transition-colors shadow-lg"
+                className="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-white px-8 py-4 text-lg font-semibold text-green-600 hover:bg-green-50 transition-colors shadow-lg"
               >
                 {t("ctaButton")}
                 <ArrowRight className="h-5 w-5" />
               </Link>
-              <p className="mt-4 text-sm text-purple-200">{t("ctaNoCard")}</p>
+              <p className="mt-4 text-sm text-green-200">{t("ctaNoCard")}</p>
             </div>
           </div>
         </div>
