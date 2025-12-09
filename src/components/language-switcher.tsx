@@ -27,7 +27,7 @@ export function LanguageSwitcher({ className = "" }: { className?: string }) {
         value={locale}
         onChange={(e) => handleChange(e.target.value)}
         disabled={isPending}
-        className="appearance-none bg-transparent border border-gray-300 rounded-lg pl-8 pr-8 py-2 text-sm cursor-pointer hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50"
+        className="appearance-none bg-transparent border border-gray-300 rounded-lg pl-3 pr-8 py-2 text-sm cursor-pointer hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50"
       >
         {locales.map((loc) => (
           <option key={loc.code} value={loc.code}>
@@ -35,7 +35,6 @@ export function LanguageSwitcher({ className = "" }: { className?: string }) {
           </option>
         ))}
       </select>
-      <Globe className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
     </div>
   );
 }

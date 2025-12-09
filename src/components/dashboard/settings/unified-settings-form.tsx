@@ -14,13 +14,17 @@ export function UnifiedSettingsForm({ merchant }: { merchant: Merchant }) {
   const t = useTranslations("settings");
   const router = useRouter();
   const supabase = createClient();
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [urlLoading, setUrlLoading] = useState(false);
+  const [urlSuccess, setUrlSuccess] = useState(false);
+  const [urlError, setUrlError] = useState("");
+  const [rulesLoading, setRulesLoading] = useState(false);
+  const [rulesSuccess, setRulesSuccess] = useState(false);
+  const [rulesError, setRulesError] = useState("");
   const [origin, setOrigin] = useState("");
   const [isPro, setIsPro] = useState(false);
 
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(["url"])
+    new Set(["url", "rules"])
   );
 
   // URL Settings
@@ -73,6 +77,19 @@ export function UnifiedSettingsForm({ merchant }: { merchant: Merchant }) {
     return normalized || null;
   };
 
+  const validateCustomDomain = (domain: string): string | null => {
+    if (!domain) return null;
+    const normalized = normalizeCustomDomain(domain);
+    if (!normalized) return null;
+
+    // Basic domain validation
+    const domainRegex = /^[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,}$/;
+    if (!domainRegex.test(normalized)) {
+      return t("invalidDomainFormat");
+    }
+    return null;
+  };
+
   const toggleSection = (section: string) => {
     setExpandedSections((prev) => {
       const newSet = new Set(prev);
@@ -85,33 +102,91 @@ export function UnifiedSettingsForm({ merchant }: { merchant: Merchant }) {
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleUrlSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setSuccess(false);
+    setUrlLoading(true);
+    setUrlSuccess(false);
+    setUrlError("");
 
     try {
-      // Only allow custom domain for Pro users
+      // Validate slug
+      if (!urlSettings.slug || urlSettings.slug.length < 3) {
+        setUrlError(t("slugTooShort"));
+        return;
+      }
+
+      // Validate custom domain for Pro users
+      if (isPro && urlSettings.custom_domain) {
+        const domainError = validateCustomDomain(urlSettings.custom_domain);
+        if (domainError) {
+          setUrlError(domainError);
+          return;
+        }
+      }
+
       const normalizedDomain = isPro ? normalizeCustomDomain(urlSettings.custom_domain) : null;
 
-      await supabase
+      const { error } = await supabase
         .from("merchants")
         .update({
           slug: urlSettings.slug,
           custom_domain: normalizedDomain,
           settings: {
             ...(merchant.settings as any || {}),
-            booking_rules: bookingRules,
             showBranding: showBranding,
           },
         })
         .eq("id", merchant.id);
 
-      setSuccess(true);
+      if (error) throw error;
+
+      setUrlSuccess(true);
       router.refresh();
-      setTimeout(() => setSuccess(false), 3000);
+      setTimeout(() => setUrlSuccess(false), 5000);
+    } catch (error: any) {
+      setUrlError(error.message || t("errorSaving"));
     } finally {
-      setLoading(false);
+      setUrlLoading(false);
+    }
+  };
+
+  const handleRulesSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRulesLoading(true);
+    setRulesSuccess(false);
+    setRulesError("");
+
+    try {
+      // Validate booking rules
+      if (bookingRules.max_advance_booking < bookingRules.min_advance_booking) {
+        setRulesError(t("maxBookingLessThanMin"));
+        return;
+      }
+
+      if (bookingRules.min_advance_booking < 0 || bookingRules.max_advance_booking < 1) {
+        setRulesError(t("invalidBookingDays"));
+        return;
+      }
+
+      const { error } = await supabase
+        .from("merchants")
+        .update({
+          settings: {
+            ...(merchant.settings as any || {}),
+            booking_rules: bookingRules,
+          },
+        })
+        .eq("id", merchant.id);
+
+      if (error) throw error;
+
+      setRulesSuccess(true);
+      router.refresh();
+      setTimeout(() => setRulesSuccess(false), 5000);
+    } catch (error: any) {
+      setRulesError(error.message || t("errorSaving"));
+    } finally {
+      setRulesLoading(false);
     }
   };
 
@@ -145,6 +220,8 @@ export function UnifiedSettingsForm({ merchant }: { merchant: Merchant }) {
         type="button"
         onClick={() => toggleSection(section)}
         className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors rounded-lg"
+        aria-expanded={isExpanded}
+        aria-controls={`section-${section}`}
       >
         <div className="flex items-center gap-3">
           <Icon className="h-5 w-5 text-gray-600" />
@@ -160,12 +237,18 @@ export function UnifiedSettingsForm({ merchant }: { merchant: Merchant }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {/* URL Settings */}
-      <div className="card overflow-hidden">
+    <div className="space-y-6">
+      {/* Booking Page Configuration Section Header */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900">{t("bookingPageSettings")}</h3>
+        <p className="text-sm text-gray-600 mt-1">{t("bookingPageSettingsDesc")}</p>
+      </div>
+
+      {/* URL Settings Form */}
+      <form onSubmit={handleUrlSubmit} className="card overflow-hidden">
         <SectionHeader title={t("bookingPageUrl")} section="url" icon={Globe} />
         {expandedSections.has("url") && (
-          <div className="p-6 space-y-4">
+          <div id="section-url" className="p-6 space-y-4">
             <div>
               <label className="label">{t("pageSlug")}</label>
               <div className="mt-1 flex flex-col sm:flex-row">
@@ -211,7 +294,7 @@ export function UnifiedSettingsForm({ merchant }: { merchant: Merchant }) {
                         {t("customDomainProDescription")}
                       </p>
                       <Link
-                        href="/dashboard/settings"
+                        href="/dashboard/billing"
                         className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-semibold rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all"
                       >
                         <Crown className="h-4 w-4" />
@@ -257,10 +340,12 @@ export function UnifiedSettingsForm({ merchant }: { merchant: Merchant }) {
               }`}>
                 <input
                   type="checkbox"
+                  id="show-branding"
                   checked={isPro ? showBranding : true}
                   onChange={(e) => isPro && setShowBranding(e.target.checked)}
                   disabled={!isPro}
                   className={`h-5 w-5 rounded ${isPro ? 'text-purple-600 cursor-pointer' : 'text-gray-400 cursor-not-allowed'}`}
+                  aria-describedby="show-branding-desc"
                 />
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
@@ -274,64 +359,91 @@ export function UnifiedSettingsForm({ merchant }: { merchant: Merchant }) {
                       </span>
                     )}
                   </div>
-                  <p className={`text-xs mt-1 ${isPro ? 'text-gray-600' : 'text-gray-500'}`}>
+                  <p id="show-branding-desc" className={`text-xs mt-1 ${isPro ? 'text-gray-600' : 'text-gray-500'}`}>
                     {isPro ? t("showBrandingDesc") : t("showBrandingDescFree")}
                   </p>
                 </div>
               </label>
             </div>
+
+            {/* Save Actions */}
+            <div className="pt-4 border-t border-gray-200 flex items-center justify-end gap-3">
+              <button
+                type="submit"
+                disabled={urlLoading}
+                className="btn btn-primary btn-md"
+              >
+                {urlLoading ? t("saving") : t("saveUrlSettings")}
+              </button>
+              {urlSuccess && (
+                <span className="text-sm text-green-600 font-medium">{t("savedSuccessfully")}</span>
+              )}
+            </div>
+
+            {/* Error Display */}
+            {urlError && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-800 font-medium">{urlError}</p>
+              </div>
+            )}
           </div>
         )}
-      </div>
+      </form>
 
-      {/* Booking Rules */}
-      <div className="card overflow-hidden">
+      {/* Booking Rules Form */}
+      <form onSubmit={handleRulesSubmit} className="card overflow-hidden">
         <SectionHeader title={t("bookingRulesTitle")} section="rules" icon={ClipboardList} />
         {expandedSections.has("rules") && (
-          <div className="p-6 space-y-4">
+          <div id="section-rules" className="p-6 space-y-4">
             <div className="space-y-3">
-              <label className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer">
+              <label htmlFor="require-phone" className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer">
                 <input
                   type="checkbox"
+                  id="require-phone"
                   checked={bookingRules.require_phone}
                   onChange={(e) =>
                     setBookingRules({ ...bookingRules, require_phone: e.target.checked })
                   }
                   className="h-4 w-4 rounded text-purple-600"
+                  aria-describedby="require-phone-desc"
                 />
                 <div>
                   <p className="text-sm font-medium text-gray-700">{t("requirePhoneNumber")}</p>
-                  <p className="text-xs text-gray-500">{t("requirePhoneNumberDesc")}</p>
+                  <p id="require-phone-desc" className="text-xs text-gray-500">{t("requirePhoneNumberDesc")}</p>
                 </div>
               </label>
 
-              <label className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer">
+              <label htmlFor="require-email" className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer">
                 <input
                   type="checkbox"
+                  id="require-email"
                   checked={bookingRules.require_email}
                   onChange={(e) =>
                     setBookingRules({ ...bookingRules, require_email: e.target.checked })
                   }
                   className="h-4 w-4 rounded text-purple-600"
+                  aria-describedby="require-email-desc"
                 />
                 <div>
                   <p className="text-sm font-medium text-gray-700">{t("requireEmailAddress")}</p>
-                  <p className="text-xs text-gray-500">{t("requireEmailDesc")}</p>
+                  <p id="require-email-desc" className="text-xs text-gray-500">{t("requireEmailDesc")}</p>
                 </div>
               </label>
 
-              <label className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer">
+              <label htmlFor="allow-same-day" className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer">
                 <input
                   type="checkbox"
+                  id="allow-same-day"
                   checked={bookingRules.allow_same_day_booking}
                   onChange={(e) =>
                     setBookingRules({ ...bookingRules, allow_same_day_booking: e.target.checked })
                   }
                   className="h-4 w-4 rounded text-purple-600"
+                  aria-describedby="allow-same-day-desc"
                 />
                 <div>
                   <p className="text-sm font-medium text-gray-700">{t("allowSameDayBooking")}</p>
-                  <p className="text-xs text-gray-500">{t("allowSameDayBookingDesc")}</p>
+                  <p id="allow-same-day-desc" className="text-xs text-gray-500">{t("allowSameDayBookingDesc")}</p>
                 </div>
               </label>
             </div>
@@ -385,15 +497,36 @@ export function UnifiedSettingsForm({ merchant }: { merchant: Merchant }) {
                 {t("cancellationNoticeDesc")}
               </p>
             </div>
+
+            {/* Save Button */}
+            <div className="pt-4 border-t border-gray-200 flex items-center justify-end gap-3">
+              <button
+                type="submit"
+                disabled={rulesLoading}
+                className="btn btn-primary btn-md"
+              >
+                {rulesLoading ? t("saving") : t("saveBookingRules")}
+              </button>
+              {rulesSuccess && (
+                <span className="text-sm text-green-600 font-medium">{t("savedSuccessfully")}</span>
+              )}
+            </div>
+
+            {/* Error Display */}
+            {rulesError && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-800 font-medium">{rulesError}</p>
+              </div>
+            )}
           </div>
         )}
-      </div>
+      </form>
 
-      {/* QR Code */}
+      {/* QR Code - Read Only Section */}
       <div className="card overflow-hidden">
         <SectionHeader title={t("qrCodeTitle")} section="qrcode" icon={QrCodeIcon} />
         {expandedSections.has("qrcode") && (
-          <div className="p-6 space-y-4">
+          <div id="section-qrcode" className="p-6 space-y-4">
             <p className="text-sm text-gray-600">
               {t("qrCodeDesc")}
             </p>
@@ -436,22 +569,6 @@ export function UnifiedSettingsForm({ merchant }: { merchant: Merchant }) {
           </div>
         )}
       </div>
-
-      {/* Save Button */}
-      <div className="card p-6">
-        <div className="flex items-center gap-3">
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn btn-primary btn-lg"
-          >
-            {loading ? t("saving") : t("saveSettings")}
-          </button>
-          {success && (
-            <span className="text-sm text-green-600 font-medium">{t("savedSuccessfully")}</span>
-          )}
-        </div>
-      </div>
-    </form>
+    </div>
   );
 }

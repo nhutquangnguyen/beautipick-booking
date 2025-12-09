@@ -13,7 +13,8 @@ import {
   Package,
   Image,
   Palette,
-  Store
+  Store,
+  ExternalLink
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { RevenueAnalytics } from "@/components/dashboard/revenue-analytics";
@@ -210,13 +211,11 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            {t("welcome")}
-          </h1>
-          <p className="text-gray-600">{t("subtitle")}</p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">
+          {t("welcome")}
+        </h1>
+        <p className="text-gray-600">{t("subtitle")}</p>
       </div>
 
       {/* Stats Grid */}
@@ -254,6 +253,12 @@ export default async function DashboardPage() {
       <div>
         <h2 className="text-lg font-semibold text-gray-900 mb-3">{t("quickActions")}</h2>
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+        <QuickActionButton
+          href={`/${merchant.slug}`}
+          icon={<ExternalLink className="h-5 w-5" />}
+          label={t("preview")}
+          external
+        />
         <QuickActionButton
           href="/dashboard/customers"
           icon={<Users className="h-5 w-5" />}
@@ -462,14 +467,17 @@ function QuickActionButton({
   href,
   icon,
   label,
+  external,
 }: {
   href: string;
   icon: React.ReactNode;
   label: string;
+  external?: boolean;
 }) {
   return (
     <Link
       href={href}
+      {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
       className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 bg-white p-4 transition-all hover:border-purple-300 hover:shadow-md"
     >
       <div className="text-gray-600">{icon}</div>

@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { Service } from "@/types/database";
 import { ImageUpload } from "@/components/ui/image-upload";
+import { MultiImageUpload } from "@/components/ui/multi-image-upload";
 
 export function ServiceEditForm({
   service,
@@ -13,6 +15,8 @@ export function ServiceEditForm({
   service: Service;
   onClose: () => void;
 }) {
+  const t = useTranslations("servicesForm");
+  const tCommon = useTranslations("common");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -25,6 +29,7 @@ export function ServiceEditForm({
     price: service.price,
     category: service.category ?? "",
     image_url: service.image_url ?? "",
+    images: (service as any).images ?? [],
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -36,9 +41,13 @@ export function ServiceEditForm({
       const { error } = await supabase
         .from("services")
         .update({
-          ...formData,
+          name: formData.name,
+          description: formData.description,
           price: Number(formData.price),
           duration_minutes: Number(formData.duration_minutes),
+          category: formData.category,
+          image_url: formData.image_url,
+          images: formData.images,
         })
         .eq("id", service.id);
 
@@ -65,7 +74,7 @@ export function ServiceEditForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="name" className="label">
-            Service Name *
+            {t("serviceName")} *
           </label>
           <input
             id="name"
@@ -73,13 +82,14 @@ export function ServiceEditForm({
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             className="input mt-1"
+            placeholder={t("serviceNamePlaceholder")}
             required
           />
         </div>
 
         <div>
           <label htmlFor="category" className="label">
-            Category
+            {t("categoryOptional")}
           </label>
           <input
             id="category"
@@ -87,13 +97,14 @@ export function ServiceEditForm({
             value={formData.category}
             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
             className="input mt-1"
+            placeholder={t("categoryPlaceholder")}
           />
         </div>
       </div>
 
       <div>
         <label htmlFor="description" className="label">
-          Description
+          {t("descriptionOptional")}
         </label>
         <textarea
           id="description"
@@ -101,13 +112,14 @@ export function ServiceEditForm({
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           className="input mt-1"
           rows={2}
+          placeholder={t("descriptionPlaceholder")}
         />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="duration" className="label">
-            Duration (minutes) *
+            {t("durationMinutes")} *
           </label>
           <input
             id="duration"
@@ -125,7 +137,7 @@ export function ServiceEditForm({
 
         <div>
           <label htmlFor="price" className="label">
-            Price ($) *
+            {t("priceLabel")} *
           </label>
           <input
             id="price"
@@ -135,6 +147,7 @@ export function ServiceEditForm({
             className="input mt-1"
             min={0}
             step={0.01}
+            placeholder={t("pricePlaceholder")}
             required
           />
         </div>
@@ -142,23 +155,23 @@ export function ServiceEditForm({
 
       <div>
         <label className="label mb-2 block">
-          Image
+          {t("imageOptional")}
         </label>
-        <ImageUpload
-          value={formData.image_url}
-          onChange={(key) => setFormData({ ...formData, image_url: key || "" })}
+        <MultiImageUpload
+          value={formData.images}
+          onChange={(images) => setFormData({ ...formData, images, image_url: images[0] || "" })}
           folder="services"
+          maxImages={5}
           aspectRatio="square"
-          placeholder="Upload image"
         />
       </div>
 
       <div className="flex justify-end gap-3">
         <button type="button" onClick={onClose} className="btn btn-secondary btn-sm">
-          Cancel
+          {tCommon("cancel")}
         </button>
         <button type="submit" disabled={loading} className="btn btn-primary btn-sm">
-          {loading ? "Saving..." : "Save Changes"}
+          {loading ? tCommon("saving") : t("saveChanges")}
         </button>
       </div>
     </form>

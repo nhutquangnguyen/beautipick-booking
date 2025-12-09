@@ -110,6 +110,7 @@ export type Database = {
           price: number;
           category: string | null;
           image_url: string | null;
+          images: string[] | null;
           is_active: boolean;
           display_order: number;
         };
@@ -124,6 +125,7 @@ export type Database = {
           price: number;
           category?: string | null;
           image_url?: string | null;
+          images?: string[] | null;
           is_active?: boolean;
           display_order?: number;
         };
@@ -138,6 +140,7 @@ export type Database = {
           price?: number;
           category?: string | null;
           image_url?: string | null;
+          images?: string[] | null;
           is_active?: boolean;
           display_order?: number;
         };

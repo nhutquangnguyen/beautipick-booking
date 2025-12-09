@@ -6,7 +6,7 @@ import { Plus, X, ShoppingBag, MoreVertical, Pencil, Trash2, ToggleLeft, ToggleR
 import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { formatCurrency } from "@/lib/utils";
-import { ImageUpload } from "@/components/ui/image-upload";
+import { MultiImageUpload } from "@/components/ui/multi-image-upload";
 
 interface Product {
   id: string;
@@ -15,6 +15,7 @@ interface Product {
   description: string | null;
   price: number;
   image_url: string | null;
+  images?: string[] | null;
   display_url?: string | null;
   is_active: boolean;
   created_at: string;
@@ -40,10 +41,11 @@ export function ProductsManager({
     description: "",
     price: 0,
     image_url: "",
+    images: [] as string[],
   });
 
   const resetForm = () => {
-    setFormData({ name: "", description: "", price: 0, image_url: "" });
+    setFormData({ name: "", description: "", price: 0, image_url: "", images: [] });
   };
 
   const handleAdd = async (e: React.FormEvent) => {
@@ -55,6 +57,7 @@ export function ProductsManager({
       description: formData.description || null,
       price: formData.price,
       image_url: formData.image_url || null,
+      images: formData.images,
     });
     resetForm();
     setShowAddModal(false);
@@ -73,6 +76,7 @@ export function ProductsManager({
         description: editingProduct.description,
         price: editingProduct.price,
         image_url: editingProduct.image_url,
+        images: editingProduct.images || [],
       })
       .eq("id", editingProduct.id);
     setEditingProduct(null);
@@ -140,11 +144,11 @@ export function ProductsManager({
                     <img
                       src={product.display_url}
                       alt={product.name}
-                      className="h-16 w-16 rounded-lg object-cover"
+                      className="h-12 w-12 rounded-lg object-cover"
                     />
                   ) : (
-                    <div className="h-16 w-16 rounded-lg bg-gray-100 flex items-center justify-center">
-                      <ShoppingBag className="h-6 w-6 text-gray-400" />
+                    <div className="h-12 w-12 rounded-lg bg-gray-100 flex items-center justify-center">
+                      <ShoppingBag className="h-5 w-5 text-gray-400" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
@@ -343,12 +347,12 @@ export function ProductsManager({
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   {t("image")}
                 </label>
-                <ImageUpload
-                  value={formData.image_url}
-                  onChange={(key) => setFormData({ ...formData, image_url: key || "" })}
+                <MultiImageUpload
+                  value={formData.images}
+                  onChange={(images) => setFormData({ ...formData, images, image_url: images[0] || "" })}
                   folder="products"
+                  maxImages={5}
                   aspectRatio="square"
-                  placeholder={t("uploadImage")}
                 />
               </div>
 
@@ -435,12 +439,12 @@ export function ProductsManager({
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   {t("image")}
                 </label>
-                <ImageUpload
-                  value={editingProduct.image_url}
-                  onChange={(key) => setEditingProduct({ ...editingProduct, image_url: key })}
+                <MultiImageUpload
+                  value={editingProduct.images || []}
+                  onChange={(images) => setEditingProduct({ ...editingProduct, images, image_url: images[0] || null })}
                   folder="products"
+                  maxImages={5}
                   aspectRatio="square"
-                  placeholder={t("uploadImage")}
                 />
               </div>
 

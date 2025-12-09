@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Pencil, Trash2, GripVertical } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Service } from "@/types/database";
@@ -9,13 +10,14 @@ import { formatCurrency, formatDuration } from "@/lib/utils";
 import { ServiceEditForm } from "./service-edit-form";
 
 export function ServiceList({ services }: { services: Service[] }) {
+  const t = useTranslations("servicesForm");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this service?")) return;
+    if (!confirm(t("confirmDelete"))) return;
 
     setDeleting(id);
     await supabase.from("services").delete().eq("id", id);
@@ -31,7 +33,7 @@ export function ServiceList({ services }: { services: Service[] }) {
   if (services.length === 0) {
     return (
       <div className="card p-8 text-center">
-        <p className="text-gray-600">No services yet. Add your first service to get started.</p>
+        <p className="text-gray-600">{t("noServicesYet")}</p>
       </div>
     );
   }
@@ -64,7 +66,7 @@ export function ServiceList({ services }: { services: Service[] }) {
                   <h3 className="font-medium text-gray-900">{service.name}</h3>
                   {!service.is_active && (
                     <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600">
-                      Inactive
+                      {t("inactive")}
                     </span>
                   )}
                 </div>

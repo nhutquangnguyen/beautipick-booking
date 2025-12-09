@@ -8,19 +8,13 @@ import {
   LayoutDashboard,
   Calendar,
   Settings,
-  Menu,
-  X,
-  LogOut,
   ChevronDown,
   ChevronRight,
-  User,
   Shield,
   Crown,
-  Share2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Merchant } from "@/types/database";
-import { LanguageSwitcher } from "@/components/language-switcher";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
@@ -34,36 +28,15 @@ interface NavItem {
 }
 
 export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [logoDisplayUrl, setLogoDisplayUrl] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isPro, setIsPro] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const pathname = usePathname();
   const t = useTranslations("nav");
   const tSidebar = useTranslations("sidebar");
-  const tDashboard = useTranslations("dashboard");
   const router = useRouter();
   const supabase = createClient();
-
-  const bookingPageUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/${merchant.slug}`;
-
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: merchant.business_name,
-          url: bookingPageUrl,
-        });
-      } catch (err) {
-        // User cancelled or share failed
-      }
-    } else {
-      // Fallback: copy to clipboard
-      await navigator.clipboard.writeText(bookingPageUrl);
-    }
-  };
 
   // Check if user is admin and Pro tier
   useEffect(() => {
@@ -140,11 +113,6 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
     return pathname.startsWith(item.href);
   };
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.push("/login");
-  };
-
   const renderNavItem = (item: NavItem, depth = 0) => {
     const active = isActive(item);
     const hasChildren = item.children && item.children.length > 0;
@@ -185,7 +153,6 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
       <Link
         key={item.href}
         href={item.href}
-        onClick={() => setMobileMenuOpen(false)}
         className={cn(
           "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
           active
@@ -233,60 +200,17 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
         </div>
       </nav>
 
-      {/* Bottom Section */}
-      <div className="px-3 pb-4 space-y-2">
-        {/* Share Now Button */}
-        <button
-          onClick={handleShare}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 px-4 py-2.5 text-sm font-medium text-white hover:opacity-90 transition-opacity"
-        >
-          <Share2 className="h-4 w-4" />
-          {tDashboard("shareNow")}
-        </button>
-
-        {/* User Menu */}
-        <div className="border-t border-gray-100 pt-2">
-          {/* Expandable submenu */}
-          {userMenuOpen && (
-            <div className="mb-2 space-y-1">
-              {/* Language Switcher */}
-              <div className="py-2 px-3">
-                <LanguageSwitcher className="w-full" />
-              </div>
-
-              {/* Sign Out */}
-              <button
-                onClick={handleSignOut}
-                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
-              >
-                <LogOut className="h-4 w-4" />
-                {t("signOut")}
-              </button>
-            </div>
-          )}
-
-          {/* User button at bottom */}
-          <button
-            onClick={() => setUserMenuOpen(!userMenuOpen)}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-gray-50 transition-colors"
-          >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100 text-sm font-medium text-purple-600">
-              <User className="h-4 w-4" />
-            </div>
-            <div className="flex-1 min-w-0 text-left">
-              <p className="text-sm font-medium text-gray-700 truncate">{merchant.email}</p>
-            </div>
-            <ChevronDown className={cn("h-4 w-4 text-gray-400 transition-transform", userMenuOpen && "rotate-180")} />
-          </button>
-        </div>
+      {/* Bottom Section - Empty for now */}
+      <div className="px-3 pb-4">
+        {/* Removed user info - now in Account Settings */}
       </div>
     </>
   );
 
   return (
     <>
-      {/* Mobile Header */}
-      <header className="sticky top-0 z-50 flex h-16 items-center justify-between bg-white px-4 lg:hidden shadow-sm">
+      {/* Mobile Top Header */}
+      <header className="sticky top-0 z-40 flex h-16 items-center justify-between bg-white px-4 lg:hidden shadow-sm">
         <Link href="/dashboard" className="flex items-center gap-2">
           {logoDisplayUrl ? (
             <img
@@ -306,31 +230,76 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
           )}
           <span className="font-semibold text-gray-900">{merchant.business_name}</span>
         </Link>
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="rounded-lg p-2 text-gray-600 hover:bg-gray-100"
-        >
-          {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
       </header>
 
-      {/* Mobile Sidebar Overlay */}
-      {mobileMenuOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-          onClick={() => setMobileMenuOpen(false)}
-        />
-      )}
-
-      {/* Mobile Sidebar */}
-      <aside
-        className={cn(
-          "fixed inset-y-0 left-0 z-50 w-72 transform bg-white transition-transform duration-300 lg:hidden",
-          mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-        )}
-      >
-        <div className="flex h-full flex-col">{sidebarContent}</div>
-      </aside>
+      {/* Mobile Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 lg:hidden shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+        <div className="grid grid-cols-3 h-14 px-2">
+          <Link
+            href="/dashboard"
+            className={cn(
+              "flex flex-col items-center justify-center gap-0.5 transition-all relative",
+              pathname === "/dashboard"
+                ? "text-purple-600"
+                : "text-gray-500"
+            )}
+          >
+            {pathname === "/dashboard" && (
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-purple-600 rounded-full" />
+            )}
+            <LayoutDashboard className={cn(
+              "transition-all",
+              pathname === "/dashboard" ? "h-5 w-5" : "h-5 w-5"
+            )} />
+            <span className={cn(
+              "text-[10px] font-medium transition-all",
+              pathname === "/dashboard" ? "font-semibold" : ""
+            )}>{t("home")}</span>
+          </Link>
+          <Link
+            href="/dashboard/bookings"
+            className={cn(
+              "flex flex-col items-center justify-center gap-0.5 transition-all relative",
+              pathname.startsWith("/dashboard/bookings")
+                ? "text-purple-600"
+                : "text-gray-500"
+            )}
+          >
+            {pathname.startsWith("/dashboard/bookings") && (
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-purple-600 rounded-full" />
+            )}
+            <Calendar className={cn(
+              "transition-all",
+              pathname.startsWith("/dashboard/bookings") ? "h-5 w-5" : "h-5 w-5"
+            )} />
+            <span className={cn(
+              "text-[10px] font-medium transition-all",
+              pathname.startsWith("/dashboard/bookings") ? "font-semibold" : ""
+            )}>{t("orders")}</span>
+          </Link>
+          <Link
+            href="/dashboard/settings"
+            className={cn(
+              "flex flex-col items-center justify-center gap-0.5 transition-all relative",
+              pathname.startsWith("/dashboard/settings")
+                ? "text-purple-600"
+                : "text-gray-500"
+            )}
+          >
+            {pathname.startsWith("/dashboard/settings") && (
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-purple-600 rounded-full" />
+            )}
+            <Settings className={cn(
+              "transition-all",
+              pathname.startsWith("/dashboard/settings") ? "h-5 w-5" : "h-5 w-5"
+            )} />
+            <span className={cn(
+              "text-[10px] font-medium transition-all",
+              pathname.startsWith("/dashboard/settings") ? "font-semibold" : ""
+            )}>{t("settings")}</span>
+          </Link>
+        </div>
+      </nav>
 
       {/* Desktop Sidebar */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 bg-white shadow-sm lg:flex lg:flex-col">
