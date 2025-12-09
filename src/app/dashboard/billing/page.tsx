@@ -3,6 +3,7 @@ import { getCurrentSubscription } from "@/lib/pricing/subscriptions";
 import { getQuotaInfo } from "@/lib/pricing/enforcement";
 import { UsageMetrics } from "@/components/billing/usage-metrics";
 import { BrandingToggle } from "@/components/billing/branding-toggle";
+import { UpgradeButton } from "@/components/billing/upgrade-button";
 import { getTranslations } from "next-intl/server";
 import { formatDistanceToNow } from "date-fns";
 import { redirect } from "next/navigation";
@@ -89,12 +90,7 @@ export default async function BillingPage() {
             <p className="text-sm text-gray-700 mb-3">
               {t("upgradeMessage")}
             </p>
-            <button
-              onClick={() => alert(t("contactAdmin"))}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
-            >
-              {t("upgradeNow")}
-            </button>
+            <UpgradeButton />
           </div>
         )}
       </div>

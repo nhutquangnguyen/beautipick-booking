@@ -14,7 +14,8 @@ import {
   Image,
   Palette,
   Store,
-  ExternalLink
+  ExternalLink,
+  ShoppingBag,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { RevenueAnalytics } from "@/components/dashboard/revenue-analytics";
@@ -258,6 +259,11 @@ export default async function DashboardPage() {
           icon={<ExternalLink className="h-5 w-5" />}
           label={t("preview")}
           external
+        />
+        <QuickActionButton
+          href="/dashboard/store"
+          icon={<ShoppingBag className="h-5 w-5" />}
+          label={tNav("store")}
         />
         <QuickActionButton
           href="/dashboard/customers"
