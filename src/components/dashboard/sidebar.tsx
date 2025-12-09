@@ -12,6 +12,8 @@ import {
   ChevronRight,
   Shield,
   Crown,
+  Home,
+  ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Merchant } from "@/types/database";
@@ -27,14 +29,25 @@ interface NavItem {
   separator?: boolean;
 }
 
-export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
+interface Translations {
+  home: string;
+  orders: string;
+  settings: string;
+  admin: string;
+}
+
+export function DashboardSidebar({
+  merchant,
+  translations
+}: {
+  merchant: Merchant;
+  translations: Translations;
+}) {
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [logoDisplayUrl, setLogoDisplayUrl] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isPro, setIsPro] = useState(false);
   const pathname = usePathname();
-  const t = useTranslations("nav");
-  const tSidebar = useTranslations("sidebar");
   const router = useRouter();
   const supabase = createClient();
 
@@ -93,11 +106,11 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
   }, [merchant.logo_url]);
 
   const navItems: NavItem[] = [
-    { href: "/dashboard", label: t("home"), icon: LayoutDashboard, exact: true },
-    { href: "/dashboard/bookings", label: t("orders"), icon: Calendar },
-    { href: "/dashboard/settings", label: t("settings"), icon: Settings },
+    { href: "/dashboard", label: translations.home, icon: LayoutDashboard, exact: true },
+    { href: "/dashboard/bookings", label: translations.orders, icon: Calendar },
+    { href: "/dashboard/settings", label: translations.settings, icon: Settings },
     // Add admin link if user is admin
-    ...(isAdmin ? [{ href: "/admin", label: t("admin"), icon: Shield }] : []),
+    ...(isAdmin ? [{ href: "/admin", label: translations.admin, icon: Shield }] : []),
   ];
 
   const toggleExpanded = (href: string) => {
@@ -233,73 +246,54 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
       </header>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 lg:hidden shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
-        <div className="grid grid-cols-3 h-14 px-2">
-          <Link
-            href="/dashboard"
-            className={cn(
-              "flex flex-col items-center justify-center gap-0.5 transition-all relative",
-              pathname === "/dashboard"
-                ? "text-purple-600"
-                : "text-gray-500"
-            )}
-          >
-            {pathname === "/dashboard" && (
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-purple-600 rounded-full" />
-            )}
-            <LayoutDashboard className={cn(
-              "transition-all",
-              pathname === "/dashboard" ? "h-5 w-5" : "h-5 w-5"
-            )} />
-            <span className={cn(
-              "text-[10px] font-medium transition-all",
-              pathname === "/dashboard" ? "font-semibold" : ""
-            )}>{t("home")}</span>
-          </Link>
-          <Link
-            href="/dashboard/bookings"
-            className={cn(
-              "flex flex-col items-center justify-center gap-0.5 transition-all relative",
-              pathname.startsWith("/dashboard/bookings")
-                ? "text-purple-600"
-                : "text-gray-500"
-            )}
-          >
-            {pathname.startsWith("/dashboard/bookings") && (
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-purple-600 rounded-full" />
-            )}
-            <Calendar className={cn(
-              "transition-all",
-              pathname.startsWith("/dashboard/bookings") ? "h-5 w-5" : "h-5 w-5"
-            )} />
-            <span className={cn(
-              "text-[10px] font-medium transition-all",
-              pathname.startsWith("/dashboard/bookings") ? "font-semibold" : ""
-            )}>{t("orders")}</span>
-          </Link>
-          <Link
-            href="/dashboard/settings"
-            className={cn(
-              "flex flex-col items-center justify-center gap-0.5 transition-all relative",
-              pathname.startsWith("/dashboard/settings")
-                ? "text-purple-600"
-                : "text-gray-500"
-            )}
-          >
-            {pathname.startsWith("/dashboard/settings") && (
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-purple-600 rounded-full" />
-            )}
-            <Settings className={cn(
-              "transition-all",
-              pathname.startsWith("/dashboard/settings") ? "h-5 w-5" : "h-5 w-5"
-            )} />
-            <span className={cn(
-              "text-[10px] font-medium transition-all",
-              pathname.startsWith("/dashboard/settings") ? "font-semibold" : ""
-            )}>{t("settings")}</span>
-          </Link>
-        </div>
-      </nav>
+      <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden px-2 pb-2">
+        <nav className="bg-white rounded-2xl shadow-lg border border-gray-200">
+          <div className="grid grid-cols-3 h-14">
+            <Link
+              href="/dashboard"
+              className={cn(
+                "flex items-center justify-center transition-colors",
+                pathname === "/dashboard"
+                  ? "text-purple-600"
+                  : "text-gray-600"
+              )}
+            >
+              <Home
+                className="h-7 w-7"
+                strokeWidth={pathname === "/dashboard" ? 2.5 : 2}
+              />
+            </Link>
+            <Link
+              href="/dashboard/bookings"
+              className={cn(
+                "flex items-center justify-center transition-colors",
+                pathname.startsWith("/dashboard/bookings")
+                  ? "text-purple-600"
+                  : "text-gray-600"
+              )}
+            >
+              <ClipboardList
+                className="h-7 w-7"
+                strokeWidth={pathname.startsWith("/dashboard/bookings") ? 2.5 : 2}
+              />
+            </Link>
+            <Link
+              href="/dashboard/settings"
+              className={cn(
+                "flex items-center justify-center transition-colors",
+                pathname.startsWith("/dashboard/settings")
+                  ? "text-purple-600"
+                  : "text-gray-600"
+              )}
+            >
+              <Settings
+                className="h-7 w-7"
+                strokeWidth={pathname.startsWith("/dashboard/settings") ? 2.5 : 2}
+              />
+            </Link>
+          </div>
+        </nav>
+      </div>
 
       {/* Desktop Sidebar */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 bg-white shadow-sm lg:flex lg:flex-col">

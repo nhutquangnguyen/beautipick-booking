@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/server-admin";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
+import { getTranslations } from "next-intl/server";
 
 const BUCKET_NAME = "images";
 
@@ -56,11 +57,20 @@ export default async function DashboardLayout({
     logo_url: logoUrl,
   };
 
+  // Get translations for sidebar
+  const t = await getTranslations("nav");
+  const translations = {
+    home: t("home"),
+    orders: t("orders"),
+    settings: t("settings"),
+    admin: t("admin"),
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <DashboardSidebar merchant={merchantWithUrl} />
+      <DashboardSidebar merchant={merchantWithUrl} translations={translations} />
       {/* Main content area - offset by sidebar width on desktop, padding bottom for mobile nav */}
-      <main className="lg:pl-64 pb-20 lg:pb-0">
+      <main className="lg:pl-64 pb-24 lg:pb-0">
         <div className="px-4 py-6 sm:px-6 lg:px-8">
           {children}
         </div>
