@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { BookingsView } from "@/components/dashboard/bookings/bookings-view";
 
 interface BookingsPageProps {
-  searchParams: Promise<{ customer?: string }>;
+  searchParams: Promise<{ customer?: string; status?: string }>;
 }
 
 export default async function BookingsPage({ searchParams }: BookingsPageProps) {
@@ -15,6 +15,7 @@ export default async function BookingsPage({ searchParams }: BookingsPageProps) 
 
   const params = await searchParams;
   const customerPhone = params.customer;
+  const statusFilter = params.status;
 
   // Build query
   let query = supabase
@@ -38,7 +39,7 @@ export default async function BookingsPage({ searchParams }: BookingsPageProps) 
         <p className="text-gray-600">{t("subtitle")}</p>
       </div>
 
-      <BookingsView bookings={bookings ?? []} customerFilter={customerPhone} />
+      <BookingsView bookings={bookings ?? []} customerFilter={customerPhone} initialStatusFilter={statusFilter} />
     </div>
   );
 }

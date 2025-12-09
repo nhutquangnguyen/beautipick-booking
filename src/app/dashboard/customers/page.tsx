@@ -9,6 +9,13 @@ export default async function CustomersPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Fetch merchant currency
+  const { data: merchant } = await supabase
+    .from("merchants")
+    .select("currency")
+    .eq("id", user!.id)
+    .single();
+
   // Fetch customers from the dedicated customers table
   const { data: customers } = await supabase
     .from("customers")
@@ -24,7 +31,7 @@ export default async function CustomersPage() {
         <p className="text-gray-600">{t("subtitle")}</p>
       </div>
 
-      <CustomersView customers={customers || []} />
+      <CustomersView customers={customers || []} currency={merchant?.currency || "VND"} />
     </div>
   );
 }

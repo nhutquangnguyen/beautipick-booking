@@ -6,8 +6,9 @@ import { useRouter } from "next/navigation";
 import { Search, Mail, Phone, Calendar, DollarSign, ShoppingBag } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Customer } from "@/types/database";
+import { formatCurrency } from "@/lib/utils";
 
-export function CustomersView({ customers }: { customers: Customer[] }) {
+export function CustomersView({ customers, currency }: { customers: Customer[]; currency: string }) {
   const t = useTranslations("customers");
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
@@ -51,7 +52,7 @@ export function CustomersView({ customers }: { customers: Customer[] }) {
             <div>
               <p className="text-sm text-gray-600">{t("totalRevenue")}</p>
               <p className="text-2xl font-bold text-gray-900">
-                ${totalRevenue.toLocaleString()}
+                {formatCurrency(totalRevenue, currency)}
               </p>
             </div>
           </div>
@@ -65,7 +66,7 @@ export function CustomersView({ customers }: { customers: Customer[] }) {
             <div>
               <p className="text-sm text-gray-600">{t("avgSpent")}</p>
               <p className="text-2xl font-bold text-gray-900">
-                ${avgSpent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                {formatCurrency(avgSpent, currency)}
               </p>
             </div>
           </div>
@@ -157,7 +158,7 @@ export function CustomersView({ customers }: { customers: Customer[] }) {
                     </td>
                     <td className="px-4 py-4 hidden sm:table-cell">
                       <p className="text-sm font-medium text-gray-900">
-                        ${customer.total_spent.toLocaleString()}
+                        {formatCurrency(customer.total_spent, currency)}
                       </p>
                     </td>
                     <td className="px-4 py-4 hidden lg:table-cell">

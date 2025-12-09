@@ -31,14 +31,14 @@ type BookingWithRelations = Booking & {
   staff: { name: string } | null;
 };
 
-export function BookingsList({ bookings }: { bookings: BookingWithRelations[] }) {
+export function BookingsList({ bookings, initialStatusFilter }: { bookings: BookingWithRelations[]; initialStatusFilter?: string }) {
   const t = useTranslations("bookings");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBooking, setSelectedBooking] = useState<BookingWithRelations | null>(null);
   const [showActionDropdown, setShowActionDropdown] = useState(false);
 
   // Filters
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>(initialStatusFilter || "all");
 
   // Sorting
   const [sortBy, setSortBy] = useState<"created_at" | "booking_date" | "total_price">("created_at");
@@ -169,7 +169,7 @@ export function BookingsList({ bookings }: { bookings: BookingWithRelations[] })
           onChange={(e) => setStatusFilter(e.target.value)}
           className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
         >
-          <option value="all">All Statuses</option>
+          <option value="all">{t("allStatuses")}</option>
           <option value="pending">{t("status.pending")}</option>
           <option value="confirmed">{t("status.confirmed")}</option>
           <option value="completed">{t("status.completed")}</option>
@@ -179,23 +179,23 @@ export function BookingsList({ bookings }: { bookings: BookingWithRelations[] })
 
       {/* Sort Controls */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <span className="text-sm text-gray-600">Showing {sortedBookings.length} of {bookings.length} orders</span>
+        <span className="text-sm text-gray-600">{t("showingOrders", { count: sortedBookings.length, total: bookings.length })}</span>
 
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-600">Sort by:</span>
+          <span className="text-sm text-gray-600">{t("sortBy")}</span>
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as any)}
             className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
           >
-            <option value="created_at">Created Time</option>
-            <option value="booking_date">Booking Time</option>
-            <option value="total_price">Total Money</option>
+            <option value="created_at">{t("createdTime")}</option>
+            <option value="booking_date">{t("bookingTime")}</option>
+            <option value="total_price">{t("totalMoney")}</option>
           </select>
           <button
             onClick={() => setSortDirection(sortDirection === "asc" ? "desc" : "asc")}
             className="flex items-center justify-center rounded-lg border border-gray-200 bg-white p-2 hover:bg-gray-50 transition-colors"
-            title={sortDirection === "asc" ? "Ascending" : "Descending"}
+            title={sortDirection === "asc" ? t("ascending") : t("descending")}
           >
             {sortDirection === "asc" ? (
               <ArrowUp className="h-4 w-4 text-gray-600" />
@@ -223,7 +223,7 @@ export function BookingsList({ bookings }: { bookings: BookingWithRelations[] })
               <div className="bg-gradient-to-r from-purple-50 to-pink-50 px-4 py-3 border-b border-gray-100">
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-xs font-medium text-gray-500">Order ID</span>
+                    <span className="text-xs font-medium text-gray-500">{t("orderId")}</span>
                     <p className="text-sm font-mono font-semibold text-gray-900">#{booking.id.substring(0, 8)}</p>
                   </div>
                   <span className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusBadgeStyle(booking.status)}`}>
@@ -260,13 +260,13 @@ export function BookingsList({ bookings }: { bookings: BookingWithRelations[] })
                     <Calendar className="h-4 w-4 text-blue-600" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-xs font-medium text-gray-500 mb-1">Created</p>
+                    <p className="text-xs font-medium text-gray-500 mb-1">{t("created")}</p>
                     <p className="text-sm text-gray-900">
                       {format(parseISO(booking.created_at), "MMM d, yyyy")} • {format(parseISO(booking.created_at), "h:mm a")}
                     </p>
                     {booking.booking_date && (
                       <>
-                        <p className="text-xs font-medium text-gray-500 mt-2 mb-1">Booking Time</p>
+                        <p className="text-xs font-medium text-gray-500 mt-2 mb-1">{t("bookingTime")}</p>
                         <p className="text-sm text-gray-900">
                           {format(parseISO(booking.booking_date), "MMM d, yyyy")}
                           {booking.start_time && booking.end_time && (
@@ -285,7 +285,7 @@ export function BookingsList({ bookings }: { bookings: BookingWithRelations[] })
                   </div>
                   <div className="flex-1">
                     <p className="text-xs font-medium text-gray-500 mb-1">
-                      {booking.booking_date ? "Service" : "Products"}
+                      {booking.booking_date ? t("service") : t("productsLabel")}
                     </p>
                     {booking.cart_items && Array.isArray(booking.cart_items) && booking.cart_items.length > 0 ? (
                       <div className="text-sm text-gray-900">
@@ -300,7 +300,7 @@ export function BookingsList({ bookings }: { bookings: BookingWithRelations[] })
                       <p className="text-sm text-gray-900">{booking.services?.name}</p>
                     )}
                     {booking.staff && (
-                      <p className="text-xs text-gray-500 mt-1">with {booking.staff.name}</p>
+                      <p className="text-xs text-gray-500 mt-1">{t("withStaff", { name: booking.staff.name })}</p>
                     )}
                   </div>
                 </div>
@@ -311,7 +311,7 @@ export function BookingsList({ bookings }: { bookings: BookingWithRelations[] })
                     <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
                       <DollarSign className="h-4 w-4 text-purple-600" />
                     </div>
-                    <span className="text-sm font-medium text-gray-700">Total</span>
+                    <span className="text-sm font-medium text-gray-700">{t("total")}</span>
                   </div>
                   <span className="text-lg font-bold text-purple-600">
                     {formatCurrency(booking.total_price)}
@@ -396,7 +396,7 @@ export function BookingsList({ bookings }: { bookings: BookingWithRelations[] })
                 )}
 
                 {selectedBooking.staff && (
-                  <p className="text-sm text-gray-500 mt-2">with {selectedBooking.staff.name}</p>
+                  <p className="text-sm text-gray-500 mt-2">{t("withStaff", { name: selectedBooking.staff.name })}</p>
                 )}
                 <p className="text-lg font-semibold text-purple-600 mt-3 pt-3 border-t border-gray-200">
                   {formatCurrency(selectedBooking.total_price)}

@@ -17,9 +17,10 @@ type BookingWithRelations = Booking & {
 interface BookingsViewProps {
   bookings: BookingWithRelations[];
   customerFilter?: string;
+  initialStatusFilter?: string;
 }
 
-export function BookingsView({ bookings, customerFilter }: BookingsViewProps) {
+export function BookingsView({ bookings, customerFilter, initialStatusFilter }: BookingsViewProps) {
   const t = useTranslations("bookings");
   const router = useRouter();
   const [view, setView] = useState<"list" | "calendar">("list");
@@ -83,7 +84,7 @@ export function BookingsView({ bookings, customerFilter }: BookingsViewProps) {
       {view === "calendar" ? (
         <BookingsCalendar bookings={bookings} />
       ) : (
-        <BookingsList bookings={bookings} />
+        <BookingsList bookings={bookings} initialStatusFilter={initialStatusFilter} />
       )}
     </div>
   );

@@ -232,7 +232,7 @@ export default async function DashboardPage() {
           value={pendingBookings.toString()}
           color="amber"
           alert={pendingBookings > 0}
-          href={pendingBookings > 0 ? "/dashboard/bookings" : undefined}
+          href={pendingBookings > 0 ? "/dashboard/bookings?status=pending" : undefined}
         />
         <StatCard
           icon={<TrendingUp className="h-6 w-6" />}
@@ -261,7 +261,7 @@ export default async function DashboardPage() {
           <div className="space-y-3">
             {pendingBookings > 0 && (
               <Link
-                href="/dashboard/bookings"
+                href="/dashboard/bookings?status=pending"
                 className="flex items-start gap-3 p-3 bg-white rounded-lg hover:shadow-sm transition-shadow"
               >
                 <div className="flex-shrink-0 w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
