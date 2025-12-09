@@ -345,7 +345,6 @@ export default async function DashboardPage() {
         <RevenueAnalytics
           currency={merchant.currency}
           allRevenueData={revenueChartData}
-          bookingsData={last90DaysBookings}
         />
       )}
 

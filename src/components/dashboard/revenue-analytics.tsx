@@ -2,44 +2,29 @@
 
 import { useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { RevenueOverTimeChart, RevenueByItemChart } from "./charts";
+import { RevenueOverTimeChart } from "./charts";
 
 interface RevenueChartData {
   date: string;
   revenue: number;
 }
 
-interface RevenueByItemData {
-  name: string;
-  revenue: number;
-}
-
-interface BookingData {
-  booking_date: string;
-  total_price: number;
-  services: { name: string } | { name: string }[] | null;
-}
-
 type TimePeriod = "7days" | "30days" | "90days" | "thisMonth" | "lastMonth";
-type ItemType = "all" | "services" | "products";
 
 interface RevenueAnalyticsProps {
   currency: string;
   allRevenueData: RevenueChartData[];
-  bookingsData: BookingData[];
 }
 
 export function RevenueAnalytics({
   currency,
   allRevenueData,
-  bookingsData,
 }: RevenueAnalyticsProps) {
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>("30days");
-  const [selectedItemType, setSelectedItemType] = useState<ItemType>("all");
   const t = useTranslations("dashboard");
 
-  // Filter data based on selected period - use useMemo to ensure recalculation
-  const { revenueData, itemData } = useMemo(() => {
+  // Filter data based on selected period
+  const revenueData = useMemo(() => {
     const now = new Date();
     let startDate = new Date();
     let endDate: Date | null = null;
@@ -63,59 +48,14 @@ export function RevenueAnalytics({
         break;
     }
 
-    // Filter revenue data
-    const filteredRevenueData = allRevenueData.filter((item) => {
+    return allRevenueData.filter((item) => {
       const itemDate = new Date(item.date);
       if (endDate) {
         return itemDate >= startDate && itemDate <= endDate;
       }
       return itemDate >= startDate;
     });
-
-    // Filter bookings for the same period and recalculate revenue by item
-    const filteredBookings = bookingsData.filter((booking) => {
-      const bookingDate = new Date(booking.booking_date);
-      if (endDate) {
-        return bookingDate >= startDate && bookingDate <= endDate;
-      }
-      return bookingDate >= startDate;
-    });
-
-    // Calculate revenue by service/product for filtered period
-    const revenueByItem: Record<string, number> = {};
-    filteredBookings.forEach((booking) => {
-      let itemName = "Other";
-      if (booking.services) {
-        if (Array.isArray(booking.services)) {
-          itemName = booking.services[0]?.name || "Other";
-        } else {
-          itemName = booking.services.name || "Other";
-        }
-      }
-      revenueByItem[itemName] = (revenueByItem[itemName] || 0) + (booking.total_price || 0);
-    });
-
-    // Sort by revenue descending
-    const itemData = Object.entries(revenueByItem)
-      .map(([name, revenue]) => ({ name, revenue }))
-      .sort((a, b) => b.revenue - a.revenue)
-      .slice(0, 10); // Top 10
-
-    // Filter by item type (all/services/products)
-    let finalItemData = itemData;
-    if (selectedItemType === "services") {
-      // For now, filter out "Other" which typically represents products
-      finalItemData = itemData.filter(item => item.name !== "Other");
-    } else if (selectedItemType === "products") {
-      // For now, only show "Other" which typically represents products
-      finalItemData = itemData.filter(item => item.name === "Other");
-    }
-
-    return {
-      revenueData: filteredRevenueData,
-      itemData: finalItemData,
-    };
-  }, [selectedPeriod, selectedItemType, allRevenueData, bookingsData]);
+  }, [selectedPeriod, allRevenueData]);
 
   const periodOptions: { value: TimePeriod; label: string }[] = [
     { value: "7days", label: t("period7days") },
@@ -149,21 +89,12 @@ export function RevenueAnalytics({
         </div>
       </div>
 
-      {/* Charts */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        <RevenueOverTimeChart
-          data={revenueData}
-          currency={currency}
-          title={t("revenueOverTime")}
-        />
-        <RevenueByItemChart
-          data={itemData}
-          currency={currency}
-          title={t("topServices")}
-          itemTypeFilter={selectedItemType}
-          onItemTypeChange={setSelectedItemType}
-        />
-      </div>
+      {/* Chart */}
+      <RevenueOverTimeChart
+        data={revenueData}
+        currency={currency}
+        title={t("revenueOverTime")}
+      />
     </div>
   );
 }
