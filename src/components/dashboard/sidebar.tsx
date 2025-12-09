@@ -133,7 +133,7 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
     { href: "/dashboard/business-info", label: t("businessInfo"), icon: Store },
     { href: "/dashboard/settings", label: t("settings"), icon: Settings },
     // Add admin link if user is admin
-    ...(isAdmin ? [{ href: "/admin", label: "Admin", icon: Shield }] : []),
+    ...(isAdmin ? [{ href: "/admin", label: t("admin"), icon: Shield }] : []),
   ];
 
   const toggleExpanded = (href: string) => {

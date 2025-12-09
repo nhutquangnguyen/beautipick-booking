@@ -139,7 +139,7 @@ export function DashboardNav({ merchant }: { merchant: Merchant }) {
                 {t("settings")}
               </Link>
               <div className="px-3 py-3 flex items-center justify-between">
-                <span className="text-sm text-gray-500">Language</span>
+                <span className="text-sm text-gray-500">{t("language")}</span>
                 <LanguageSwitcherCompact />
               </div>
             </div>

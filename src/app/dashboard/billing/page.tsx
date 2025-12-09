@@ -28,7 +28,7 @@ export default async function BillingPage() {
     return (
       <div className="p-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-4">{t("title")}</h1>
-        <p className="text-gray-600">No subscription found.</p>
+        <p className="text-gray-600">{t("noSubscription")}</p>
       </div>
     );
   }
@@ -87,7 +87,7 @@ export default async function BillingPage() {
         {subscription.tier.tier_key === "free" && (
           <div className="mt-4 p-4 bg-purple-50 rounded-lg">
             <p className="text-sm text-gray-700 mb-3">
-              Upgrade to Pro for unlimited services, products, and 500 gallery images!
+              {t("upgradeMessage")}
             </p>
             <button
               onClick={() => alert(t("contactAdmin"))}

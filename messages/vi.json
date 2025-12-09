@@ -212,6 +212,7 @@
     },
     "nav": {
         "home": "Trang chủ",
+        "admin": "Quản trị",
         "orders": "Đơn hàng",
         "bookings": "Đặt lịch",
         "customers": "Khách hàng",
@@ -667,6 +668,7 @@
     "dashboard": {
         "welcome": "Chào mừng trở lại!",
         "subtitle": "Đây là những gì đang diễn ra với doanh nghiệp của bạn",
+        "noRevenueData": "Không có dữ liệu doanh thu",
         "preview": "Xem trước",
         "shareBookingPage": "Chia sẻ trang đặt lịch",
         "setUpSlugFirst": "Thiết lập đường dẫn trang web trước",
@@ -1166,9 +1168,23 @@
         }
     },
     "tetCallNow": "Gọi ngay để nhận ưu đãi Tết",
+  "quota": {
+    "planLimit": "{tierName} - Giới hạn {resourceType}",
+    "usingOf": "Bạn đang sử dụng {current} trong {limit} {resourceName}",
+    "closeToLimit": "Bạn sắp đạt giới hạn! Nâng cấp lên Pro để không giới hạn {resourceName}.",
+    "upgradeToPro": "Nâng cấp lên Pro",
+    "services": "dịch vụ",
+    "products": "sản phẩm",
+    "gallery": "hình ảnh gallery",
+    "servicesTitle": "Dịch Vụ",
+    "productsTitle": "Sản Phẩm",
+    "galleryTitle": "Hình Ảnh Gallery"
+  },
   "billing": {
     "title": "Gói Dịch Vụ & Thanh Toán",
     "subtitle": "Quản lý gói dịch vụ và mức sử dụng",
+    "noSubscription": "Không tìm thấy gói đăng ký.",
+    "upgradeMessage": "Nâng cấp lên Pro để có dịch vụ, sản phẩm không giới hạn và 500 hình ảnh gallery!",
     "currentPlan": "Gói Hiện Tại",
     "status": "Trạng Thái",
     "active": "Đang Hoạt Động",

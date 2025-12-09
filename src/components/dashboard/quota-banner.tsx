@@ -2,6 +2,7 @@
 
 import { AlertCircle, Crown } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 interface QuotaBannerProps {
   resourceType: "services" | "products" | "gallery";
@@ -18,16 +19,12 @@ export function QuotaBanner({
   tierName,
   isFree,
 }: QuotaBannerProps) {
+  const t = useTranslations("quota");
   const isUnlimited = limit === -1;
   const usagePercentage = !isUnlimited ? (currentCount / limit) * 100 : 0;
 
-  const resourceNames = {
-    services: "services",
-    products: "products",
-    gallery: "gallery images",
-  };
-
-  const resourceName = resourceNames[resourceType];
+  const resourceName = t(resourceType);
+  const resourceTypeTitle = t(`${resourceType}Title`);
 
   // Don't show banner for Pro users with unlimited resources
   if (!isFree || isUnlimited) {
@@ -41,11 +38,11 @@ export function QuotaBanner({
           <div className="flex items-center gap-2 mb-2">
             <AlertCircle className="w-5 h-5 text-purple-600" />
             <h3 className="font-semibold text-purple-900">
-              {tierName} Plan - {resourceType.charAt(0).toUpperCase() + resourceType.slice(1)} Limit
+              {t("planLimit", { tierName, resourceType: resourceTypeTitle })}
             </h3>
           </div>
           <p className="text-sm text-purple-700 mb-3">
-            You're using {currentCount} of {limit} {resourceName}
+            {t("usingOf", { current: currentCount, limit, resourceName })}
           </p>
           <div className="w-full bg-purple-200 rounded-full h-2 mb-3">
             <div
@@ -61,7 +58,7 @@ export function QuotaBanner({
           </div>
           {usagePercentage >= 90 && (
             <p className="text-sm text-purple-700 font-medium">
-              You're close to your limit! Upgrade to Pro for unlimited {resourceName}.
+              {t("closeToLimit", { resourceName })}
             </p>
           )}
         </div>
@@ -70,7 +67,7 @@ export function QuotaBanner({
           className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors whitespace-nowrap"
         >
           <Crown className="w-4 h-4" />
-          Upgrade to Pro
+          {t("upgradeToPro")}
         </Link>
       </div>
     </div>

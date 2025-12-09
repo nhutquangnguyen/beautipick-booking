@@ -161,7 +161,7 @@ export function RevenueByItemChart({
         </ResponsiveContainer>
       ) : (
         <div className="flex items-center justify-center h-64 text-gray-500">
-          <p>No revenue data available</p>
+          <p>{t("noRevenueData")}</p>
         </div>
       )}
     </div>

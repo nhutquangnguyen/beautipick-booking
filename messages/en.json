@@ -212,6 +212,7 @@
     },
     "nav": {
         "home": "Home",
+        "admin": "Admin",
         "orders": "Orders",
         "bookings": "Bookings",
         "customers": "Customers",
@@ -667,6 +668,7 @@
     "dashboard": {
         "welcome": "Welcome back!",
         "subtitle": "Here's what's happening with your business",
+        "noRevenueData": "No revenue data available",
         "preview": "Preview",
         "shareBookingPage": "Share Your Booking Page",
         "setUpSlugFirst": "Set up your business slug first",
@@ -1167,9 +1169,23 @@
             }
         }
     },
+  "quota": {
+    "planLimit": "{tierName} Plan - {resourceType} Limit",
+    "usingOf": "You're using {current} of {limit} {resourceName}",
+    "closeToLimit": "You're close to your limit! Upgrade to Pro for unlimited {resourceName}.",
+    "upgradeToPro": "Upgrade to Pro",
+    "services": "services",
+    "products": "products",
+    "gallery": "gallery images",
+    "servicesTitle": "Services",
+    "productsTitle": "Products",
+    "galleryTitle": "Gallery Images"
+  },
   "billing": {
     "title": "Subscription & Billing",
     "subtitle": "Manage your plan and usage",
+    "noSubscription": "No subscription found.",
+    "upgradeMessage": "Upgrade to Pro for unlimited services, products, and 500 gallery images!",
     "currentPlan": "Current Plan",
     "status": "Status",
     "active": "Active",
