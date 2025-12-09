@@ -2,16 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Menu, X, BookOpen } from "lucide-react";
+import { Menu, X, BookOpen, Store } from "lucide-react";
 import { LanguageSwitcherIcon } from "@/components/language-switcher";
 
 interface MobileMenuProps {
+  storeText: string;
   loginText: string;
   getStartedText: string;
   languageText: string;
 }
 
-export function MobileMenu({ loginText, getStartedText, languageText }: MobileMenuProps) {
+export function MobileMenu({ storeText, loginText, getStartedText, languageText }: MobileMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -41,6 +42,16 @@ export function MobileMenu({ loginText, getStartedText, languageText }: MobileMe
           {/* Menu Panel */}
           <div className="fixed top-16 right-0 left-0 bg-white border-t border-gray-200 shadow-xl z-50 md:hidden animate-in slide-in-from-top duration-200">
             <div className="px-6 py-6 space-y-2">
+              {/* Store Link */}
+              <Link
+                href="/store"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-3 w-full px-4 py-3 text-base font-medium text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-all duration-200"
+              >
+                <Store className="h-5 w-5" />
+                <span>{storeText}</span>
+              </Link>
+
               {/* Blog Link */}
               <Link
                 href="/blog"

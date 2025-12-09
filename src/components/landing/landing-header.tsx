@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Sparkles, BookOpen } from "lucide-react";
 import { LanguageSwitcherIcon } from "@/components/language-switcher";
@@ -32,6 +34,7 @@ export function LandingHeader({
             {/* Mobile Menu (hamburger) */}
             <div className="md:hidden">
               <MobileMenu
+                storeText={store}
                 loginText={login}
                 getStartedText={getStarted}
                 languageText={language}
