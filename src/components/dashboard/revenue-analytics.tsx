@@ -72,21 +72,17 @@ export function RevenueAnalytics({
         <h2 className="text-xl font-semibold text-gray-900">
           {t("revenueAnalytics")}
         </h2>
-        <div className="flex gap-2">
+        <select
+          value={selectedPeriod}
+          onChange={(e) => setSelectedPeriod(e.target.value as TimePeriod)}
+          className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+        >
           {periodOptions.map((option) => (
-            <button
-              key={option.value}
-              onClick={() => setSelectedPeriod(option.value)}
-              className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-                selectedPeriod === option.value
-                  ? "bg-purple-600 text-white"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
+            <option key={option.value} value={option.value}>
               {option.label}
-            </button>
+            </option>
           ))}
-        </div>
+        </select>
       </div>
 
       {/* Chart */}

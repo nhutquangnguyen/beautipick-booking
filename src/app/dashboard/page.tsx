@@ -9,14 +9,18 @@ import {
   Users,
   Clock,
   TrendingUp,
-  CheckCircle2
+  CheckCircle2,
+  Package,
+  Image,
+  Palette,
+  Store
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { RevenueAnalytics } from "@/components/dashboard/revenue-analytics";
-import { ShareBookingPage } from "@/components/dashboard/share-booking-page";
 
 export default async function DashboardPage() {
   const t = await getTranslations("dashboard");
+  const tNav = await getTranslations("nav");
   const supabase = await createClient();
   const {
     data: { user },
@@ -215,9 +219,6 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Share Your Booking Page - Prominent CTA */}
-      <ShareBookingPage businessSlug={merchant.slug} />
-
       {/* Stats Grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
@@ -247,6 +248,43 @@ export default async function DashboardPage() {
           color="purple"
           trend={revenueTrend}
         />
+      </div>
+
+      {/* Quick Actions */}
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 mb-3">{t("quickActions")}</h2>
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+        <QuickActionButton
+          href="/dashboard/customers"
+          icon={<Users className="h-5 w-5" />}
+          label={tNav("customers")}
+        />
+        <QuickActionButton
+          href="/dashboard/services"
+          icon={<Scissors className="h-5 w-5" />}
+          label={tNav("services")}
+        />
+        <QuickActionButton
+          href="/dashboard/products"
+          icon={<Package className="h-5 w-5" />}
+          label={tNav("products")}
+        />
+        <QuickActionButton
+          href="/dashboard/themes/gallery"
+          icon={<Image className="h-5 w-5" />}
+          label={tNav("gallery")}
+        />
+        <QuickActionButton
+          href="/dashboard/themes"
+          icon={<Palette className="h-5 w-5" />}
+          label={tNav("themes")}
+        />
+        <QuickActionButton
+          href="/dashboard/business-info"
+          icon={<Store className="h-5 w-5" />}
+          label={tNav("businessInfo")}
+        />
+        </div>
       </div>
 
       {/* Growth Insights */}
@@ -348,82 +386,6 @@ export default async function DashboardPage() {
         />
       )}
 
-      {/* Smart Activity Feed */}
-      <div>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">
-            {pendingBookings > 0 ? t("requiresAttention") : t("recentActivity")}
-          </h2>
-          <Link
-            href="/dashboard/bookings"
-            className="text-sm font-medium text-purple-600 hover:text-purple-500"
-          >
-            {t("viewAll")}
-          </Link>
-        </div>
-        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
-          {smartBookings.length > 0 ? (
-            <div className="divide-y divide-gray-100">
-              {smartBookings.map((booking, index) => (
-                <div
-                  key={booking.id}
-                  className={`flex items-center justify-between p-4 transition-colors hover:bg-gray-50 ${
-                    index === 0 ? "" : ""
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-purple-100 to-pink-100 text-sm font-medium text-purple-600">
-                      {booking.customer_name
-                        .split(" ")
-                        .map((n: string) => n[0])
-                        .join("")
-                        .toUpperCase()
-                        .slice(0, 2)}
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">
-                        {booking.customer_name}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {booking.services?.name} · {booking.booking_date}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="font-medium text-gray-900">
-                      {formatCurrency(booking.total_price)}
-                    </span>
-                    <span
-                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                        booking.status === "confirmed"
-                          ? "bg-green-50 text-green-600 ring-1 ring-green-500/20"
-                          : booking.status === "pending"
-                            ? "bg-amber-50 text-amber-600 ring-1 ring-amber-500/20"
-                            : booking.status === "completed"
-                              ? "bg-blue-50 text-blue-600 ring-1 ring-blue-500/20"
-                              : "bg-gray-50 text-gray-600 ring-1 ring-gray-500/20"
-                      }`}
-                    >
-                      {booking.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="p-8 text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
-                <Calendar className="h-6 w-6 text-gray-400" />
-              </div>
-              <p className="mt-3 font-medium text-gray-900">{t("noBookings")}</p>
-              <p className="mt-1 text-sm text-gray-500">
-                {t("noBookingsDesc")}
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-
     </div>
   );
 }
@@ -496,3 +458,22 @@ function StatCard({
   return content;
 }
 
+function QuickActionButton({
+  href,
+  icon,
+  label,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 bg-white p-4 transition-all hover:border-purple-300 hover:shadow-md"
+    >
+      <div className="text-gray-600">{icon}</div>
+      <span className="text-xs font-medium text-gray-700 text-center">{label}</span>
+    </Link>
+  );
+}

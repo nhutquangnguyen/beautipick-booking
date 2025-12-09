@@ -7,33 +7,20 @@ import { useTranslations } from "next-intl";
 import {
   LayoutDashboard,
   Calendar,
-  Users,
   Settings,
   Menu,
   X,
-  Scissors,
-  Clock,
-  Palette,
-  Images,
-  ShoppingBag,
-  Store,
   LogOut,
   ChevronDown,
   ChevronRight,
   User,
-  ExternalLink,
-  Copy,
-  Check,
-  Link as LinkIcon,
-  Sparkles,
-  QrCode,
-  ClipboardList,
   Shield,
   Crown,
+  Share2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Merchant } from "@/types/database";
-import { LanguageSwitcherCompact } from "@/components/language-switcher";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
@@ -49,18 +36,34 @@ interface NavItem {
 export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
-  const [copied, setCopied] = useState(false);
   const [logoDisplayUrl, setLogoDisplayUrl] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isPro, setIsPro] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const pathname = usePathname();
   const t = useTranslations("nav");
-  const tDashboard = useTranslations("dashboard");
   const tSidebar = useTranslations("sidebar");
+  const tDashboard = useTranslations("dashboard");
   const router = useRouter();
   const supabase = createClient();
 
   const bookingPageUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/${merchant.slug}`;
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: merchant.business_name,
+          url: bookingPageUrl,
+        });
+      } catch (err) {
+        // User cancelled or share failed
+      }
+    } else {
+      // Fallback: copy to clipboard
+      await navigator.clipboard.writeText(bookingPageUrl);
+    }
+  };
 
   // Check if user is admin and Pro tier
   useEffect(() => {
@@ -116,21 +119,9 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
     fetchSignedUrl();
   }, [merchant.logo_url]);
 
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(bookingPageUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   const navItems: NavItem[] = [
     { href: "/dashboard", label: t("home"), icon: LayoutDashboard, exact: true },
     { href: "/dashboard/bookings", label: t("orders"), icon: Calendar },
-    { href: "/dashboard/customers", label: t("customers"), icon: Users },
-    { href: "/dashboard/services", label: t("services"), icon: Scissors },
-    { href: "/dashboard/products", label: t("products"), icon: ShoppingBag },
-    { href: "/dashboard/themes/gallery", label: t("gallery"), icon: Images },
-    { href: "/dashboard/themes", label: t("themes"), icon: Palette },
-    { href: "/dashboard/business-info", label: t("businessInfo"), icon: Store },
     { href: "/dashboard/settings", label: t("settings"), icon: Settings },
     // Add admin link if user is admin
     ...(isAdmin ? [{ href: "/admin", label: t("admin"), icon: Shield }] : []),
@@ -235,41 +226,6 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
         </div>
       </Link>
 
-      {/* Booking Page Actions - Desktop Only */}
-      <div className="hidden lg:block px-3 pb-2">
-        <div className="flex gap-1.5">
-          <button
-            onClick={handleCopy}
-            className={cn(
-              "flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-medium transition-all",
-              copied
-                ? "bg-green-50 text-green-600"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            )}
-          >
-            {copied ? (
-              <>
-                <Check className="h-3.5 w-3.5" />
-                {tSidebar("copied")}
-              </>
-            ) : (
-              <>
-                <Copy className="h-3.5 w-3.5" />
-                {tSidebar("copyLink")}
-              </>
-            )}
-          </button>
-          <Link
-            href={`/${merchant.slug}`}
-            target="_blank"
-            className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 py-2 text-xs font-medium text-white hover:opacity-90 transition-opacity"
-          >
-            <ExternalLink className="h-3.5 w-3.5" />
-            {tDashboard("preview")}
-          </Link>
-        </div>
-      </div>
-
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-3 py-2">
         <div className="space-y-1">
@@ -279,30 +235,50 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
 
       {/* Bottom Section */}
       <div className="px-3 pb-4 space-y-2">
-        {/* Language Switcher */}
-        <div className="flex items-center justify-between rounded-lg px-3 py-2.5 bg-gray-50">
-          <span className="text-sm text-gray-500">{tSidebar("language")}</span>
-          <LanguageSwitcherCompact />
-        </div>
-
-        {/* User */}
-        <div className="flex items-center gap-3 rounded-lg px-3 py-2.5 bg-gray-50">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100 text-sm font-medium text-purple-600">
-            <User className="h-4 w-4" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-700 truncate">{merchant.email}</p>
-          </div>
-        </div>
-
-        {/* Sign Out */}
+        {/* Share Now Button */}
         <button
-          onClick={handleSignOut}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+          onClick={handleShare}
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 px-4 py-2.5 text-sm font-medium text-white hover:opacity-90 transition-opacity"
         >
-          <LogOut className="h-5 w-5" />
-          {t("signOut")}
+          <Share2 className="h-4 w-4" />
+          {tDashboard("shareNow")}
         </button>
+
+        {/* User Menu */}
+        <div className="border-t border-gray-100 pt-2">
+          {/* Expandable submenu */}
+          {userMenuOpen && (
+            <div className="mb-2 space-y-1">
+              {/* Language Switcher */}
+              <div className="py-2 px-3">
+                <LanguageSwitcher className="w-full" />
+              </div>
+
+              {/* Sign Out */}
+              <button
+                onClick={handleSignOut}
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+              >
+                <LogOut className="h-4 w-4" />
+                {t("signOut")}
+              </button>
+            </div>
+          )}
+
+          {/* User button at bottom */}
+          <button
+            onClick={() => setUserMenuOpen(!userMenuOpen)}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-gray-50 transition-colors"
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100 text-sm font-medium text-purple-600">
+              <User className="h-4 w-4" />
+            </div>
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-sm font-medium text-gray-700 truncate">{merchant.email}</p>
+            </div>
+            <ChevronDown className={cn("h-4 w-4 text-gray-400 transition-transform", userMenuOpen && "rotate-180")} />
+          </button>
+        </div>
       </div>
     </>
   );
@@ -330,43 +306,12 @@ export function DashboardSidebar({ merchant }: { merchant: Merchant }) {
           )}
           <span className="font-semibold text-gray-900">{merchant.business_name}</span>
         </Link>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleCopy}
-            className={cn(
-              "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
-              copied
-                ? "bg-green-50 text-green-600"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            )}
-          >
-            {copied ? (
-              <>
-                <Check className="h-3.5 w-3.5" />
-                {tSidebar("copied")}
-              </>
-            ) : (
-              <>
-                <Copy className="h-3.5 w-3.5" />
-                {tSidebar("copyLink")}
-              </>
-            )}
-          </button>
-          <Link
-            href={`/${merchant.slug}`}
-            target="_blank"
-            className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 transition-opacity"
-          >
-            <ExternalLink className="h-3.5 w-3.5" />
-            {tDashboard("preview")}
-          </Link>
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="rounded-lg p-2 text-gray-600 hover:bg-gray-100"
-          >
-            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
-        </div>
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="rounded-lg p-2 text-gray-600 hover:bg-gray-100"
+        >
+          {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+        </button>
       </header>
 
       {/* Mobile Sidebar Overlay */}
