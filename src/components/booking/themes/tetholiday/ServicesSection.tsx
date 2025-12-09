@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { ServicesSectionProps } from "../types";
+import { formatCurrency } from "@/lib/utils";
 
 export function TetHolidayServicesSection({ services, merchant, colors, cart }: ServicesSectionProps) {
   const t = useTranslations("common");
@@ -190,8 +191,7 @@ export function TetHolidayServicesSection({ services, merchant, colors, cart }: 
                           transform: isHovered ? 'scale(1.05)' : 'scale(1)',
                         }}
                       >
-                        {merchant?.currency === "USD" ? "$" : "€"}
-                        {service.price}
+                        {formatCurrency(service.price, merchant?.currency || "USD")}
                       </p>
                       {service.duration_minutes && (
                         <p

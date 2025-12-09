@@ -103,6 +103,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
               {/* Mobile Menu (hamburger) */}
               <div className="md:hidden">
                 <MobileMenu
+                  storeText={t("store")}
                   loginText={t("login")}
                   getStartedText={t("getStarted")}
                   languageText={tNav("language")}

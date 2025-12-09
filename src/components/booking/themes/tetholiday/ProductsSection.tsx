@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Plus, Minus } from "lucide-react";
 import { ProductsSectionProps } from "../types";
+import { formatCurrency } from "@/lib/utils";
 
 export function TetHolidayProductsSection({ products, merchant, colors, cart }: ProductsSectionProps) {
   const t = useTranslations("common");
@@ -202,8 +203,7 @@ export function TetHolidayProductsSection({ products, merchant, colors, cart }: 
                         transform: isHovered ? 'scale(1.1)' : 'scale(1)',
                       }}
                     >
-                      {merchant?.currency === "USD" ? "$" : "€"}
-                      {product.price}
+                      {formatCurrency(product.price, merchant?.currency || "USD")}
                     </p>
                     <span className="text-3xl transition-transform duration-300 group-hover:scale-125">🎁</span>
                   </div>

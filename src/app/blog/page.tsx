@@ -48,6 +48,7 @@ export default async function BlogListPage() {
               {/* Mobile Menu (hamburger) */}
               <div className="md:hidden">
                 <MobileMenu
+                  storeText={t("store")}
                   loginText={t("login")}
                   getStartedText={t("getStarted")}
                   languageText={tNav("language")}
