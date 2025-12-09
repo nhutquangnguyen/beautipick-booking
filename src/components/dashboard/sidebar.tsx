@@ -246,8 +246,8 @@ export function DashboardSidebar({
       </header>
 
       {/* Mobile Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden px-2 pb-2">
-        <nav className="bg-white rounded-2xl shadow-lg border border-gray-200">
+      <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden px-4 pb-6">
+        <nav className="bg-white rounded-3xl shadow-lg border border-gray-200 max-w-md mx-auto">
           <div className="grid grid-cols-3 h-14">
             <Link
               href="/dashboard"
