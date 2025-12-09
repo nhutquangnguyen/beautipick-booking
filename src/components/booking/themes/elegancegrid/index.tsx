@@ -63,10 +63,16 @@ export function EleganceGridTheme({ data, colors, cart, onOpenCart }: ThemeCompo
         <EleganceGridHeroSection merchant={data.merchant} colors={eleganceColors} onScrollToServices={handleScrollToServices} />
         <EleganceGridAboutSection merchant={data.merchant} colors={eleganceColors} />
         <EleganceGridGallerySection gallery={data.gallery} colors={eleganceColors} />
-        <EleganceGridServicesSection services={data.services} merchant={data.merchant} colors={eleganceColors} cart={cart} />
-        <EleganceGridProductsSection products={data.products} merchant={data.merchant} colors={eleganceColors} cart={cart} />
+        <div id="services-section">
+          <EleganceGridServicesSection services={data.services} merchant={data.merchant} colors={eleganceColors} cart={cart} />
+        </div>
+        <div id="products-section">
+          <EleganceGridProductsSection products={data.products} merchant={data.merchant} colors={eleganceColors} cart={cart} />
+        </div>
         {videoId && <EleganceGridVideoSection videoUrl={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`} colors={eleganceColors} />}
-        <EleganceGridContactSection merchant={data.merchant} colors={eleganceColors} />
+        <div id="contact-section">
+          <EleganceGridContactSection merchant={data.merchant} colors={eleganceColors} />
+        </div>
         <EleganceGridSocialSection socialLinks={data.socialLinks} colors={eleganceColors} />
       </div>
 

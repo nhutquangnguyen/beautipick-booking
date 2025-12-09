@@ -124,25 +124,31 @@ export function ChristmasTheme({ data, colors, cart, onOpenCart }: ThemeComponen
         />
         <ChristmasAboutSection merchant={data.merchant} colors={colors} />
         <ChristmasGallerySection gallery={data.gallery} colors={colors} />
-        <ChristmasServicesSection
-          services={data.services}
-          merchant={data.merchant}
-          colors={colors}
-          cart={cart}
-        />
-        <ChristmasProductsSection
-          products={data.products}
-          merchant={data.merchant}
-          colors={colors}
-          cart={cart}
-        />
+        <div id="services-section">
+          <ChristmasServicesSection
+            services={data.services}
+            merchant={data.merchant}
+            colors={colors}
+            cart={cart}
+          />
+        </div>
+        <div id="products-section">
+          <ChristmasProductsSection
+            products={data.products}
+            merchant={data.merchant}
+            colors={colors}
+            cart={cart}
+          />
+        </div>
         {videoId && (
           <ChristmasVideoSection
             videoUrl={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`}
             colors={colors}
           />
         )}
-        <ChristmasContactSection merchant={data.merchant} colors={colors} />
+        <div id="contact-section">
+          <ChristmasContactSection merchant={data.merchant} colors={colors} />
+        </div>
         <ChristmasSocialSection socialLinks={data.socialLinks} colors={colors} />
       </div>
 

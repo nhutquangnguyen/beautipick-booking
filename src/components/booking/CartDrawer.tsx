@@ -44,13 +44,13 @@ export function CartDrawer({ isOpen, onClose, cart, currency, merchantId, mercha
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 transition-opacity"
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] transition-opacity"
         onClick={onClose}
       />
 
       {/* Drawer */}
       <div
-        className="fixed top-0 right-0 h-full w-full sm:w-[450px] bg-white shadow-2xl z-50 flex flex-col"
+        className="fixed top-0 right-0 h-full w-full sm:w-[450px] bg-white shadow-2xl z-[60] flex flex-col"
         style={{
           animation: 'slideInRight 0.3s ease-out',
         }}
@@ -224,13 +224,6 @@ export function CartDrawer({ isOpen, onClose, cart, currency, merchantId, mercha
               style={{ backgroundColor: primaryColor }}
             >
               {t("proceedToCheckout")}
-            </button>
-
-            <button
-              onClick={() => cart.clearCart()}
-              className="w-full mt-3 py-3 rounded-2xl font-semibold text-sm text-gray-600 hover:bg-gray-100 transition-colors"
-            >
-              {t("clearCart")}
             </button>
           </div>
         )}

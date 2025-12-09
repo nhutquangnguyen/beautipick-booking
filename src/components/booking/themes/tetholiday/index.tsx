@@ -140,25 +140,31 @@ export function TetHolidayTheme({ data, colors, cart, onOpenCart }: ThemeCompone
           colors={colors}
           onFullGalleryChange={setIsFullGalleryOpen}
         />
-        <TetHolidayServicesSection
-          services={data.services}
-          merchant={data.merchant}
-          colors={colors}
-          cart={cart}
-        />
-        <TetHolidayProductsSection
-          products={data.products}
-          merchant={data.merchant}
-          colors={colors}
-          cart={cart}
-        />
+        <div id="services-section">
+          <TetHolidayServicesSection
+            services={data.services}
+            merchant={data.merchant}
+            colors={colors}
+            cart={cart}
+          />
+        </div>
+        <div id="products-section">
+          <TetHolidayProductsSection
+            products={data.products}
+            merchant={data.merchant}
+            colors={colors}
+            cart={cart}
+          />
+        </div>
         {videoId && (
           <TetHolidayVideoSection
             videoUrl={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`}
             colors={colors}
           />
         )}
-        <TetHolidayContactSection merchant={data.merchant} colors={colors} />
+        <div id="contact-section">
+          <TetHolidayContactSection merchant={data.merchant} colors={colors} />
+        </div>
         <TetHolidaySocialSection socialLinks={data.socialLinks} colors={colors} />
       </div>
 

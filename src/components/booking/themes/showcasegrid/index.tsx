@@ -72,30 +72,36 @@ export function ShowcaseGridTheme({ data, colors, cart, locale, currency, onOpen
 
       {/* Work/Services Section - Alternating Layout */}
       {data.services && data.services.length > 0 && (
-        <ShowcaseGridWorkSection
-          services={data.services}
-          colors={showcaseColors}
-          cart={cart}
-          locale={locale}
-          currency={currency}
-        />
+        <div id="services-section">
+          <ShowcaseGridWorkSection
+            services={data.services}
+            colors={showcaseColors}
+            cart={cart}
+            locale={locale}
+            currency={currency}
+          />
+        </div>
       )}
 
       {/* Products Section - Premium Card Grid */}
       {data.products && data.products.length > 0 && (
-        <ShowcaseGridProductsSection
-          products={data.products}
-          merchant={data.merchant}
-          colors={showcaseColors}
-          cart={cart}
-        />
+        <div id="products-section">
+          <ShowcaseGridProductsSection
+            products={data.products}
+            merchant={data.merchant}
+            colors={showcaseColors}
+            cart={cart}
+          />
+        </div>
       )}
 
       {/* Contact Section - Form & Info */}
-      <ShowcaseGridContactSection
-        merchant={data.merchant}
-        colors={showcaseColors}
-      />
+      <div id="contact-section">
+        <ShowcaseGridContactSection
+          merchant={data.merchant}
+          colors={showcaseColors}
+        />
+      </div>
 
       {/* Language Switcher */}
       <LanguageSwitcher accentColor={showcaseColors.accentColor} position="top-right" />

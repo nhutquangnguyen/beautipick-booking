@@ -151,28 +151,34 @@ export function StarterTheme({ data, colors, cart, onOpenCart }: ThemeComponentP
           )}
 
           {data.services.length > 0 && (
-            <StarterServicesSection
-              services={data.services}
-              merchant={data.merchant}
-              colors={colors}
-              cart={cart}
-            />
+            <div id="services-section">
+              <StarterServicesSection
+                services={data.services}
+                merchant={data.merchant}
+                colors={colors}
+                cart={cart}
+              />
+            </div>
           )}
 
           {data.products.length > 0 && (
-            <StarterProductsSection
-              products={data.products}
-              merchant={data.merchant}
-              colors={colors}
-              cart={cart}
-            />
+            <div id="products-section">
+              <StarterProductsSection
+                products={data.products}
+                merchant={data.merchant}
+                colors={colors}
+                cart={cart}
+              />
+            </div>
           )}
 
           {data.gallery.length > 0 && (
             <StarterGallerySection gallery={data.gallery} colors={colors} />
           )}
 
-          <StarterContactSection merchant={data.merchant} colors={colors} />
+          <div id="contact-section">
+            <StarterContactSection merchant={data.merchant} colors={colors} />
+          </div>
 
           {data.socialLinks.length > 0 && (
             <StarterSocialSection socialLinks={data.socialLinks} colors={colors} />
