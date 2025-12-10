@@ -588,7 +588,8 @@
         "sendingLink": "Sending...",
         "orContinueWith": "or",
         "continueWithGoogle": "Continue with Google",
-        "skipForNow": "Skip for now"
+        "skipForNow": "Skip for now",
+        "emailRequired": "Email required for magic link"
     },
     "booking": {
         "bookAppointment": "Book Appointment",

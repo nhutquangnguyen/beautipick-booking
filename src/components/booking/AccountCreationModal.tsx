@@ -33,6 +33,11 @@ export function AccountCreationModal({
   const supabase = createClient();
 
   const handleSendMagicLink = async () => {
+    if (!customerEmail || !customerEmail.trim()) {
+      setError("Please provide an email address");
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -171,7 +176,13 @@ export function AccountCreationModal({
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-900">{customerName}</p>
-                      <p className="text-sm text-gray-600 truncate">{customerEmail}</p>
+                      {customerEmail ? (
+                        <p className="text-sm text-gray-600 truncate">{customerEmail}</p>
+                      ) : (
+                        <p className="text-xs text-orange-600 italic">
+                          {t("emailRequired")}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>

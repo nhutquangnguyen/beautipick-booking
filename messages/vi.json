@@ -604,7 +604,8 @@
         "sendingLink": "Đang gửi...",
         "orContinueWith": "hoặc",
         "continueWithGoogle": "Tiếp tục với Google",
-        "skipForNow": "Bỏ qua"
+        "skipForNow": "Bỏ qua",
+        "emailRequired": "Cần email để gửi liên kết"
     },
     "booking": {
         "bookAppointment": "Đặt lịch hẹn",

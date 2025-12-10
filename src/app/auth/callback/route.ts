@@ -29,19 +29,26 @@ export async function GET(request: Request) {
     console.log('[Auth Callback] User authenticated:', data.user.id, data.user.email);
     console.log('[Auth Callback] User metadata:', data.user.user_metadata);
 
-    // Check user type from metadata
-    const userType = data.user.user_metadata?.user_type;
+    // Check user type from metadata or check if it's a Google OAuth customer signup
+    let userType = data.user.user_metadata?.user_type;
+    let customerName = data.user.user_metadata?.name;
+    let customerPhone = data.user.user_metadata?.phone;
+    let customerEmail = data.user.user_metadata?.email;
+    let firstMerchantId = data.user.user_metadata?.first_merchant_id;
+
+    // For Google OAuth, check if there's pending customer data in the referrer
+    // (This would need to be passed via state or stored temporarily)
+    // Since we can't pass state easily, we'll check if this is a new user without merchant profile
 
     // Use admin client to check existing profiles (bypasses RLS)
     const adminClient = createAdminClient();
 
     // If this is a customer account creation
     if (userType === "customer") {
-      console.log('[Auth Callback] Creating customer account');
+      console.log('[Auth Callback] Creating customer account from magic link');
 
-      const customerName = data.user.user_metadata?.name || data.user.email?.split('@')[0] || 'Customer';
-      const customerPhone = data.user.user_metadata?.phone;
-      const firstMerchantId = data.user.user_metadata?.first_merchant_id;
+      customerName = customerName || data.user.email?.split('@')[0] || 'Customer';
+      customerEmail = customerEmail || data.user.email;
 
       // Check if customer account already exists
       const { data: existingCustomerAccount } = await adminClient
@@ -56,7 +63,7 @@ export async function GET(request: Request) {
           .from("customer_accounts")
           .insert({
             id: data.user.id,
-            email: data.user.email || '',
+            email: customerEmail || data.user.email || '',
             name: customerName,
             phone: customerPhone,
             first_merchant_id: firstMerchantId,

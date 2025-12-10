@@ -178,14 +178,8 @@ export function useCheckoutFlow({
       // Success - show success step
       setCurrentStep("success");
 
-      // Clear cart and reset form
+      // Clear cart (but keep customer info for account creation modal)
       cart.clearCart();
-      setSelectedDate("");
-      setSelectedTime("");
-      setCustomerName("");
-      setCustomerPhone("");
-      setCustomerEmail("");
-      setNotes("");
 
     } catch (error: any) {
       console.error('Error creating booking:', error);
@@ -234,6 +228,13 @@ export function useCheckoutFlow({
 
   const resetToInitialStep = () => {
     setCurrentStep(initialStep);
+    // Clear form data when resetting
+    setSelectedDate("");
+    setSelectedTime("");
+    setCustomerName("");
+    setCustomerPhone("");
+    setCustomerEmail("");
+    setNotes("");
   };
 
   return {
