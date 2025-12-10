@@ -594,6 +594,18 @@
         "confirmation": "Xác nhận",
         "month": "Tháng"
     },
+    "customerAccount": {
+        "createAccount": "Tạo tài khoản",
+        "trackYourBookings": "Theo dõi đơn hàng & nhận ưu đãi",
+        "checkYourEmail": "Kiểm tra Email",
+        "magicLinkSent": "Chúng tôi đã gửi liên kết đăng nhập đến",
+        "gotIt": "Đã hiểu",
+        "sendMagicLink": "Gửi liên kết đăng nhập",
+        "sendingLink": "Đang gửi...",
+        "orContinueWith": "hoặc",
+        "continueWithGoogle": "Tiếp tục với Google",
+        "skipForNow": "Bỏ qua"
+    },
     "booking": {
         "bookAppointment": "Đặt lịch hẹn",
         "bookNow": "Đặt ngay",

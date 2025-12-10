@@ -1,9 +1,11 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { X, Check, Calendar, Clock, User, Phone, Mail, MessageSquare } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { ThemeCartHandlers } from "./themes/types";
 import { useCheckoutFlow } from "./hooks/useCheckoutFlow";
+import { AccountCreationModal } from "./AccountCreationModal";
 
 interface CheckoutFlowProps {
   isOpen: boolean;
@@ -26,6 +28,7 @@ export function CheckoutFlow({
 }: CheckoutFlowProps) {
   const t = useTranslations("checkout");
   const locale = useLocale();
+  const [showAccountModal, setShowAccountModal] = useState(false);
   const checkout = useCheckoutFlow({
     isOpen,
     cart,
@@ -34,6 +37,23 @@ export function CheckoutFlow({
     currency,
     locale,
   });
+
+  // Show account creation modal after successful booking
+  useEffect(() => {
+    if (checkout.currentStep === "success" && checkout.customerEmail) {
+      // Small delay to let success animation play
+      const timer = setTimeout(() => {
+        setShowAccountModal(true);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [checkout.currentStep, checkout.customerEmail]);
+
+  const handleCloseCheckout = () => {
+    onClose();
+    checkout.resetToInitialStep();
+    setShowAccountModal(false);
+  };
 
   if (!isOpen) return null;
 
@@ -67,10 +87,7 @@ export function CheckoutFlow({
                 {t("thankYouMessage", { merchantName })}
               </p>
               <button
-                onClick={() => {
-                  onClose();
-                  checkout.resetToInitialStep();
-                }}
+                onClick={handleCloseCheckout}
                 className="w-full py-4 rounded-2xl font-semibold text-white transition-all hover:opacity-90"
                 style={{ backgroundColor: primaryColor }}
               >
@@ -433,6 +450,22 @@ export function CheckoutFlow({
           )}
         </div>
       </div>
+
+      {/* Account Creation Modal - Show after successful booking */}
+      {checkout.customerEmail && (
+        <AccountCreationModal
+          isOpen={showAccountModal}
+          onClose={() => {
+            setShowAccountModal(false);
+            handleCloseCheckout();
+          }}
+          customerEmail={checkout.customerEmail}
+          customerName={checkout.customerName}
+          customerPhone={checkout.customerPhone}
+          merchantId={merchantId}
+          primaryColor={primaryColor}
+        />
+      )}
     </>
   );
 }

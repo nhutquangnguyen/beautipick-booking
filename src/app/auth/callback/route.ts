@@ -27,9 +27,68 @@ export async function GET(request: Request) {
     }
 
     console.log('[Auth Callback] User authenticated:', data.user.id, data.user.email);
+    console.log('[Auth Callback] User metadata:', data.user.user_metadata);
 
-    // Use admin client to check merchant profile (bypasses RLS)
+    // Check user type from metadata
+    const userType = data.user.user_metadata?.user_type;
+
+    // Use admin client to check existing profiles (bypasses RLS)
     const adminClient = createAdminClient();
+
+    // If this is a customer account creation
+    if (userType === "customer") {
+      console.log('[Auth Callback] Creating customer account');
+
+      const customerName = data.user.user_metadata?.name || data.user.email?.split('@')[0] || 'Customer';
+      const customerPhone = data.user.user_metadata?.phone;
+      const firstMerchantId = data.user.user_metadata?.first_merchant_id;
+
+      // Check if customer account already exists
+      const { data: existingCustomerAccount } = await adminClient
+        .from("customer_accounts")
+        .select("id")
+        .eq("id", data.user.id)
+        .maybeSingle();
+
+      if (!existingCustomerAccount) {
+        // Create customer account
+        const { error: customerError } = await (adminClient as any)
+          .from("customer_accounts")
+          .insert({
+            id: data.user.id,
+            email: data.user.email || '',
+            name: customerName,
+            phone: customerPhone,
+            first_merchant_id: firstMerchantId,
+            preferences: {},
+          });
+
+        if (customerError) {
+          console.error('[Auth Callback] Error creating customer account:', customerError);
+          return NextResponse.redirect(`${origin}/?error=customer_creation_failed`);
+        }
+
+        console.log('[Auth Callback] Customer account created successfully');
+      }
+
+      // Redirect back to the merchant's booking page
+      if (firstMerchantId) {
+        // Get merchant slug
+        const { data: merchantData } = await (adminClient as any)
+          .from("merchants")
+          .select("slug")
+          .eq("id", firstMerchantId)
+          .single();
+
+        if (merchantData?.slug) {
+          return NextResponse.redirect(`${origin}/${merchantData.slug}?account_created=true`);
+        }
+      }
+
+      return NextResponse.redirect(`${origin}/?account_created=true`);
+    }
+
+    // Otherwise, handle merchant account
     const { data: merchantData, error: merchantError } = await adminClient
       .from("merchants")
       .select("id")

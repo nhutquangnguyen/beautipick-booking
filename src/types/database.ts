@@ -537,6 +537,81 @@ export type Database = {
           gallery_images_count?: number;
         };
       };
+      customer_accounts: {
+        Row: {
+          id: string;
+          created_at: string;
+          updated_at: string;
+          email: string;
+          name: string;
+          phone: string | null;
+          avatar_url: string | null;
+          first_merchant_id: string | null;
+          preferences: Json;
+          is_active: boolean;
+        };
+        Insert: {
+          id: string;
+          created_at?: string;
+          updated_at?: string;
+          email: string;
+          name: string;
+          phone?: string | null;
+          avatar_url?: string | null;
+          first_merchant_id?: string | null;
+          preferences?: Json;
+          is_active?: boolean;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+          email?: string;
+          name?: string;
+          phone?: string | null;
+          avatar_url?: string | null;
+          first_merchant_id?: string | null;
+          preferences?: Json;
+          is_active?: boolean;
+        };
+      };
+      customer_account_links: {
+        Row: {
+          id: string;
+          created_at: string;
+          customer_account_id: string;
+          customer_id: string;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          customer_account_id: string;
+          customer_id: string;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          customer_account_id?: string;
+          customer_id?: string;
+        };
+      };
+      user_types: {
+        Row: {
+          user_id: string;
+          user_type: "merchant" | "customer" | "admin";
+          created_at: string;
+        };
+        Insert: {
+          user_id: string;
+          user_type: "merchant" | "customer" | "admin";
+          created_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          user_type?: "merchant" | "customer" | "admin";
+          created_at?: string;
+        };
+      };
     };
     Views: {
       [_ in never]: never;
@@ -567,6 +642,13 @@ export type MerchantInsert = Database["public"]["Tables"]["merchants"]["Insert"]
 export type ServiceInsert = Database["public"]["Tables"]["services"]["Insert"];
 export type StaffInsert = Database["public"]["Tables"]["staff"]["Insert"];
 export type CustomerInsert = Database["public"]["Tables"]["customers"]["Insert"];
+
+// Customer Accounts
+export type CustomerAccount = Database["public"]["Tables"]["customer_accounts"]["Row"];
+export type CustomerAccountInsert = Database["public"]["Tables"]["customer_accounts"]["Insert"];
+export type CustomerAccountUpdate = Database["public"]["Tables"]["customer_accounts"]["Update"];
+export type CustomerAccountLink = Database["public"]["Tables"]["customer_account_links"]["Row"];
+export type UserType = Database["public"]["Tables"]["user_types"]["Row"];
 export type AdminInsert = Database["public"]["Tables"]["admins"]["Insert"];
 export type BlogPostInsert = Database["public"]["Tables"]["blog_posts"]["Insert"];
 export type BlogPostUpdate = Database["public"]["Tables"]["blog_posts"]["Update"];

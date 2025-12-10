@@ -578,6 +578,18 @@
         "confirmation": "Confirmation",
         "month": "Month"
     },
+    "customerAccount": {
+        "createAccount": "Create Account",
+        "trackYourBookings": "Track your bookings & earn rewards",
+        "checkYourEmail": "Check Your Email",
+        "magicLinkSent": "We sent a magic link to",
+        "gotIt": "Got It",
+        "sendMagicLink": "Send Magic Link",
+        "sendingLink": "Sending...",
+        "orContinueWith": "or",
+        "continueWithGoogle": "Continue with Google",
+        "skipForNow": "Skip for now"
+    },
     "booking": {
         "bookAppointment": "Book Appointment",
         "bookNow": "Book Now",
