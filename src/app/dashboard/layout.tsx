@@ -64,6 +64,7 @@ export default async function DashboardLayout({
     orders: t("orders"),
     settings: t("settings"),
     admin: t("admin"),
+    signOut: t("signOut"),
   };
 
   return (

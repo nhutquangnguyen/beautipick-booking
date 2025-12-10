@@ -591,6 +591,22 @@
         "skipForNow": "Skip for now",
         "emailRequired": "Email required for magic link"
     },
+    "customerDashboard": {
+        "myBookings": "My Bookings",
+        "welcomeBack": "Welcome back, {name}!",
+        "logout": "Logout",
+        "noBookings": "No Bookings Yet",
+        "noBookingsDesc": "Your booking history will appear here",
+        "date": "Date",
+        "time": "Time",
+        "items": "Items",
+        "notes": "Notes",
+        "bookedOn": "Booked on",
+        "statusPending": "Pending",
+        "statusConfirmed": "Confirmed",
+        "statusCompleted": "Completed",
+        "statusCancelled": "Cancelled"
+    },
     "booking": {
         "bookAppointment": "Book Appointment",
         "bookNow": "Book Now",

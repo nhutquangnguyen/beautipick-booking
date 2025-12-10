@@ -3,6 +3,7 @@
 import { useTransition, useState, useRef, useEffect } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Globe, Check } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const locales = [
   { code: "vi", label: "Tiếng Việt", flag: "🇻🇳" },
@@ -12,12 +13,13 @@ const locales = [
 export function LanguageSwitcher({ className = "" }: { className?: string }) {
   const t = useTranslations("language");
   const locale = useLocale();
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const handleChange = (newLocale: string) => {
     startTransition(() => {
       document.cookie = `locale=${newLocale};path=/;max-age=31536000`;
-      window.location.reload();
+      router.refresh();
     });
   };
 
@@ -41,12 +43,13 @@ export function LanguageSwitcher({ className = "" }: { className?: string }) {
 
 export function LanguageSwitcherCompact({ className = "" }: { className?: string }) {
   const locale = useLocale();
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const handleChange = (newLocale: string) => {
     startTransition(() => {
       document.cookie = `locale=${newLocale};path=/;max-age=31536000`;
-      window.location.reload();
+      router.refresh();
     });
   };
 
@@ -74,6 +77,7 @@ export function LanguageSwitcherCompact({ className = "" }: { className?: string
 
 export function LanguageSwitcherIcon({ className = "" }: { className?: string }) {
   const locale = useLocale();
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -82,7 +86,7 @@ export function LanguageSwitcherIcon({ className = "" }: { className?: string })
     setIsOpen(false);
     startTransition(() => {
       document.cookie = `locale=${newLocale};path=/;max-age=31536000`;
-      window.location.reload();
+      router.refresh();
     });
   };
 

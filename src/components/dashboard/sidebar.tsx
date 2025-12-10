@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
@@ -14,11 +15,14 @@ import {
   Crown,
   Home,
   ClipboardList,
+  User,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Merchant } from "@/types/database";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 interface NavItem {
   href: string;
@@ -34,6 +38,7 @@ interface Translations {
   orders: string;
   settings: string;
   admin: string;
+  signOut: string;
 }
 
 export function DashboardSidebar({
@@ -47,30 +52,61 @@ export function DashboardSidebar({
   const [logoDisplayUrl, setLogoDisplayUrl] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isPro, setIsPro] = useState(false);
+  const [userEmail, setUserEmail] = useState<string>("");
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
+  const accountMenuRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
 
-  // Check if user is admin and Pro tier
+  // Fetch user email
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        setUserEmail(user.email);
+      }
+    };
+    getUser();
+  }, [supabase]);
+
+  // Close account menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (accountMenuRef.current && !accountMenuRef.current.contains(event.target as Node)) {
+        setIsAccountMenuOpen(false);
+      }
+    };
+
+    if (isAccountMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isAccountMenuOpen]);
+
+  // Check if user is admin and Pro tier (combined for better performance)
   useEffect(() => {
     const checkAdminAndTier = async () => {
-      // Check admin status
-      const { data: adminData } = await supabase
-        .from("admins")
-        .select("user_id")
-        .eq("user_id", merchant.id)
-        .maybeSingle();
-      setIsAdmin(!!adminData);
+      // Run both queries in parallel for better performance
+      const [adminResult, subscriptionResult] = await Promise.all([
+        supabase
+          .from("admins")
+          .select("user_id")
+          .eq("user_id", merchant.id)
+          .maybeSingle(),
+        supabase
+          .from("merchant_subscriptions")
+          .select("pricing_tiers(tier_key)")
+          .eq("merchant_id", merchant.id)
+          .eq("status", "active")
+          .maybeSingle()
+      ]);
 
-      // Check subscription tier
-      const { data: subscription } = await supabase
-        .from("merchant_subscriptions")
-        .select("pricing_tiers(tier_key)")
-        .eq("merchant_id", merchant.id)
-        .eq("status", "active")
-        .maybeSingle();
-
-      const tierKey = (subscription?.pricing_tiers as any)?.tier_key || "free";
+      setIsAdmin(!!adminResult.data);
+      const tierKey = (subscriptionResult.data?.pricing_tiers as any)?.tier_key || "free";
       setIsPro(tierKey === "pro");
     };
     checkAdminAndTier();
@@ -105,26 +141,32 @@ export function DashboardSidebar({
     fetchSignedUrl();
   }, [merchant.logo_url]);
 
-  const navItems: NavItem[] = [
+  // Memoize navItems to prevent recreation on every render
+  const navItems: NavItem[] = useMemo(() => [
     { href: "/dashboard", label: translations.home, icon: LayoutDashboard, exact: true },
     { href: "/dashboard/bookings", label: translations.orders, icon: Calendar },
     { href: "/dashboard/settings", label: translations.settings, icon: Settings },
     // Add admin link if user is admin
     ...(isAdmin ? [{ href: "/admin", label: translations.admin, icon: Shield }] : []),
-  ];
+  ], [isAdmin, translations]);
 
-  const toggleExpanded = (href: string) => {
+  const toggleExpanded = useCallback((href: string) => {
     setExpandedItems((prev) =>
       prev.includes(href) ? prev.filter((h) => h !== href) : [...prev, href]
     );
-  };
+  }, []);
 
-  const isActive = (item: NavItem) => {
+  const isActive = useCallback((item: NavItem) => {
     if (item.exact) {
       return pathname === item.href;
     }
     return pathname.startsWith(item.href);
-  };
+  }, [pathname]);
+
+  const handleSignOut = useCallback(async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+  }, [supabase, router]);
 
   const renderNavItem = (item: NavItem, depth = 0) => {
     const active = isActive(item);
@@ -184,11 +226,16 @@ export function DashboardSidebar({
       {/* Logo */}
       <Link href="/dashboard" className="flex h-16 items-center gap-3 px-4 hover:bg-gray-50 transition-colors cursor-pointer">
         {logoDisplayUrl ? (
-          <img
-            src={logoDisplayUrl}
-            alt={merchant.business_name}
-            className="h-10 w-10 rounded-xl object-cover shadow-sm"
-          />
+          <div className="relative h-10 w-10 rounded-xl overflow-hidden shadow-sm">
+            <Image
+              src={logoDisplayUrl}
+              alt={merchant.business_name}
+              fill
+              className="object-cover"
+              sizes="40px"
+              priority
+            />
+          </div>
         ) : (
           <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 shadow-sm flex items-center justify-center text-white font-bold">
             {merchant.business_name.charAt(0)}
@@ -213,9 +260,43 @@ export function DashboardSidebar({
         </div>
       </nav>
 
-      {/* Bottom Section - Empty for now */}
-      <div className="px-3 pb-4">
-        {/* Removed user info - now in Account Settings */}
+      {/* Bottom Section - Account Menu */}
+      <div ref={accountMenuRef} className="relative px-3 pb-4 border-t border-gray-200 pt-4">
+        {/* Account Button */}
+        <button
+          onClick={() => setIsAccountMenuOpen(!isAccountMenuOpen)}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-100 transition-colors"
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 text-purple-600">
+            <User className="h-5 w-5" />
+          </div>
+          <div className="flex-1 min-w-0 text-left">
+            <p className="text-sm font-medium text-gray-900 truncate">{userEmail}</p>
+          </div>
+          <ChevronDown className={cn(
+            "h-4 w-4 text-gray-600 transition-transform",
+            isAccountMenuOpen && "rotate-180"
+          )} />
+        </button>
+
+        {/* Dropdown Menu */}
+        {isAccountMenuOpen && (
+          <div className="absolute bottom-full left-0 right-0 mb-2 mx-3 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
+            {/* Language Switcher */}
+            <div className="p-3 border-b border-gray-200">
+              <LanguageSwitcher />
+            </div>
+
+            {/* Sign Out */}
+            <button
+              onClick={handleSignOut}
+              className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>{translations.signOut}</span>
+            </button>
+          </div>
+        )}
       </div>
     </>
   );
@@ -226,11 +307,16 @@ export function DashboardSidebar({
       <header className="sticky top-0 z-40 flex h-16 items-center justify-between bg-white px-4 lg:hidden shadow-sm">
         <Link href="/dashboard" className="flex items-center gap-2">
           {logoDisplayUrl ? (
-            <img
-              src={logoDisplayUrl}
-              alt={merchant.business_name}
-              className="h-8 w-8 rounded-lg object-cover"
-            />
+            <div className="relative h-8 w-8 rounded-lg overflow-hidden">
+              <Image
+                src={logoDisplayUrl}
+                alt={merchant.business_name}
+                fill
+                className="object-cover"
+                sizes="32px"
+                priority
+              />
+            </div>
           ) : (
             <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white font-bold text-sm">
               {merchant.business_name.charAt(0)}
@@ -243,6 +329,40 @@ export function DashboardSidebar({
           )}
           <span className="font-semibold text-gray-900">{merchant.business_name}</span>
         </Link>
+
+        {/* Mobile Account Button */}
+        <div ref={accountMenuRef} className="relative">
+          <button
+            onClick={() => setIsAccountMenuOpen(!isAccountMenuOpen)}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 text-purple-600 hover:bg-purple-200 transition-colors"
+          >
+            <User className="h-5 w-5" />
+          </button>
+
+          {/* Mobile Dropdown Menu */}
+          {isAccountMenuOpen && (
+            <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
+              {/* User Email */}
+              <div className="p-3 border-b border-gray-100">
+                <p className="text-sm text-gray-900 truncate">{userEmail}</p>
+              </div>
+
+              {/* Language Switcher */}
+              <div className="p-3 border-b border-gray-200">
+                <LanguageSwitcher />
+              </div>
+
+              {/* Sign Out */}
+              <button
+                onClick={handleSignOut}
+                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>{translations.signOut}</span>
+              </button>
+            </div>
+          )}
+        </div>
       </header>
 
       {/* Mobile Bottom Navigation */}

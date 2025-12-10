@@ -96,7 +96,7 @@ export function CheckoutFlow({
       const { error: signInError } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/auth/callback?type=customer&merchant_id=${merchantId}&name=${encodeURIComponent(checkout.customerName)}&phone=${encodeURIComponent(checkout.customerPhone || '')}&email=${encodeURIComponent(checkout.customerEmail || '')}`,
           queryParams: {
             access_type: "offline",
             prompt: "consent",

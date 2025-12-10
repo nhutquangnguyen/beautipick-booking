@@ -9,7 +9,15 @@ export async function GET(request: Request) {
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/dashboard";
 
+  // Check for customer signup parameters (from Google OAuth redirect)
+  const signupType = searchParams.get("type");
+  const merchantIdParam = searchParams.get("merchant_id");
+  const nameParam = searchParams.get("name");
+  const phoneParam = searchParams.get("phone");
+  const emailParam = searchParams.get("email");
+
   console.log('[Auth Callback] Received request with code:', code ? 'present' : 'missing');
+  console.log('[Auth Callback] Signup type:', signupType);
   console.log('[Auth Callback] Next redirect:', next);
 
   if (code) {
@@ -29,23 +37,19 @@ export async function GET(request: Request) {
     console.log('[Auth Callback] User authenticated:', data.user.id, data.user.email);
     console.log('[Auth Callback] User metadata:', data.user.user_metadata);
 
-    // Check user type from metadata or check if it's a Google OAuth customer signup
-    let userType = data.user.user_metadata?.user_type;
-    let customerName = data.user.user_metadata?.name;
-    let customerPhone = data.user.user_metadata?.phone;
-    let customerEmail = data.user.user_metadata?.email;
-    let firstMerchantId = data.user.user_metadata?.first_merchant_id;
-
-    // For Google OAuth, check if there's pending customer data in the referrer
-    // (This would need to be passed via state or stored temporarily)
-    // Since we can't pass state easily, we'll check if this is a new user without merchant profile
+    // Check user type from metadata or query params (for Google OAuth customer signup)
+    let userType = data.user.user_metadata?.user_type || signupType;
+    let customerName = data.user.user_metadata?.name || nameParam;
+    let customerPhone = data.user.user_metadata?.phone || phoneParam;
+    let customerEmail = data.user.user_metadata?.email || emailParam;
+    let firstMerchantId = data.user.user_metadata?.first_merchant_id || merchantIdParam;
 
     // Use admin client to check existing profiles (bypasses RLS)
     const adminClient = createAdminClient();
 
     // If this is a customer account creation
     if (userType === "customer") {
-      console.log('[Auth Callback] Creating customer account from magic link');
+      console.log('[Auth Callback] Creating customer account from OAuth or magic link');
 
       customerName = customerName || data.user.email?.split('@')[0] || 'Customer';
       customerEmail = customerEmail || data.user.email;
@@ -75,29 +79,35 @@ export async function GET(request: Request) {
           return NextResponse.redirect(`${origin}/?error=customer_creation_failed`);
         }
 
+        // Create user_type entry for customer
+        const { error: userTypeError } = await (adminClient as any)
+          .from("user_types")
+          .insert({
+            user_id: data.user.id,
+            user_type: "customer",
+          });
+
+        if (userTypeError) {
+          console.error('[Auth Callback] Error creating user type:', userTypeError);
+        }
+
         console.log('[Auth Callback] Customer account created successfully');
       }
 
-      // Redirect back to the merchant's booking page
-      if (firstMerchantId) {
-        // Get merchant slug
-        const { data: merchantData } = await (adminClient as any)
-          .from("merchants")
-          .select("slug")
-          .eq("id", firstMerchantId)
-          .single();
-
-        if (merchantData?.slug) {
-          return NextResponse.redirect(`${origin}/${merchantData.slug}?account_created=true`);
-        }
-      }
-
-      return NextResponse.redirect(`${origin}/?account_created=true`);
+      // Redirect to customer dashboard
+      console.log('[Auth Callback] Redirecting customer to dashboard');
+      return NextResponse.redirect(`${origin}/customer`);
     }
 
-    // Otherwise, handle merchant account
+    // Check if user already exists as merchant or customer
     const { data: merchantData, error: merchantError } = await adminClient
       .from("merchants")
+      .select("id")
+      .eq("id", data.user.id)
+      .maybeSingle();
+
+    const { data: existingCustomer } = await adminClient
+      .from("customer_accounts")
       .select("id")
       .eq("id", data.user.id)
       .maybeSingle();
@@ -106,6 +116,18 @@ export async function GET(request: Request) {
       exists: !!merchantData,
       error: merchantError?.message,
     });
+
+    // If this was a customer signup attempt but user has merchant profile, redirect to customer creation
+    if (signupType === "customer" && merchantData && !existingCustomer) {
+      console.log('[Auth Callback] User has merchant profile but signing up as customer, redirecting to home');
+      return NextResponse.redirect(`${origin}/?error=account_exists`);
+    }
+
+    // If user has customer account, redirect there
+    if (existingCustomer) {
+      console.log('[Auth Callback] Existing customer found, redirecting to customer dashboard');
+      return NextResponse.redirect(`${origin}/customer`);
+    }
 
     // If no merchant profile exists (new OAuth user), create one
     if (!merchantData) {
@@ -186,6 +208,18 @@ export async function GET(request: Request) {
         console.error('[Auth Callback] Error creating merchant profile:', insertError.message);
         console.error('[Auth Callback] Error details:', insertError);
         return NextResponse.redirect(`${origin}/login?error=profile_creation_failed&code=${insertError.code}`);
+      }
+
+      // Create user_type entry for merchant
+      const { error: userTypeError } = await (adminClient as any)
+        .from("user_types")
+        .insert({
+          user_id: data.user.id,
+          user_type: "merchant",
+        });
+
+      if (userTypeError) {
+        console.error('[Auth Callback] Error creating user type:', userTypeError);
       }
 
       console.log('[Auth Callback] Merchant profile created successfully, redirecting to onboarding');

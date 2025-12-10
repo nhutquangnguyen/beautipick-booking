@@ -607,6 +607,22 @@
         "skipForNow": "Bỏ qua",
         "emailRequired": "Cần email để gửi liên kết"
     },
+    "customerDashboard": {
+        "myBookings": "Đơn hàng của tôi",
+        "welcomeBack": "Chào mừng trở lại, {name}!",
+        "logout": "Đăng xuất",
+        "noBookings": "Chưa có đơn hàng",
+        "noBookingsDesc": "Lịch sử đơn hàng của bạn sẽ hiển thị ở đây",
+        "date": "Ngày",
+        "time": "Giờ",
+        "items": "Sản phẩm/Dịch vụ",
+        "notes": "Ghi chú",
+        "bookedOn": "Đặt ngày",
+        "statusPending": "Chờ xác nhận",
+        "statusConfirmed": "Đã xác nhận",
+        "statusCompleted": "Đã hoàn thành",
+        "statusCancelled": "Đã hủy"
+    },
     "booking": {
         "bookAppointment": "Đặt lịch hẹn",
         "bookNow": "Đặt ngay",

@@ -28,14 +28,14 @@ export async function getCurrentSubscription(
     `
     )
     .eq("merchant_id", merchantId)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error("Error fetching subscription:", error);
     return null;
   }
 
-  return data as SubscriptionWithTier;
+  return data as SubscriptionWithTier | null;
 }
 
 /**
