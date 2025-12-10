@@ -15,7 +15,7 @@ export function FloatingZaloButton({ phoneNumber, accentColor = "#0068FF" }: Flo
       href={zaloUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className="fixed bottom-24 right-8 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 z-50 group"
+      className="fixed bottom-8 right-8 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 z-50 group"
       style={{
         backgroundColor: 'transparent',
       }}
