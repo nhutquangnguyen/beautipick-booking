@@ -9,7 +9,6 @@ import { CartDrawer } from "./CartDrawer";
 import { PoweredByFooter } from "./PoweredByFooter";
 import { FloatingZaloButton } from "./FloatingZaloButton";
 import { CheckoutFlow } from "./CheckoutFlow";
-import { MobileBottomNav } from "./MobileBottomNav";
 import { createClient } from "@/lib/supabase/client";
 
 // Dynamic imports for theme components - Tailwind-based versions
@@ -60,7 +59,6 @@ export function BookingPageDynamic({
   const [showCart, setShowCart] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
   const [isPro, setIsPro] = useState(false);
-  const [activeSection, setActiveSection] = useState<string>("services");
   const supabase = createClient();
 
   // Check subscription tier
@@ -150,21 +148,6 @@ export function BookingPageDynamic({
 
   const clearCart = useCallback(() => {
     setCart([]);
-  }, []);
-
-  // Handle navigation to sections
-  const handleNavigate = useCallback((section: "services" | "products" | "contact") => {
-    setActiveSection(section);
-    // Scroll to section with offset to show the title
-    const sectionId = section === "services" ? "services-section" :
-                      section === "products" ? "products-section" :
-                      "contact-section";
-    const element = document.getElementById(sectionId);
-    if (element) {
-      const yOffset = -80; // Offset to show the section title
-      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
-      window.scrollTo({ top: y, behavior: "smooth" });
-    }
   }, []);
 
   // Extract theme colors from MerchantTheme
@@ -270,15 +253,6 @@ export function BookingPageDynamic({
           accentColor="#0068FF"
         />
       )}
-
-      {/* Mobile Bottom Navigation */}
-      <MobileBottomNav
-        hasServices={services.length > 0}
-        hasProducts={products.length > 0}
-        accentColor={colors.accentColor}
-        onNavigate={handleNavigate}
-        activeSection={activeSection}
-      />
     </div>
   );
 }
