@@ -84,7 +84,7 @@ export default function DashboardStorePage() {
             </div>
           </div>
           <Link
-            href="/dashboard/billing"
+            href="/business/dashboard/billing"
             className="inline-flex items-center gap-2 mt-4 text-sm font-medium text-purple-600 hover:text-purple-700"
           >
             {t("pricingManageSubscription")}
@@ -133,13 +133,13 @@ export default function DashboardStorePage() {
                 </div>
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                   <Link
-                    href="/dashboard/billing"
+                    href="/business/dashboard/billing"
                     className="inline-flex items-center justify-center px-4 py-2 rounded-full border-2 border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors text-sm"
                   >
                     200k/month
                   </Link>
                   <Link
-                    href="/dashboard/billing"
+                    href="/business/dashboard/billing"
                     className="inline-flex items-center justify-center px-6 py-2.5 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold hover:opacity-90 transition-opacity"
                   >
                     160k/month (yearly)

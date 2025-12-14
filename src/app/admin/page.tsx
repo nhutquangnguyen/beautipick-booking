@@ -15,6 +15,7 @@ interface MerchantData {
   phone: string | null;
   created_at: string;
   is_active: boolean;
+  show_in_directory: boolean;
   custom_domain: string | null;
   merchant_subscriptions?: Array<{
     id: string;
@@ -60,7 +61,7 @@ export default async function AdminPage() {
     .single();
 
   if (!adminRecord) {
-    redirect("/dashboard");
+    redirect("/business/dashboard");
   }
 
   // Fetch all merchants with their statistics and subscriptions using admin client
@@ -74,6 +75,7 @@ export default async function AdminPage() {
       phone,
       created_at,
       is_active,
+      show_in_directory,
       custom_domain,
       merchant_subscriptions (
         id,

@@ -76,7 +76,7 @@ export function MobileMenu({ storeText, loginText, getStartedText, languageText 
 
               {/* Login Button */}
               <Link
-                href="/login"
+                href="/business/login"
                 onClick={() => setIsOpen(false)}
                 className="block w-full text-center px-6 py-3 text-base font-medium text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-all duration-200"
               >

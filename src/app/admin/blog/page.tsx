@@ -24,7 +24,7 @@ export default async function AdminBlogPage() {
     .single();
 
   if (!adminRecord) {
-    redirect("/dashboard");
+    redirect("/business/dashboard");
   }
 
   // Fetch all blog posts using admin client

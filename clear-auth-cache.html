@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clear Auth Cache - BeautiPick</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+    p {
+      color: #666;
+      line-height: 1.6;
+    }
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 20px;
+      width: 100%;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    .success {
+      background: #10b981;
+      color: white;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 20px;
+      display: none;
+    }
+    .info {
+      background: #f3f4f6;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+    .cache-list {
+      background: #f9fafb;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+      font-family: monospace;
+      font-size: 13px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .cache-item {
+      padding: 5px 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🧹 Clear Auth Cache</h1>
+    <p>This tool will clear your authentication cache stored in localStorage. Use this if you're experiencing login issues.</p>
+
+    <div class="info">
+      <strong>When to use this:</strong>
+      <ul>
+        <li>Login shows success but header still shows "Đăng nhập"</li>
+        <li>User account was upgraded (customer → merchant or vice versa)</li>
+        <li>After fixing database/RLS policies</li>
+      </ul>
+    </div>
+
+    <div id="cacheList" class="cache-list"></div>
+
+    <button onclick="clearCache()">Clear All Auth Cache</button>
+
+    <div id="success" class="success">
+      ✓ Cache cleared successfully! Please refresh the page or <a href="/" style="color: white; text-decoration: underline;">go to homepage</a>.
+    </div>
+  </div>
+
+  <script>
+    function displayCurrentCache() {
+      const cacheList = document.getElementById('cacheList');
+      const keys = [];
+
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.includes('user_type_') || key.includes('has_merchant_') || key.includes('supabase'))) {
+          keys.push(key);
+        }
+      }
+
+      if (keys.length === 0) {
+        cacheList.innerHTML = '<div class="cache-item">No auth cache found</div>';
+      } else {
+        cacheList.innerHTML = '<strong>Found cached items:</strong><br>' +
+          keys.map(key => `<div class="cache-item">${key}</div>`).join('');
+      }
+    }
+
+    function clearCache() {
+      let cleared = 0;
+
+      // Clear user_type cache
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.includes('user_type_') || key.includes('has_merchant_'))) {
+          keysToRemove.push(key);
+        }
+      }
+
+      keysToRemove.forEach(key => {
+        localStorage.removeItem(key);
+        cleared++;
+      });
+
+      console.log(`Cleared ${cleared} cache items`);
+
+      document.getElementById('success').style.display = 'block';
+      displayCurrentCache();
+    }
+
+    // Display current cache on load
+    displayCurrentCache();
+  </script>
+</body>
+</html>

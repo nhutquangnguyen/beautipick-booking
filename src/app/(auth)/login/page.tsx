@@ -20,20 +20,75 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
-        setError(error.message);
+        console.error('[Login] Auth error:', error);
+        setError(`Đăng nhập thất bại: ${error.message}`);
+        setLoading(false);
         return;
       }
 
-      router.push("/dashboard");
-      router.refresh();
-    } catch {
-      setError("An unexpected error occurred");
+      if (data.user) {
+        console.log('[Login] User logged in:', data.user.id);
+
+        // Check if customer account exists
+        const { data: customerAccount, error: customerError } = await supabase
+          .from("customer_accounts")
+          .select("id")
+          .eq("id", data.user.id)
+          .maybeSingle();
+
+        console.log('[Login] Customer account query result:', { customerAccount, customerError });
+
+        if (customerError) {
+          console.error('[Login] Error querying customer account:', customerError);
+          await supabase.auth.signOut();
+          setError(`Lỗi kết nối cơ sở dữ liệu: ${customerError.message}`);
+          setLoading(false);
+          return;
+        }
+
+        if (!customerAccount) {
+          console.log('[Login] No customer account found, checking for merchant account');
+
+          // No customer account found
+          // Check if user has merchant account
+          const { data: merchantAccount, error: merchantError } = await supabase
+            .from("merchants")
+            .select("id")
+            .eq("id", data.user.id)
+            .maybeSingle();
+
+          console.log('[Login] Merchant account query result:', { merchantAccount, merchantError });
+
+          if (merchantAccount) {
+            // User is a merchant but doesn't have customer account yet
+            await supabase.auth.signOut();
+            setError("Bạn chỉ có tài khoản salon. Vui lòng đăng ký tài khoản khách hàng tại /signup hoặc đăng nhập salon tại /business/login");
+            setLoading(false);
+            return;
+          } else {
+            // No account at all - user needs to sign up first
+            console.log('[Login] No customer or merchant account found');
+            await supabase.auth.signOut();
+            setError("Tài khoản chưa được đăng ký. Vui lòng đăng ký tại trang /signup trước khi đăng nhập.");
+            setLoading(false);
+            return;
+          }
+        }
+
+        console.log('[Login] Valid customer account found, redirecting to home');
+        // Valid customer account exists (user may also have merchant account, that's ok)
+        router.push("/");
+        router.refresh();
+      }
+    } catch (err) {
+      console.error('[Login] Unexpected error:', err);
+      setError(`Lỗi không mong đợi: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
@@ -50,11 +105,11 @@ export default function LoginPage() {
         </div>
 
         <div className="card p-8">
-          <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
-          <p className="mt-2 text-gray-600">Sign in to your account</p>
+          <h1 className="text-2xl font-bold text-gray-900">Chào mừng trở lại</h1>
+          <p className="mt-2 text-gray-600">Đăng nhập vào tài khoản của bạn</p>
 
           <div className="mt-6">
-            <OAuthButtons redirectTo="/dashboard" />
+            <OAuthButtons redirectTo="/" userType="customer" />
           </div>
 
           <div className="relative my-6">
@@ -108,16 +163,25 @@ export default function LoginPage() {
               disabled={loading}
               className="btn btn-primary btn-md w-full"
             >
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? "Đang đăng nhập..." : "Đăng nhập"}
             </button>
           </form>
 
           <p className="mt-6 text-center text-sm text-gray-600">
-            Don&apos;t have an account?{" "}
+            Chưa có tài khoản?{" "}
             <Link href="/signup" className="font-medium text-purple-600 hover:text-purple-500">
-              Sign up
+              Đăng ký
             </Link>
           </p>
+
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <p className="text-center text-xs text-gray-500">
+              Bạn là chủ salon?{" "}
+              <Link href="/business/login" className="font-medium text-purple-600 hover:text-purple-500">
+                Đăng nhập tại đây
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

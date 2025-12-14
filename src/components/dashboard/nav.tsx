@@ -22,9 +22,9 @@ export function DashboardNav({ merchant }: { merchant: Merchant }) {
   const t = useTranslations("nav");
 
   const navItems = [
-    { href: "/dashboard", label: t("home"), icon: LayoutDashboard },
-    { href: "/dashboard/bookings", label: t("bookings"), icon: Calendar },
-    { href: "/dashboard/customers", label: t("customers"), icon: Users },
+    { href: "/business/dashboard", label: t("home"), icon: LayoutDashboard },
+    { href: "/business/dashboard/bookings", label: t("bookings"), icon: Calendar },
+    { href: "/business/dashboard/customers", label: t("customers"), icon: Users },
   ];
 
   return (
@@ -33,7 +33,7 @@ export function DashboardNav({ merchant }: { merchant: Merchant }) {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             {/* Logo */}
-            <Link href="/dashboard" className="flex items-center gap-2">
+            <Link href="/business/dashboard" className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-purple-600 to-pink-600" />
               <span className="font-bold text-gray-900 hidden sm:block">
                 {merchant.business_name}
@@ -44,8 +44,8 @@ export function DashboardNav({ merchant }: { merchant: Merchant }) {
             <div className="hidden md:flex md:items-center md:gap-1">
               {navItems.map((item) => {
                 const isActive =
-                  item.href === "/dashboard"
-                    ? pathname === "/dashboard"
+                  item.href === "/business/dashboard"
+                    ? pathname === "/business/dashboard"
                     : pathname.startsWith(item.href);
                 return (
                   <Link
@@ -72,10 +72,10 @@ export function DashboardNav({ merchant }: { merchant: Merchant }) {
 
               {/* Settings button */}
               <Link
-                href="/dashboard/settings"
+                href="/business/dashboard/settings"
                 className={cn(
                   "hidden md:flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  pathname.startsWith("/dashboard/settings")
+                  pathname.startsWith("/business/dashboard/settings")
                     ? "bg-purple-50 text-purple-600"
                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                 )}
@@ -105,8 +105,8 @@ export function DashboardNav({ merchant }: { merchant: Merchant }) {
             <div className="space-y-1 px-4 py-3">
               {navItems.map((item) => {
                 const isActive =
-                  item.href === "/dashboard"
-                    ? pathname === "/dashboard"
+                  item.href === "/business/dashboard"
+                    ? pathname === "/business/dashboard"
                     : pathname.startsWith(item.href);
                 return (
                   <Link
@@ -126,11 +126,11 @@ export function DashboardNav({ merchant }: { merchant: Merchant }) {
                 );
               })}
               <Link
-                href="/dashboard/settings"
+                href="/business/dashboard/settings"
                 onClick={() => setMobileMenuOpen(false)}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-3 text-base font-medium transition-colors",
-                  pathname.startsWith("/dashboard/settings")
+                  pathname.startsWith("/business/dashboard/settings")
                     ? "bg-purple-50 text-purple-600"
                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                 )}

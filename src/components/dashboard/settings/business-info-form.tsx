@@ -259,7 +259,7 @@ export function BusinessInfoForm({ merchant }: { merchant: Merchant }) {
                       {tSettings("customDomainProDescription")}
                     </p>
                     <Link
-                      href="/dashboard/settings"
+                      href="/business/dashboard/settings"
                       className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-semibold rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all"
                     >
                       <Crown className="h-4 w-4" />

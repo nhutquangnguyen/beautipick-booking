@@ -19,7 +19,7 @@ export function LanguageSwitcher({ className = "" }: { className?: string }) {
   const handleChange = (newLocale: string) => {
     startTransition(() => {
       document.cookie = `locale=${newLocale};path=/;max-age=31536000`;
-      router.refresh();
+      window.location.reload();
     });
   };
 
@@ -49,7 +49,7 @@ export function LanguageSwitcherCompact({ className = "" }: { className?: string
   const handleChange = (newLocale: string) => {
     startTransition(() => {
       document.cookie = `locale=${newLocale};path=/;max-age=31536000`;
-      router.refresh();
+      window.location.reload();
     });
   };
 
@@ -86,7 +86,7 @@ export function LanguageSwitcherIcon({ className = "" }: { className?: string })
     setIsOpen(false);
     startTransition(() => {
       document.cookie = `locale=${newLocale};path=/;max-age=31536000`;
-      router.refresh();
+      window.location.reload();
     });
   };
 

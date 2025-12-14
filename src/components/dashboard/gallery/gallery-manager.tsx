@@ -350,7 +350,7 @@ export function GalleryManager({
               )}
             </div>
             <Link
-              href="/dashboard/settings"
+              href="/business/dashboard/settings"
               className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors whitespace-nowrap"
             >
               <Crown className="w-4 h-4" />
@@ -372,7 +372,7 @@ export function GalleryManager({
               <p className="text-sm text-red-700 mb-3">{error}</p>
             </div>
             <Link
-              href="/dashboard/settings"
+              href="/business/dashboard/settings"
               className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors whitespace-nowrap"
             >
               <Crown className="w-4 h-4" />
@@ -499,7 +499,7 @@ export function GalleryManager({
                         <p className="text-sm text-red-700 font-medium">{error}</p>
                         {showUpgradePrompt && (
                           <Link
-                            href="/dashboard/settings"
+                            href="/business/dashboard/settings"
                             className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors"
                           >
                             <Crown className="w-4 h-4" />

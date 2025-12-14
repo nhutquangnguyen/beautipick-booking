@@ -22,7 +22,7 @@ export default async function CustomerDashboardPage() {
 
   // If user is a merchant, redirect to merchant dashboard
   if (userType?.user_type === "merchant") {
-    redirect("/dashboard");
+    redirect("/business/dashboard");
   }
 
   // Get customer account details

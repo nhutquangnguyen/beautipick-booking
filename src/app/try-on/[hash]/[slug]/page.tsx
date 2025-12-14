@@ -166,7 +166,7 @@ export default async function ThemePreviewPage({
             </div>
           </div>
           <Link
-            href="/dashboard/settings"
+            href="/business/dashboard/settings"
             className="w-full px-4 py-2 bg-white text-purple-600 hover:bg-white/90 rounded-lg transition-colors font-bold text-sm flex items-center justify-center gap-2 shadow-lg"
           >
             <Crown className="h-4 w-4" />

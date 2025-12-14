@@ -4,10 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
-import { Check, ChevronRight, Clock, Scissors, Store, Palette, Sparkles, Languages } from "lucide-react";
-import { layoutOptions } from "@/types/database";
+import { Check, ChevronRight, Clock, Scissors, Store, Sparkles, Languages } from "lucide-react";
 
-type Step = "business" | "theme" | "category" | "hours" | "complete";
+type Step = "business" | "category" | "hours" | "complete";
 
 // Category-based services and products templates with translations
 const CATEGORY_DATA = {
@@ -118,10 +117,10 @@ export default function OnboardingPage() {
   // Language selection state (default to current locale)
   const [selectedLanguage, setSelectedLanguage] = useState<"en" | "vi">(defaultLocale as "en" | "vi");
 
-  // Set currency and timezone based on selected language
-  const currency = selectedLanguage === "vi" ? "VND" : "USD";
-  const timezone = selectedLanguage === "vi" ? "Asia/Ho_Chi_Minh" : "America/New_York";
-  const priceMultiplier = currency === "VND" ? 25000 : 1;
+  // Set currency and timezone - default to VND and GMT+7
+  const currency = "VND";
+  const timezone = "Asia/Ho_Chi_Minh"; // GMT+7
+  const priceMultiplier = 25000;
 
   // Dynamic labels based on selected language
   const labels = {
@@ -137,10 +136,6 @@ export default function OnboardingPage() {
     continue: selectedLanguage === "vi" ? "Tiếp tục" : "Continue",
     skipForNow: selectedLanguage === "vi" ? "Bỏ qua bây giờ" : "Skip for now",
   };
-
-  // Theme selection - use Starter layout with clean color scheme
-  const [selectedColorScheme, setSelectedColorScheme] = useState<string>("clean");
-  const starterLayout = layoutOptions.find(l => l.id === "starter")!;
 
   // Business info
   const [businessInfo, setBusinessInfo] = useState({
@@ -172,6 +167,21 @@ export default function OnboardingPage() {
         address: businessInfo.address || null,
         currency: currency,
         timezone: timezone,
+        // Apply default theme automatically
+        theme: {
+          layoutTemplate: "starter",
+          primaryColor: "#7c3aed",
+          secondaryColor: "#a78bfa",
+          accentColor: "#ec4899",
+          backgroundColor: "#ffffff",
+          textColor: "#1f2937",
+          fontFamily: "Inter",
+          borderRadius: "lg",
+          buttonStyle: "solid",
+          headerStyle: "stacked",
+          contentOrder: ["about", "services", "gallery", "products", "video", "contact", "social"],
+          showSectionTitles: true,
+        }
       };
 
       // Auto-add Zalo link if phone number is provided (for Vietnamese users)
@@ -186,36 +196,6 @@ export default function OnboardingPage() {
       }
 
       await supabase.from("merchants").update(updates).eq("id", user.id);
-    }
-
-    setLoading(false);
-    setStep("theme");
-  };
-
-  const handleThemeSubmit = async () => {
-    setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (user) {
-      const selectedColor = starterLayout.colorSchemes.find(c => c.id === selectedColorScheme);
-      if (selectedColor) {
-        await supabase.from("merchants").update({
-          theme: {
-            layoutTemplate: "starter",
-            primaryColor: selectedColor.primaryColor,
-            secondaryColor: selectedColor.secondaryColor,
-            accentColor: selectedColor.accentColor,
-            backgroundColor: selectedColor.backgroundColor,
-            textColor: selectedColor.textColor,
-            fontFamily: selectedColor.fontFamily,
-            borderRadius: "lg",
-            buttonStyle: "solid",
-            headerStyle: "stacked",
-            contentOrder: ["about", "services", "gallery", "products", "video", "contact", "social"],
-            showSectionTitles: true,
-          }
-        }).eq("id", user.id);
-      }
     }
 
     setLoading(false);
@@ -336,19 +316,18 @@ export default function OnboardingPage() {
   };
 
   const handleComplete = () => {
-    router.push("/dashboard");
+    router.push("/business/dashboard");
     router.refresh();
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
-      <div className={`mx-auto px-4 py-6 sm:py-12 ${step === "theme" ? "max-w-6xl" : "max-w-2xl"}`}>
+      <div className="mx-auto px-4 py-6 sm:py-12 max-w-2xl">
         {/* Progress */}
         <div className="mb-6 sm:mb-8">
           <div className="flex items-center justify-center gap-1.5 sm:gap-2">
             {[
               { key: "business", icon: Store, label: "Info" },
-              { key: "theme", icon: Palette, label: "Theme" },
               { key: "category", icon: Sparkles, label: "Category" },
               { key: "hours", icon: Clock, label: "Hours" },
             ].map((s, i, arr) => (
@@ -382,55 +361,6 @@ export default function OnboardingPage() {
           </div>
         </div>
 
-        {/* Step: Theme Selection */}
-        {step === "theme" && (
-          <div className="rounded-2xl bg-white p-4 sm:p-8 shadow-sm">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-              Choose Your Theme
-            </h1>
-            <p className="mt-2 text-sm sm:text-base text-gray-600">
-              Pick a beautiful theme for your booking page. You can customize colors and fonts later.
-            </p>
-
-            <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-              {starterLayout.colorSchemes.map((scheme) => (
-                <button
-                  key={scheme.id}
-                  onClick={() => setSelectedColorScheme(scheme.id)}
-                  className={`relative rounded-xl border-2 p-4 text-left transition-all ${
-                    selectedColorScheme === scheme.id
-                      ? "border-purple-600 bg-purple-50"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                >
-                  <div
-                    className="h-16 w-full rounded-lg mb-3"
-                    style={{ background: scheme.preview }}
-                  />
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="font-semibold text-gray-900 text-sm">{scheme.name}</p>
-                      <p className="text-xs text-gray-500 mt-1">{scheme.description}</p>
-                    </div>
-                    {selectedColorScheme === scheme.id && (
-                      <Check className="h-5 w-5 text-purple-600 flex-shrink-0" />
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            <button
-              onClick={handleThemeSubmit}
-              disabled={loading}
-              className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 py-4 font-semibold text-white hover:bg-purple-700 disabled:opacity-50"
-            >
-              {loading ? t("saving") : t("continue")}
-              <ChevronRight className="h-5 w-5" />
-            </button>
-          </div>
-        )}
-
         {/* Step: Business Info */}
         {step === "business" && (
           <div className="rounded-2xl bg-white p-4 sm:p-8 shadow-sm">
@@ -452,7 +382,7 @@ export default function OnboardingPage() {
                   onChange={(e) => setSelectedLanguage(e.target.value as "en" | "vi")}
                   className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200"
                 >
-                  <option value="en">🇺🇸 English (USD)</option>
+                  <option value="en">🇺🇸 English (VND)</option>
                   <option value="vi">🇻🇳 Tiếng Việt (VND)</option>
                 </select>
               </div>
@@ -515,7 +445,7 @@ export default function OnboardingPage() {
             </button>
 
             <button
-              onClick={() => setStep("theme")}
+              onClick={() => setStep("category")}
               className="mt-3 w-full py-2 text-sm text-gray-500 hover:text-gray-700"
             >
               {labels.skipForNow}

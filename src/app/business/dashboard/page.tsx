@@ -12,7 +12,6 @@ import {
   CheckCircle2,
   Package,
   Image,
-  Palette,
   Store,
   ExternalLink,
   ShoppingBag,
@@ -49,7 +48,7 @@ export default async function DashboardPage() {
 
   // If no services or availability, redirect to onboarding
   if (!hasServices || !hasAvailability) {
-    redirect("/dashboard/onboarding");
+    redirect("/business/dashboard/onboarding");
   }
 
   // Get stats
@@ -233,7 +232,7 @@ export default async function DashboardPage() {
           value={pendingBookings.toString()}
           color="amber"
           alert={pendingBookings > 0}
-          href={pendingBookings > 0 ? "/dashboard/bookings?status=pending" : undefined}
+          href={pendingBookings > 0 ? "/business/dashboard/bookings?status=pending" : undefined}
         />
         <StatCard
           icon={<TrendingUp className="h-6 w-6" />}
@@ -255,43 +254,38 @@ export default async function DashboardPage() {
         <h2 className="text-lg font-semibold text-gray-900 mb-3">{t("quickActions")}</h2>
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
         <QuickActionButton
-          href={`/${merchant.slug}`}
+          href={`/m/${merchant.slug}`}
           icon={<ExternalLink className="h-5 w-5" />}
           label={t("preview")}
           external
         />
         <QuickActionButton
-          href="/dashboard/store"
+          href="/business/dashboard/store"
           icon={<ShoppingBag className="h-5 w-5" />}
           label={tNav("store")}
         />
         <QuickActionButton
-          href="/dashboard/customers"
+          href="/business/dashboard/customers"
           icon={<Users className="h-5 w-5" />}
           label={tNav("customers")}
         />
         <QuickActionButton
-          href="/dashboard/services"
+          href="/business/dashboard/services"
           icon={<Scissors className="h-5 w-5" />}
           label={tNav("services")}
         />
         <QuickActionButton
-          href="/dashboard/products"
+          href="/business/dashboard/products"
           icon={<Package className="h-5 w-5" />}
           label={tNav("products")}
         />
         <QuickActionButton
-          href="/dashboard/themes/gallery"
+          href="/business/dashboard/themes/gallery"
           icon={<Image className="h-5 w-5" />}
           label={tNav("gallery")}
         />
         <QuickActionButton
-          href="/dashboard/themes"
-          icon={<Palette className="h-5 w-5" />}
-          label={tNav("themes")}
-        />
-        <QuickActionButton
-          href="/dashboard/business-info"
+          href="/business/dashboard/business-info"
           icon={<Store className="h-5 w-5" />}
           label={tNav("businessInfo")}
         />
@@ -310,7 +304,7 @@ export default async function DashboardPage() {
           <div className="space-y-3">
             {pendingBookings > 0 && (
               <Link
-                href="/dashboard/bookings?status=pending"
+                href="/business/dashboard/bookings?status=pending"
                 className="flex items-start gap-3 p-3 bg-white rounded-lg hover:shadow-sm transition-shadow"
               >
                 <div className="flex-shrink-0 w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
@@ -328,7 +322,7 @@ export default async function DashboardPage() {
 
             {servicesWithoutImages > 0 && (
               <Link
-                href="/dashboard/services"
+                href="/business/dashboard/services"
                 className="flex items-start gap-3 p-3 bg-white rounded-lg hover:shadow-sm transition-shadow"
               >
                 <div className="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -348,7 +342,7 @@ export default async function DashboardPage() {
 
             {productsWithoutImages > 0 && (
               <Link
-                href="/dashboard/products"
+                href="/business/dashboard/products"
                 className="flex items-start gap-3 p-3 bg-white rounded-lg hover:shadow-sm transition-shadow"
               >
                 <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">

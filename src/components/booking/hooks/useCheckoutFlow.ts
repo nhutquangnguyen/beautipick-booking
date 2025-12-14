@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { CartItem } from "../themes/types";
 import { ThemeCartHandlers } from "../themes/types";
+import { createClient } from "@/lib/supabase/client";
 
-export type CheckoutStep = "datetime" | "info" | "confirm" | "success";
+export type CheckoutStep = "datetime" | "choose" | "info" | "confirm" | "success";
 
 interface UseCheckoutFlowProps {
   isOpen: boolean;
@@ -26,7 +27,12 @@ export function useCheckoutFlow({
 
   const [currentStep, setCurrentStep] = useState<CheckoutStep>(initialStep);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [hasCustomerInfo, setHasCustomerInfo] = useState(false);
+  const [skippedAuth, setSkippedAuth] = useState(false); // Track if user skipped auth step
   const timeSelectionRef = useRef<HTMLDivElement>(null);
+  const supabase = createClient();
 
   // Form data
   const [selectedDate, setSelectedDate] = useState("");
@@ -34,12 +40,78 @@ export function useCheckoutFlow({
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
+  const [customerAddress, setCustomerAddress] = useState("");
   const [notes, setNotes] = useState("");
+
+  // Get current user on mount and pre-fill form
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      console.log('[CheckoutFlow] Auth user:', user?.id, user?.email);
+
+      // If user is logged in, get their customer account info and pre-fill
+      if (user) {
+        const { data: customerAccount, error: customerError } = await supabase
+          .from("customer_accounts")
+          .select("*")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (customerError) {
+          console.error('[CheckoutFlow] Error fetching customer account:', customerError);
+        }
+
+        console.log('[CheckoutFlow] Customer account:', customerAccount ? 'exists' : 'DOES NOT EXIST');
+
+        if (customerAccount) {
+          // User has a customer account - they're logged in as customer
+          setCurrentUserId(user.id);
+          setIsLoggedIn(true);
+
+          // Pre-fill form with logged-in user's info
+          if (customerAccount.name) setCustomerName(customerAccount.name);
+          if (customerAccount.email) setCustomerEmail(customerAccount.email);
+          if (customerAccount.phone) setCustomerPhone(customerAccount.phone);
+
+          // Check if we have all required info (name and phone are required, email is optional)
+          const hasPhone = !!customerAccount.phone;
+          const hasName = !!customerAccount.name;
+
+          setHasCustomerInfo(hasPhone && hasName);
+        } else {
+          // User is authenticated but doesn't have a customer account (probably a merchant)
+          console.log('[CheckoutFlow] User authenticated but NO customer account - treating as guest');
+          setCurrentUserId(null); // IMPORTANT: Don't set customer_id for users without customer accounts
+          setIsLoggedIn(false);
+
+          // Pre-fill email from auth if available
+          if (user.email) {
+            setCustomerEmail(user.email);
+          }
+          setHasCustomerInfo(false);
+        }
+      } else {
+        console.log('[CheckoutFlow] No authenticated user - guest checkout');
+        setCurrentUserId(null);
+        setIsLoggedIn(false);
+        setHasCustomerInfo(false);
+      }
+    };
+    getCurrentUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   // Reset step when modal opens (but not if we're showing success)
   useEffect(() => {
     if (isOpen && currentStep !== "success") {
-      setCurrentStep(initialStep);
+      // Determine the correct initial step based on login status
+      if (shouldSkipInfoStep()) {
+        // If logged in with all info, skip directly to confirm
+        setCurrentStep("confirm");
+      } else {
+        setCurrentStep(initialStep);
+      }
     }
   }, [isOpen]); // Removed initialStep from dependencies to prevent reset during checkout
 
@@ -141,6 +213,7 @@ export function useCheckoutFlow({
     try {
       const bookingData = {
         merchant_id: merchantId,
+        customer_id: isLoggedIn ? currentUserId : null, // Only include customer_id if logged in as customer
         customer_name: customerName,
         customer_email: customerEmail,
         customer_phone: customerPhone,
@@ -153,8 +226,6 @@ export function useCheckoutFlow({
         cart_items: cart.cart,
       };
 
-      console.log('Booking data being sent:', bookingData);
-
       const response = await fetch('/api/bookings', {
         method: 'POST',
         headers: {
@@ -163,17 +234,26 @@ export function useCheckoutFlow({
         body: JSON.stringify(bookingData),
       });
 
-      console.log('Response status:', response.status);
-      console.log('Response ok:', response.ok);
-
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
         console.error('Booking API error:', errorData);
-        throw new Error(errorData.error || 'Failed to create booking');
+        console.error('Response status:', response.status);
+        console.error('Response statusText:', response.statusText);
+        throw new Error(errorData.error || `Failed to create booking (${response.status})`);
       }
 
       const result = await response.json();
-      console.log('Booking created successfully:', result);
+
+      // If user is not logged in as customer, store booking ID for later linking after sign-up
+      if (!isLoggedIn && result.booking?.id) {
+        console.log('[CheckoutFlow] Saving pending_booking_id for later linking:', result.booking.id);
+        localStorage.setItem('pending_booking_id', result.booking.id);
+        // Also set as cookie for auth callback
+        document.cookie = `pending_booking_id=${result.booking.id}; path=/; max-age=3600`; // 1 hour
+        console.log('[CheckoutFlow] Saved to localStorage and cookie');
+      } else {
+        console.log('[CheckoutFlow] User is logged in, booking already linked to customer_id:', currentUserId);
+      }
 
       // Success - show success step
       setCurrentStep("success");
@@ -195,11 +275,21 @@ export function useCheckoutFlow({
   };
 
   const canProceedFromInfo = () => {
+    // If logged in, only phone is required (name is pre-filled, email is optional)
+    if (isLoggedIn) {
+      return customerPhone.trim() !== '';
+    }
+    // If not logged in, require name and phone (email is optional)
     return customerName.trim() && customerPhone.trim();
   };
 
+  // Check if we should skip the info step (logged in with all info)
+  const shouldSkipInfoStep = () => {
+    return isLoggedIn && hasCustomerInfo;
+  };
+
   const getStepStatus = (step: CheckoutStep) => {
-    const stepOrder: CheckoutStep[] = ["datetime", "info", "confirm", "success"];
+    const stepOrder: CheckoutStep[] = ["datetime", "choose", "info", "confirm", "success"];
     const currentIndex = stepOrder.indexOf(currentStep);
     const stepIndex = stepOrder.indexOf(step);
 
@@ -210,6 +300,7 @@ export function useCheckoutFlow({
 
   const goToNextStep = () => {
     if (currentStep === "datetime") {
+      // After selecting datetime, go directly to info (skip choose step)
       setCurrentStep("info");
     } else if (currentStep === "info") {
       setCurrentStep("confirm");
@@ -219,8 +310,10 @@ export function useCheckoutFlow({
   };
 
   const goToPreviousStep = () => {
-    if (currentStep === "info" && hasServices) {
-      setCurrentStep("datetime");
+    if (currentStep === "info") {
+      if (hasServices) {
+        setCurrentStep("datetime");
+      }
     } else if (currentStep === "confirm") {
       setCurrentStep("info");
     }
@@ -228,13 +321,19 @@ export function useCheckoutFlow({
 
   const resetToInitialStep = () => {
     setCurrentStep(initialStep);
-    // Clear form data when resetting
+    // Clear form data when resetting (but keep user info if logged in)
     setSelectedDate("");
     setSelectedTime("");
-    setCustomerName("");
-    setCustomerPhone("");
-    setCustomerEmail("");
     setNotes("");
+    setSkippedAuth(false);
+
+    // Only clear customer info if not logged in
+    if (!isLoggedIn) {
+      setCustomerName("");
+      setCustomerPhone("");
+      setCustomerEmail("");
+      setCustomerAddress("");
+    }
   };
 
   return {
@@ -242,6 +341,11 @@ export function useCheckoutFlow({
     currentStep,
     isSubmitting,
     hasServices,
+    isLoggedIn,
+    hasCustomerInfo,
+    skippedAuth,
+    setSkippedAuth,
+    shouldSkipInfoStep: shouldSkipInfoStep(),
     timeSelectionRef,
 
     // Form data
@@ -255,6 +359,8 @@ export function useCheckoutFlow({
     setCustomerPhone,
     customerEmail,
     setCustomerEmail,
+    customerAddress,
+    setCustomerAddress,
     notes,
     setNotes,
 

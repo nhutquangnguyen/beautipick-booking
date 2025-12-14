@@ -20,6 +20,7 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { MerchantDetailModal } from "./merchant-detail-modal";
+import { DirectoryToggle } from "./directory-toggle";
 
 interface MerchantWithStats {
   id: string;
@@ -29,6 +30,7 @@ interface MerchantWithStats {
   phone: string | null;
   created_at: string;
   is_active: boolean;
+  show_in_directory: boolean;
   custom_domain: string | null;
   total_bookings: number;
   total_customers: number;
@@ -210,6 +212,9 @@ export function AdminDashboard({ merchants }: AdminDashboardProps) {
                   Tier
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Directory
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Stats
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -292,6 +297,14 @@ export function AdminDashboard({ merchants }: AdminDashboardProps) {
                           Pro
                         </span>
                       )}
+                    </td>
+
+                    <td className="px-4 py-4">
+                      <DirectoryToggle
+                        merchantId={merchant.id}
+                        merchantName={merchant.business_name}
+                        initialValue={merchant.show_in_directory ?? true}
+                      />
                     </td>
 
                     <td className="px-4 py-4">

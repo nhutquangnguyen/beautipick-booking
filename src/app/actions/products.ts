@@ -43,7 +43,7 @@ export async function createProduct(formData: {
     return { error: error.message };
   }
 
-  revalidatePath("/dashboard/products");
+  revalidatePath("/business/dashboard/products");
   return { success: true };
 }
 
@@ -71,6 +71,6 @@ export async function deleteProduct(productId: string) {
     return { error: error.message };
   }
 
-  revalidatePath("/dashboard/products");
+  revalidatePath("/business/dashboard/products");
   return { success: true };
 }

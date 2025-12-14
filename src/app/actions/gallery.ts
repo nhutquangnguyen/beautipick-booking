@@ -39,7 +39,7 @@ export async function createGalleryImage(formData: {
     return { error: error.message };
   }
 
-  revalidatePath("/dashboard/gallery");
+  revalidatePath("/business/dashboard/gallery");
   return { success: true };
 }
 
@@ -67,6 +67,6 @@ export async function deleteGalleryImage(imageId: string) {
     return { error: error.message };
   }
 
-  revalidatePath("/dashboard/gallery");
+  revalidatePath("/business/dashboard/gallery");
   return { success: true };
 }

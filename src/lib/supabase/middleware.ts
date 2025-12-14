@@ -36,7 +36,7 @@ export async function updateSession(request: NextRequest) {
 
   // Protect dashboard routes (merchant) and customer routes
   if (
-    (request.nextUrl.pathname.startsWith("/dashboard") ||
+    (request.nextUrl.pathname.startsWith("/business/dashboard") ||
       request.nextUrl.pathname.startsWith("/customer")) &&
     !user
   ) {
@@ -44,13 +44,13 @@ export async function updateSession(request: NextRequest) {
     if (request.nextUrl.pathname.startsWith("/customer")) {
       url.pathname = "/";
     } else {
-      url.pathname = "/login";
+      url.pathname = "/business/login";
     }
     return NextResponse.redirect(url);
   }
 
   // Check user type for route protection
-  if (user && (request.nextUrl.pathname.startsWith("/dashboard") || request.nextUrl.pathname.startsWith("/customer"))) {
+  if (user && (request.nextUrl.pathname.startsWith("/business/dashboard") || request.nextUrl.pathname.startsWith("/customer"))) {
     const { data: userType } = await supabase
       .from("user_types")
       .select("user_type")
@@ -68,12 +68,12 @@ export async function updateSession(request: NextRequest) {
       // Redirect based on what profile exists
       if (request.nextUrl.pathname.startsWith("/customer") && merchantProfile) {
         const url = request.nextUrl.clone();
-        url.pathname = "/dashboard";
+        url.pathname = "/business/dashboard";
         return NextResponse.redirect(url);
       }
     } else {
       // Prevent customers from accessing merchant dashboard
-      if (request.nextUrl.pathname.startsWith("/dashboard") && userType.user_type === "customer") {
+      if (request.nextUrl.pathname.startsWith("/business/dashboard") && userType.user_type === "customer") {
         const url = request.nextUrl.clone();
         url.pathname = "/customer";
         return NextResponse.redirect(url);
@@ -82,7 +82,7 @@ export async function updateSession(request: NextRequest) {
       // Prevent merchants from accessing customer dashboard
       if (request.nextUrl.pathname.startsWith("/customer") && userType.user_type === "merchant") {
         const url = request.nextUrl.clone();
-        url.pathname = "/dashboard";
+        url.pathname = "/business/dashboard";
         return NextResponse.redirect(url);
       }
     }
@@ -105,7 +105,7 @@ export async function updateSession(request: NextRequest) {
     if (userType?.user_type === "customer") {
       url.pathname = "/customer";
     } else {
-      url.pathname = "/dashboard";
+      url.pathname = "/business/dashboard";
     }
     return NextResponse.redirect(url);
   }

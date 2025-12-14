@@ -63,7 +63,7 @@ export function QuotaBanner({
           )}
         </div>
         <Link
-          href="/dashboard/settings"
+          href="/business/dashboard/settings"
           className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors whitespace-nowrap"
         >
           <Crown className="w-4 h-4" />

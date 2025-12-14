@@ -7,7 +7,7 @@ import { defaultTheme, defaultSettings } from "@/types/database";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/dashboard";
+  const next = searchParams.get("next") ?? "/business/dashboard";
 
   // Check for customer signup parameters (from Google OAuth redirect)
   const signupType = searchParams.get("type");
@@ -47,12 +47,9 @@ export async function GET(request: Request) {
     // Use admin client to check existing profiles (bypasses RLS)
     const adminClient = createAdminClient();
 
-    // If this is a customer account creation
+    // Handle customer login/signup
     if (userType === "customer") {
-      console.log('[Auth Callback] Creating customer account from OAuth or magic link');
-
-      customerName = customerName || data.user.email?.split('@')[0] || 'Customer';
-      customerEmail = customerEmail || data.user.email;
+      console.log('[Auth Callback] Customer login flow');
 
       // Check if customer account already exists
       const { data: existingCustomerAccount } = await adminClient
@@ -61,25 +58,73 @@ export async function GET(request: Request) {
         .eq("id", data.user.id)
         .maybeSingle();
 
-      if (!existingCustomerAccount) {
-        // Create customer account
-        const { error: customerError } = await (adminClient as any)
-          .from("customer_accounts")
-          .insert({
-            id: data.user.id,
-            email: customerEmail || data.user.email || '',
-            name: customerName,
-            phone: customerPhone,
-            first_merchant_id: firstMerchantId,
-            preferences: {},
-          });
+      if (existingCustomerAccount) {
+        // Customer account exists, allow login
+        console.log('[Auth Callback] Customer account found, redirecting to homepage');
+        return NextResponse.redirect(`${origin}/`);
+      }
 
-        if (customerError) {
-          console.error('[Auth Callback] Error creating customer account:', customerError);
-          return NextResponse.redirect(`${origin}/?error=customer_creation_failed`);
+      // Check if user has merchant account (to support dual accounts)
+      const { data: existingMerchant } = await adminClient
+        .from("merchants")
+        .select("id")
+        .eq("id", data.user.id)
+        .maybeSingle();
+
+      // No customer account exists, create one
+      // Allow merchants to also have customer accounts (dual accounts)
+      console.log('[Auth Callback] Creating customer account' + (existingMerchant ? ' (merchant also becoming customer)' : ''));
+      customerName = customerName || data.user.email?.split('@')[0] || 'Customer';
+      customerEmail = customerEmail || data.user.email;
+
+      const { error: customerError } = await (adminClient as any)
+        .from("customer_accounts")
+        .insert({
+          id: data.user.id,
+          email: customerEmail || data.user.email || '',
+          name: customerName,
+          phone: customerPhone,
+          first_merchant_id: firstMerchantId,
+          preferences: {},
+        });
+
+      if (customerError) {
+        console.error('[Auth Callback] Error creating customer account:', customerError);
+        return NextResponse.redirect(`${origin}/?error=customer_creation_failed`);
+      }
+
+      // Link pending booking to user if exists
+      const cookieHeader = request.headers.get('cookie') || '';
+      const pendingBookingMatch = cookieHeader.match(/pending_booking_id=([^;]+)/);
+      if (pendingBookingMatch) {
+        const pendingBookingId = pendingBookingMatch[1];
+        console.log('[Auth Callback] Linking pending booking:', pendingBookingId, 'to user:', data.user.id);
+
+        const { error: bookingUpdateError } = await (adminClient as any)
+          .from("bookings")
+          .update({ customer_id: data.user.id })
+          .eq("id", pendingBookingId)
+          .is("customer_id", null); // Only update if not already linked
+
+        if (bookingUpdateError) {
+          console.error('[Auth Callback] Error linking booking to user:', bookingUpdateError);
+        } else {
+          console.log('[Auth Callback] Successfully linked booking to user');
+          // Note: Cookie will be cleared by browser when user navigates
+          // localStorage will be cleared by the client-side code
         }
+      }
 
-        // Create user_type entry for customer
+      // Update user_type entry
+      // If user already has merchant type, they now have both
+      const { data: existingUserType } = await (adminClient as any)
+        .from("user_types")
+        .select("user_type")
+        .eq("user_id", data.user.id)
+        .maybeSingle();
+
+      if (!existingUserType) {
+        // Create new user_type as customer
         const { error: userTypeError } = await (adminClient as any)
           .from("user_types")
           .insert({
@@ -90,55 +135,51 @@ export async function GET(request: Request) {
         if (userTypeError) {
           console.error('[Auth Callback] Error creating user type:', userTypeError);
         }
-
-        console.log('[Auth Callback] Customer account created successfully');
+      } else {
+        // User already has a type (merchant), keep it as is
+        // They now have both accounts but user_type remains as merchant
+        console.log('[Auth Callback] User already has type:', (existingUserType as any).user_type, ', now has both accounts');
       }
 
-      // Redirect to customer dashboard
-      console.log('[Auth Callback] Redirecting customer to dashboard');
-      return NextResponse.redirect(`${origin}/customer`);
+      console.log('[Auth Callback] Customer account created successfully, redirecting to homepage');
+      return NextResponse.redirect(`${origin}/`);
     }
 
-    // Check if user already exists as merchant or customer
-    const { data: merchantData, error: merchantError } = await adminClient
-      .from("merchants")
-      .select("id")
-      .eq("id", data.user.id)
-      .maybeSingle();
+    // Handle merchant login/signup
+    if (userType === "merchant") {
+      console.log('[Auth Callback] Merchant login flow');
 
-    const { data: existingCustomer } = await adminClient
-      .from("customer_accounts")
-      .select("id")
-      .eq("id", data.user.id)
-      .maybeSingle();
+      // Check if merchant account already exists
+      const { data: existingMerchant } = await adminClient
+        .from("merchants")
+        .select("id")
+        .eq("id", data.user.id)
+        .maybeSingle();
 
-    console.log('[Auth Callback] Merchant check:', {
-      exists: !!merchantData,
-      error: merchantError?.message,
-    });
+      if (existingMerchant) {
+        // Merchant account exists, allow login
+        console.log('[Auth Callback] Merchant account found, redirecting to dashboard');
+        return NextResponse.redirect(`${origin}/business/dashboard`);
+      }
 
-    // If this was a customer signup attempt but user has merchant profile, redirect to customer creation
-    if (signupType === "customer" && merchantData && !existingCustomer) {
-      console.log('[Auth Callback] User has merchant profile but signing up as customer, redirecting to home');
-      return NextResponse.redirect(`${origin}/?error=account_exists`);
-    }
+      // Check if user has customer account (to support dual accounts)
+      const { data: existingCustomer } = await adminClient
+        .from("customer_accounts")
+        .select("id")
+        .eq("id", data.user.id)
+        .maybeSingle();
 
-    // If user has customer account, redirect there
-    if (existingCustomer) {
-      console.log('[Auth Callback] Existing customer found, redirecting to customer dashboard');
-      return NextResponse.redirect(`${origin}/customer`);
-    }
-
-    // If no merchant profile exists (new OAuth user), create one
-    if (!merchantData) {
+      // No merchant account exists, create one
+      // Allow customers to also have merchant accounts (dual accounts)
+      console.log('[Auth Callback] Creating merchant account' + (existingCustomer ? ' (customer also becoming merchant)' : ''));
       const email = data.user.email || "";
-      const businessName = data.user.user_metadata?.full_name || email.split("@")[0];
+      const businessName = data.user.user_metadata?.business_name || data.user.user_metadata?.full_name || email.split("@")[0];
       let slug = generateSlug(businessName);
 
-      // Get locale from cookie or default to 'en'
+      // Get locale from cookie or default to 'vi'
       const cookieHeader = request.headers.get('cookie') || '';
-      const localeCookie = cookieHeader.split(';').find(c => c.trim().startsWith('NEXT_LOCALE='));
-      const locale = localeCookie ? localeCookie.split('=')[1] : 'en';
+      const localeCookie = cookieHeader.split(';').find(c => c.trim().startsWith('locale='));
+      const locale = localeCookie ? localeCookie.split('=')[1] : 'vi';
 
       // Set timezone and currency based on locale
       const timezone = locale === 'vi' ? 'Asia/Ho_Chi_Minh' : 'America/New_York';
@@ -147,14 +188,14 @@ export async function GET(request: Request) {
       // Check for slug conflicts and make it unique
       let slugAttempt = 0;
       let finalSlug = slug;
-      while (slugAttempt < 10) { // Max 10 attempts to avoid infinite loop
+      while (slugAttempt < 10) {
         const { data: conflictCheck } = await adminClient
           .from("merchants")
           .select("slug")
           .eq("slug", finalSlug)
           .maybeSingle();
 
-        if (!conflictCheck) break; // Slug is available
+        if (!conflictCheck) break;
 
         slugAttempt++;
         finalSlug = `${slug}-${slugAttempt}`;
@@ -168,8 +209,7 @@ export async function GET(request: Request) {
         locale,
       });
 
-      // Use admin client to create merchant profile (bypasses RLS)
-      // Create simple theme and settings objects to avoid potential type mismatches
+      // Create merchant profile
       const simpleTheme = {
         primaryColor: "#8B5CF6",
         secondaryColor: "#EC4899",
@@ -206,29 +246,79 @@ export async function GET(request: Request) {
 
       if (insertError) {
         console.error('[Auth Callback] Error creating merchant profile:', insertError.message);
-        console.error('[Auth Callback] Error details:', insertError);
-        return NextResponse.redirect(`${origin}/login?error=profile_creation_failed&code=${insertError.code}`);
+        return NextResponse.redirect(`${origin}/business/login?error=profile_creation_failed`);
       }
 
-      // Create user_type entry for merchant
-      const { error: userTypeError } = await (adminClient as any)
+      // Update user_type entry
+      // If user already has customer type, update to merchant (or keep as is)
+      const { data: existingUserType } = await (adminClient as any)
         .from("user_types")
-        .insert({
-          user_id: data.user.id,
-          user_type: "merchant",
-        });
+        .select("user_type")
+        .eq("user_id", data.user.id)
+        .maybeSingle();
 
-      if (userTypeError) {
-        console.error('[Auth Callback] Error creating user type:', userTypeError);
+      if (!existingUserType) {
+        // Create new user_type as merchant
+        const { error: userTypeError } = await (adminClient as any)
+          .from("user_types")
+          .insert({
+            user_id: data.user.id,
+            user_type: "merchant",
+          });
+
+        if (userTypeError) {
+          console.error('[Auth Callback] Error creating user type:', userTypeError);
+        }
+      } else if ((existingUserType as any).user_type === "customer") {
+        // User was customer, now becoming merchant - update to merchant
+        // (Merchant type has priority for primary landing page)
+        const { error: updateError } = await (adminClient as any)
+          .from("user_types")
+          .update({ user_type: "merchant" })
+          .eq("user_id", data.user.id);
+
+        if (updateError) {
+          console.error('[Auth Callback] Error updating user type:', updateError);
+        } else {
+          console.log('[Auth Callback] Updated user type from customer to merchant, user now has both accounts');
+        }
       }
 
       console.log('[Auth Callback] Merchant profile created successfully, redirecting to onboarding');
-      // Redirect new OAuth users to onboarding
-      return NextResponse.redirect(`${origin}/dashboard/onboarding`);
+      return NextResponse.redirect(`${origin}/business/dashboard/onboarding`);
     }
 
-    console.log('[Auth Callback] Existing merchant found, redirecting to:', next);
-    return NextResponse.redirect(`${origin}${next}`);
+    // Fallback: No userType provided (legacy or direct callback)
+    console.log('[Auth Callback] No userType provided, checking existing accounts');
+
+    const { data: merchantData } = await adminClient
+      .from("merchants")
+      .select("id")
+      .eq("id", data.user.id)
+      .maybeSingle();
+
+    const { data: customerData } = await adminClient
+      .from("customer_accounts")
+      .select("id")
+      .eq("id", data.user.id)
+      .maybeSingle();
+
+    // If user has customer account, redirect to customer area
+    if (customerData) {
+      console.log('[Auth Callback] Customer account found, redirecting to homepage');
+      return NextResponse.redirect(`${origin}/`);
+    }
+
+    // If user has merchant account, redirect to merchant area
+    if (merchantData) {
+      console.log('[Auth Callback] Merchant account found, redirecting to business dashboard');
+      return NextResponse.redirect(`${origin}/business/dashboard`);
+    }
+
+    // No account found - this shouldn't happen with proper login flows
+    console.error('[Auth Callback] No account found and no userType provided');
+    await supabase.auth.signOut();
+    return NextResponse.redirect(`${origin}/login?error=no_account_found`);
   }
 
   // Return the user to an error page with instructions

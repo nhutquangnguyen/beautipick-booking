@@ -143,9 +143,9 @@ export function DashboardSidebar({
 
   // Memoize navItems to prevent recreation on every render
   const navItems: NavItem[] = useMemo(() => [
-    { href: "/dashboard", label: translations.home, icon: LayoutDashboard, exact: true },
-    { href: "/dashboard/bookings", label: translations.orders, icon: Calendar },
-    { href: "/dashboard/settings", label: translations.settings, icon: Settings },
+    { href: "/business/dashboard", label: translations.home, icon: LayoutDashboard, exact: true },
+    { href: "/business/dashboard/bookings", label: translations.orders, icon: Calendar },
+    { href: "/business/dashboard/settings", label: translations.settings, icon: Settings },
     // Add admin link if user is admin
     ...(isAdmin ? [{ href: "/admin", label: translations.admin, icon: Shield }] : []),
   ], [isAdmin, translations]);
@@ -224,7 +224,7 @@ export function DashboardSidebar({
   const sidebarContent = (
     <>
       {/* Logo */}
-      <Link href="/dashboard" className="flex h-16 items-center gap-3 px-4 hover:bg-gray-50 transition-colors cursor-pointer">
+      <Link href="/business/dashboard" className="flex h-16 items-center gap-3 px-4 hover:bg-gray-50 transition-colors cursor-pointer">
         {logoDisplayUrl ? (
           <div className="relative h-10 w-10 rounded-xl overflow-hidden shadow-sm">
             <Image
@@ -305,7 +305,7 @@ export function DashboardSidebar({
     <>
       {/* Mobile Top Header */}
       <header className="sticky top-0 z-40 flex h-16 items-center justify-between bg-white px-4 lg:hidden shadow-sm">
-        <Link href="/dashboard" className="flex items-center gap-2">
+        <Link href="/business/dashboard" className="flex items-center gap-2">
           {logoDisplayUrl ? (
             <div className="relative h-8 w-8 rounded-lg overflow-hidden">
               <Image
@@ -370,45 +370,45 @@ export function DashboardSidebar({
         <nav className="bg-white rounded-3xl shadow-lg border border-gray-200 max-w-md mx-auto">
           <div className="grid grid-cols-3 h-14">
             <Link
-              href="/dashboard"
+              href="/business/dashboard"
               className={cn(
                 "flex items-center justify-center transition-colors",
-                pathname === "/dashboard"
+                pathname === "/business/dashboard"
                   ? "text-purple-600"
                   : "text-gray-600"
               )}
             >
               <Home
                 className="h-7 w-7"
-                strokeWidth={pathname === "/dashboard" ? 2.5 : 2}
+                strokeWidth={pathname === "/business/dashboard" ? 2.5 : 2}
               />
             </Link>
             <Link
-              href="/dashboard/bookings"
+              href="/business/dashboard/bookings"
               className={cn(
                 "flex items-center justify-center transition-colors",
-                pathname.startsWith("/dashboard/bookings")
+                pathname.startsWith("/business/dashboard/bookings")
                   ? "text-purple-600"
                   : "text-gray-600"
               )}
             >
               <ClipboardList
                 className="h-7 w-7"
-                strokeWidth={pathname.startsWith("/dashboard/bookings") ? 2.5 : 2}
+                strokeWidth={pathname.startsWith("/business/dashboard/bookings") ? 2.5 : 2}
               />
             </Link>
             <Link
-              href="/dashboard/settings"
+              href="/business/dashboard/settings"
               className={cn(
                 "flex items-center justify-center transition-colors",
-                pathname.startsWith("/dashboard/settings")
+                pathname.startsWith("/business/dashboard/settings")
                   ? "text-purple-600"
                   : "text-gray-600"
               )}
             >
               <Settings
                 className="h-7 w-7"
-                strokeWidth={pathname.startsWith("/dashboard/settings") ? 2.5 : 2}
+                strokeWidth={pathname.startsWith("/business/dashboard/settings") ? 2.5 : 2}
               />
             </Link>
           </div>

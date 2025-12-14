@@ -1,37 +1,98 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 interface OAuthButtonsProps {
   redirectTo?: string;
+  userType: 'customer' | 'merchant';
+  onSuccess?: () => void;
 }
 
-export function OAuthButtons({ redirectTo = "/dashboard" }: OAuthButtonsProps) {
+export function OAuthButtons({ redirectTo = "/business/dashboard", userType, onSuccess }: OAuthButtonsProps) {
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const supabase = createClient();
+  const router = useRouter();
+
+  // Listen for auth state changes (for popup flow)
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        console.log('[OAuthButtons] User signed in via popup');
+        setLoading(null);
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          // Refresh to update UI
+          router.refresh();
+        }
+      }
+    });
+
+    // Listen for messages from popup window
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+
+      if (event.data.type === 'OAUTH_SUCCESS') {
+        console.log('[OAuthButtons] Received OAuth success from popup');
+        setLoading(null);
+        // The auth state change will handle the rest
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('message', handleMessage);
+    };
+  }, [supabase, router, onSuccess]);
 
   const handleOAuthSignIn = async () => {
     setError(null);
     setLoading("google");
 
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      // Get OAuth URL first
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=${redirectTo}`,
+          // Use callback-popup page for popup flow
+          redirectTo: `${window.location.origin}/auth/callback-popup?next=${redirectTo}&type=${userType}`,
           queryParams: {
             prompt: 'select_account',
           },
+          skipBrowserRedirect: true, // Don't redirect main window
         },
       });
 
       if (error) {
         setError(error.message);
+        return;
       }
-    } catch {
+
+      if (data?.url) {
+        // Open popup with OAuth URL directly
+        const width = 500;
+        const height = 600;
+        const left = window.screenX + (window.outerWidth - width) / 2;
+        const top = window.screenY + (window.outerHeight - height) / 2;
+
+        const popup = window.open(
+          data.url,  // Open directly with OAuth URL
+          'googleSignIn',
+          `width=${width},height=${height},left=${left},top=${top},popup=1,toolbar=0,location=0,menubar=0`
+        );
+
+        if (!popup) {
+          setError("Popup was blocked. Please allow popups for this site.");
+        }
+      }
+    } catch (err) {
       setError("An unexpected error occurred");
+      console.error('[OAuthButtons] Error:', err);
     } finally {
       setLoading(null);
     }

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Signup Flow</title>
+</head>
+<body>
+    <h1>Debug: Check Email Confirmation Status</h1>
+    <p>Open your browser console and check the signup response:</p>
+
+    <script type="module">
+        // Test signup to see if confirmation is required
+        import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+        const supabaseUrl = prompt('Enter your Supabase URL:');
+        const supabaseKey = prompt('Enter your Supabase ANON key:');
+
+        if (supabaseUrl && supabaseKey) {
+            const supabase = createClient(supabaseUrl, supabaseKey);
+
+            // Test signup
+            const testEmail = `test-${Date.now()}@example.com`;
+            const result = await supabase.auth.signUp({
+                email: testEmail,
+                password: 'test123456',
+            });
+
+            console.log('=== SIGNUP RESULT ===');
+            console.log('User:', result.data.user);
+            console.log('Session:', result.data.session);
+            console.log('Error:', result.error);
+
+            if (result.data.session) {
+                document.body.innerHTML += '<h2 style="color: green;">✓ Email confirmation is DISABLED</h2><p>Users can signup without email confirmation</p>';
+            } else if (result.data.user && !result.data.session) {
+                document.body.innerHTML += '<h2 style="color: orange;">⚠ Email confirmation is ENABLED</h2><p>Check your email for confirmation link</p>';
+            } else {
+                document.body.innerHTML += '<h2 style="color: red;">✗ Error occurred</h2><p>Check console for details</p>';
+            }
+        }
+    </script>
+</body>
+</html>

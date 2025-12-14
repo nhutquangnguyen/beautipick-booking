@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Upload, X, Image as ImageIcon, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { useTranslations } from "next-intl";
 
 interface MultiImageUploadProps {
   value: string[]; // Array of image URLs/keys
@@ -23,6 +24,7 @@ export function MultiImageUpload({
   const [error, setError] = useState<string | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const supabase = createClient();
+  const t = useTranslations("imageUpload");
 
   const aspectRatioClasses = {
     square: "aspect-square",
@@ -50,7 +52,7 @@ export function MultiImageUpload({
 
     // Check if adding these files would exceed max
     if (value.length + files.length > maxImages) {
-      setError(`Maximum ${maxImages} images allowed`);
+      setError(t("maxImagesError", { max: maxImages }));
       return;
     }
 
@@ -79,7 +81,7 @@ export function MultiImageUpload({
       onChange([...value, ...uploadedKeys]);
     } catch (err) {
       console.error("Upload error:", err);
-      setError("Failed to upload images. Please try again.");
+      setError(t("uploadError"));
     } finally {
       setUploading(false);
     }
@@ -130,7 +132,7 @@ export function MultiImageUpload({
               {/* Primary Badge */}
               {index === 0 && (
                 <div className="absolute top-2 left-2 z-10 px-2 py-1 bg-purple-600 text-white text-xs font-medium rounded">
-                  Primary
+                  {t("primary")}
                 </div>
               )}
 
@@ -153,7 +155,7 @@ export function MultiImageUpload({
               {/* Drag Handle Overlay */}
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
                 <div className="text-white text-xs font-medium px-2 py-1 bg-black/50 rounded">
-                  Drag to reorder
+                  {t("dragToReorder")}
                 </div>
               </div>
             </div>
@@ -174,7 +176,7 @@ export function MultiImageUpload({
             {uploading ? (
               <>
                 <Loader2 className="w-8 h-8 text-purple-500 animate-spin mb-2" />
-                <p className="text-sm text-gray-600">Uploading...</p>
+                <p className="text-sm text-gray-600">{t("uploading")}</p>
               </>
             ) : (
               <>
@@ -184,10 +186,10 @@ export function MultiImageUpload({
                   <Upload className="w-8 h-8 text-gray-400 mb-2" />
                 )}
                 <p className="text-sm text-gray-600 font-medium">
-                  {value.length === 0 ? "Upload images" : "Add more images"}
+                  {value.length === 0 ? t("uploadImages") : t("addMoreImages")}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  {value.length} / {maxImages} images
+                  {value.length} / {maxImages} {t("images")}
                 </p>
               </>
             )}
@@ -206,10 +208,10 @@ export function MultiImageUpload({
       {/* Hints */}
       <div className="text-xs text-gray-500 space-y-1">
         {value.length > 0 && (
-          <p>💡 Drag images to reorder. First image is the primary image.</p>
+          <p>💡 {t("dragHint")}</p>
         )}
         {value.length === 0 && (
-          <p>💡 You can upload multiple images (max {maxImages})</p>
+          <p>💡 {t("uploadHint", { max: maxImages })}</p>
         )}
       </div>
 

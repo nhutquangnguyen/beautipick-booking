@@ -45,7 +45,7 @@ export async function createService(formData: {
     return { error: error.message };
   }
 
-  revalidatePath("/dashboard/services");
+  revalidatePath("/business/dashboard/services");
   return { success: true };
 }
 
@@ -73,6 +73,6 @@ export async function deleteService(serviceId: string) {
     return { error: error.message };
   }
 
-  revalidatePath("/dashboard/services");
+  revalidatePath("/business/dashboard/services");
   return { success: true };
 }

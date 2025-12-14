@@ -33,6 +33,15 @@ export function CheckoutFlow({
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [accountError, setAccountError] = useState<string | null>(null);
+  const [showEmailInput, setShowEmailInput] = useState(false);
+  const [tempEmail, setTempEmail] = useState("");
+  const [tempPhone, setTempPhone] = useState("");
+  const [tempName, setTempName] = useState("");
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
+  const [showAuthForm, setShowAuthForm] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const supabase = createClient();
 
   const checkout = useCheckoutFlow({
@@ -44,9 +53,76 @@ export function CheckoutFlow({
     locale,
   });
 
+  // Listen for OAuth popup success
+  useEffect(() => {
+    const handleMessage = async (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+
+      if (event.data.type === 'OAUTH_SUCCESS') {
+        console.log('[CheckoutFlow] Received OAuth success from popup');
+        setIsCreatingAccount(false);
+
+        // Wait a bit for session to be established
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Check if user now has a session
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (user) {
+          console.log('[CheckoutFlow] User authenticated after popup:', user.id);
+
+          // Link pending booking if exists
+          const pendingBookingId = localStorage.getItem('pending_booking_id');
+          if (pendingBookingId) {
+            console.log('[CheckoutFlow] Linking pending booking to new account:', pendingBookingId);
+            try {
+              const linkResponse = await fetch('/api/bookings', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  bookingId: pendingBookingId,
+                  customerId: user.id,
+                }),
+              });
+
+              const linkResult = await linkResponse.json();
+
+              if (linkResponse.ok) {
+                console.log('[CheckoutFlow] Successfully linked booking:', linkResult);
+                localStorage.removeItem('pending_booking_id');
+                document.cookie = 'pending_booking_id=; path=/; max-age=0';
+              } else {
+                console.error('[CheckoutFlow] Failed to link booking:', linkResult);
+              }
+            } catch (error) {
+              console.error('[CheckoutFlow] Error linking booking:', error);
+            }
+          }
+
+          // Close checkout and redirect to appointments
+          handleCloseCheckout();
+          window.location.href = '/account/appointments';
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [supabase]);
+
   const handleSendMagicLink = async () => {
-    if (!checkout.customerEmail || !checkout.customerEmail.trim()) {
-      setAccountError("Please provide an email address");
+    const emailToUse = tempEmail;
+    const phoneToUse = tempPhone;
+    const nameToUse = tempName;
+
+    if (!emailToUse || !emailToUse.trim()) {
+      setAccountError(locale === 'vi' ? "Vui lòng cung cấp địa chỉ email" : "Please provide email address");
+      return;
+    }
+
+    // Only require phone for signup, not login
+    if (authMode === 'signup' && (!phoneToUse || !phoneToUse.trim())) {
+      setAccountError(locale === 'vi' ? "Vui lòng cung cấp số điện thoại" : "Please provide phone number");
       return;
     }
 
@@ -54,31 +130,46 @@ export function CheckoutFlow({
     setAccountError(null);
 
     try {
-      const { error: signInError } = await supabase.auth.signInWithOtp({
-        email: checkout.customerEmail,
+      const signInOptions: any = {
+        email: emailToUse,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-          data: {
-            user_type: "customer",
-            name: checkout.customerName,
-            phone: checkout.customerPhone,
-            first_merchant_id: merchantId,
-          },
+          emailRedirectTo: `${window.location.origin}/auth/callback?type=customer`,
         },
-      });
+      };
+
+      // Only add user metadata for signup
+      if (authMode === 'signup') {
+        signInOptions.options.data = {
+          user_type: "customer",
+          name: nameToUse || emailToUse.split('@')[0],
+          phone: phoneToUse,
+          first_merchant_id: merchantId,
+        };
+      }
+
+      const { error: signInError } = await supabase.auth.signInWithOtp(signInOptions);
 
       if (signInError) throw signInError;
 
       setEmailSent(true);
+      // After email sent, user will verify and come back logged in
     } catch (err) {
       console.error("Error sending magic link:", err);
-      setAccountError(err instanceof Error ? err.message : "Failed to send magic link");
+      setAccountError(err instanceof Error ? err.message : (locale === 'vi' ? "Không thể gửi liên kết đăng nhập" : "Unable to send login link"));
     } finally {
       setIsCreatingAccount(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
+    const phoneToUse = tempPhone;
+    const nameToUse = tempName;
+
+    if (!phoneToUse || !phoneToUse.trim()) {
+      setAccountError(locale === 'vi' ? "Vui lòng cung cấp số điện thoại" : "Please provide phone number");
+      return;
+    }
+
     setIsCreatingAccount(true);
     setAccountError(null);
 
@@ -86,28 +177,222 @@ export function CheckoutFlow({
       // Store customer info in localStorage for Google OAuth callback
       const customerData = {
         user_type: "customer",
-        name: checkout.customerName,
-        phone: checkout.customerPhone,
-        email: checkout.customerEmail,
+        name: nameToUse,
+        phone: phoneToUse,
         first_merchant_id: merchantId,
       };
       localStorage.setItem('pending_customer_signup', JSON.stringify(customerData));
 
-      const { error: signInError } = await supabase.auth.signInWithOAuth({
+      console.log('[CheckoutFlow] Starting Google OAuth...');
+
+      // Get the OAuth URL first (synchronously before popup)
+      const { data, error: signInError } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?type=customer&merchant_id=${merchantId}&name=${encodeURIComponent(checkout.customerName)}&phone=${encodeURIComponent(checkout.customerPhone || '')}&email=${encodeURIComponent(checkout.customerEmail || '')}`,
+          redirectTo: `${window.location.origin}/auth/callback-popup?type=customer&merchant_id=${merchantId}&name=${encodeURIComponent(nameToUse || '')}&phone=${encodeURIComponent(phoneToUse)}`,
           queryParams: {
-            access_type: "offline",
-            prompt: "consent",
+            prompt: 'select_account',
+          },
+          skipBrowserRedirect: true, // Don't redirect main window
+        },
+      });
+
+      console.log('[CheckoutFlow] OAuth response:', { hasData: !!data, hasUrl: !!data?.url, error: signInError });
+
+      if (signInError) {
+        throw signInError;
+      }
+
+      if (data?.url) {
+        console.log('[CheckoutFlow] Opening popup with URL:', data.url);
+
+        // Open popup AFTER we have the URL
+        const width = 500;
+        const height = 600;
+        const left = window.screenX + (window.outerWidth - width) / 2;
+        const top = window.screenY + (window.outerHeight - height) / 2;
+
+        const popup = window.open(
+          data.url,  // Open directly with the OAuth URL
+          'googleSignIn',
+          `width=${width},height=${height},left=${left},top=${top},popup=1,toolbar=0,location=0,menubar=0`
+        );
+
+        console.log('[CheckoutFlow] Popup opened:', !!popup);
+
+        if (!popup) {
+          console.error('[CheckoutFlow] Popup was blocked!');
+          throw new Error(locale === 'vi' ? "Popup bị chặn. Vui lòng cho phép popup cho trang này." : "Popup blocked. Please allow popups for this site.");
+        } else {
+          console.log('[CheckoutFlow] Popup successfully opened');
+        }
+      } else {
+        console.error('[CheckoutFlow] No URL received from Supabase');
+      }
+    } catch (err) {
+      console.error("Error with Google sign in:", err);
+      setAccountError(err instanceof Error ? err.message : (locale === 'vi' ? "Không thể đăng nhập bằng Google" : "Unable to sign in with Google"));
+      setIsCreatingAccount(false);
+    }
+  };
+
+  const handleCreateAccountWithPassword = async () => {
+    if (!email || !password) {
+      setAccountError(locale === 'vi' ? "Vui lòng nhập email và mật khẩu" : "Please enter email and password");
+      return;
+    }
+
+    if (password.length < 6) {
+      setAccountError(locale === 'vi' ? "Mật khẩu phải có ít nhất 6 ký tự" : "Password must be at least 6 characters");
+      return;
+    }
+
+    setIsCreatingAccount(true);
+    setAccountError(null);
+
+    try {
+      // First, sign up the user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            user_type: "customer",
+            name: checkout.customerName,
+            phone: checkout.customerPhone,
           },
         },
       });
 
-      if (signInError) throw signInError;
+      if (authError) throw authError;
+
+      console.log('SignUp response:', authData);
+
+      if (!authData.user) {
+        throw new Error('No user returned from signup');
+      }
+
+      // Create customer account
+      const response = await fetch('/api/customer-accounts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: authData.user.id,
+          email,
+          name: checkout.customerName,
+          phone: checkout.customerPhone,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('Customer account creation error:', errorData);
+        throw new Error(errorData.error || 'Failed to create customer account');
+      }
+
+      const result = await response.json();
+      console.log('Customer account created successfully:', result);
+
+      // Check if session was created (email confirmation is OFF)
+      if (authData.session) {
+        // User is already logged in - link pending booking to account
+        console.log('User is logged in with session after signup');
+
+        // Link pending booking before redirect
+        const pendingBookingId = localStorage.getItem('pending_booking_id');
+        if (pendingBookingId && authData.user) {
+          console.log('[CheckoutFlow] Linking pending booking to new account:', { bookingId: pendingBookingId, userId: authData.user.id });
+          try {
+            const linkResponse = await fetch('/api/bookings', {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                bookingId: pendingBookingId,
+                customerId: authData.user.id,
+              }),
+            });
+
+            const linkResult = await linkResponse.json();
+
+            if (linkResponse.ok) {
+              console.log('[CheckoutFlow] Successfully linked booking:', linkResult);
+              localStorage.removeItem('pending_booking_id');
+              document.cookie = 'pending_booking_id=; path=/; max-age=0';
+            } else {
+              console.error('[CheckoutFlow] Failed to link booking:', linkResult);
+            }
+          } catch (error) {
+            console.error('[CheckoutFlow] Error linking booking:', error);
+          }
+        } else {
+          console.log('[CheckoutFlow] No pending booking to link', { pendingBookingId, userId: authData.user?.id });
+        }
+
+        handleCloseCheckout();
+        // Redirect to appointments page to see the booking
+        window.location.href = '/account/appointments';
+      } else {
+        // No session - need to sign in manually (happens when email confirmation is OFF but auto-confirm is enabled)
+        console.log('No session after signup, signing in manually...');
+
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (signInError) {
+          console.error('Sign in error:', signInError);
+          // If sign-in fails, might need email confirmation
+          setEmailSent(true);
+          setAccountError(null);
+        } else if (signInData.session) {
+          // Successfully signed in - link pending booking to account
+          console.log('Successfully signed in after signup');
+
+          // Link pending booking before redirect
+          const pendingBookingId = localStorage.getItem('pending_booking_id');
+          if (pendingBookingId && signInData.user) {
+            console.log('[CheckoutFlow] Linking pending booking to new account:', { bookingId: pendingBookingId, userId: signInData.user.id });
+            try {
+              const linkResponse = await fetch('/api/bookings', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  bookingId: pendingBookingId,
+                  customerId: signInData.user.id,
+                }),
+              });
+
+              const linkResult = await linkResponse.json();
+
+              if (linkResponse.ok) {
+                console.log('[CheckoutFlow] Successfully linked booking:', linkResult);
+                localStorage.removeItem('pending_booking_id');
+                document.cookie = 'pending_booking_id=; path=/; max-age=0';
+              } else {
+                console.error('[CheckoutFlow] Failed to link booking:', linkResult);
+              }
+            } catch (error) {
+              console.error('[CheckoutFlow] Error linking booking:', error);
+            }
+          } else {
+            console.log('[CheckoutFlow] No pending booking to link', { pendingBookingId, userId: signInData.user?.id });
+          }
+
+          handleCloseCheckout();
+          // Redirect to appointments page to see the booking
+          window.location.href = '/account/appointments';
+        } else {
+          // Email confirmation required
+          console.log('Email confirmation required');
+          setEmailSent(true);
+          setAccountError(null);
+        }
+      }
     } catch (err) {
-      console.error("Error with Google sign in:", err);
-      setAccountError(err instanceof Error ? err.message : "Failed to sign in with Google");
+      console.error("Error creating account:", err);
+      setAccountError(err instanceof Error ? err.message : (locale === 'vi' ? "Không thể tạo tài khoản" : "Unable to create account"));
+    } finally {
       setIsCreatingAccount(false);
     }
   };
@@ -118,7 +403,29 @@ export function CheckoutFlow({
     setShowAccountCreation(false);
     setEmailSent(false);
     setAccountError(null);
+    setShowEmailInput(false);
+    setTempEmail("");
+    setTempPhone("");
+    setTempName("");
+    setShowPasswordForm(false);
+    setPassword("");
+    setEmail("");
+    setShowAuthForm(false);
+    setAuthMode('login');
   };
+
+  // Clean up pending booking ID if user is logged in (booking was linked)
+  useEffect(() => {
+    if (checkout.isLoggedIn && checkout.currentStep === "success") {
+      const pendingBookingId = localStorage.getItem('pending_booking_id');
+      if (pendingBookingId) {
+        console.log('[CheckoutFlow] Cleaning up pending booking ID after successful sign-in');
+        localStorage.removeItem('pending_booking_id');
+        // Clear cookie
+        document.cookie = 'pending_booking_id=; path=/; max-age=0';
+      }
+    }
+  }, [checkout.isLoggedIn, checkout.currentStep]);
 
   if (!isOpen) return null;
 
@@ -127,7 +434,7 @@ export function CheckoutFlow({
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 transition-opacity"
-        onClick={onClose}
+        onClick={handleCloseCheckout}
       />
 
       {/* Modal */}
@@ -151,146 +458,225 @@ export function CheckoutFlow({
               <h2 className="text-2xl font-bold mb-3 text-gray-900 text-center">
                 {t("orderSuccess")}
               </h2>
-              <p className="text-gray-600 mb-6 text-center">
+              <p className="text-gray-600 mb-2 text-center">
                 {t("thankYouMessage", { merchantName })}
               </p>
+              <p className="text-sm text-gray-500 mb-6 text-center">
+                {t("merchantWillContact")}
+              </p>
 
-              {/* Account Creation Section */}
-              {!showAccountCreation && !emailSent ? (
-                // Show CTA Button First
-                <div className="space-y-3">
-                  <button
-                    onClick={() => setShowAccountCreation(true)}
-                    className="w-full py-4 rounded-2xl font-bold text-white transition-all hover:opacity-90 flex items-center justify-center gap-2"
-                    style={{ backgroundColor: primaryColor }}
-                  >
-                    <User className="w-5 h-5" />
-                    {tAccount("createAccount")}
-                  </button>
-                  <button
-                    onClick={handleCloseCheckout}
-                    className="w-full py-3 rounded-xl font-semibold text-gray-600 hover:text-gray-800 transition-colors"
-                  >
-                    {t("close")}
-                  </button>
-                </div>
-              ) : emailSent ? (
-                // Email Sent State
-                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl text-center">
-                  <Mail className="w-12 h-12 mx-auto mb-3" style={{ color: primaryColor }} />
-                  <p className="text-sm font-semibold text-gray-900 mb-1">
-                    {tAccount("checkYourEmail")}
-                  </p>
-                  <p className="text-xs text-gray-600">
-                    {tAccount("magicLinkSent")}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">{checkout.customerEmail}</p>
-                </div>
-              ) : (
-                // Account Creation Options
-                <div className="mb-6">
-                  <div className="text-center mb-4">
-                    <h3 className="text-lg font-bold text-gray-900">{tAccount("createAccount")}</h3>
-                    <p className="text-sm text-gray-600">{tAccount("trackYourBookings")}</p>
-                  </div>
-
-                  {accountError && (
-                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600 text-center">
-                      {accountError}
-                    </div>
-                  )}
-
-                  {/* Customer Info Preview */}
-                  <div className="mb-4 p-3 bg-gray-50 rounded-xl border border-gray-200">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div
-                        className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                        style={{ backgroundColor: `${primaryColor}20` }}
+              {/* Account Creation Section (for guests only) */}
+              {!checkout.isLoggedIn && (
+                <div className="space-y-4">
+                  {emailSent ? (
+                    <>
+                      {/* Email Verification Required */}
+                      <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl text-center">
+                        <Mail className="w-12 h-12 mx-auto mb-3" style={{ color: primaryColor }} />
+                        <p className="text-sm font-semibold text-gray-900 mb-1">
+                          {tAccount("checkYourEmail")}
+                        </p>
+                        <p className="text-xs text-gray-600">
+                          {locale === 'vi'
+                            ? `Chúng tôi đã gửi email xác nhận đến ${email}. Vui lòng kiểm tra và xác nhận để hoàn tất tạo tài khoản.`
+                            : `We've sent a confirmation email to ${email}. Please check and verify to complete your account creation.`}
+                        </p>
+                      </div>
+                      <button
+                        onClick={handleCloseCheckout}
+                        className="w-full py-4 rounded-xl font-bold text-white transition-all hover:opacity-90"
+                        style={{ backgroundColor: primaryColor }}
                       >
-                        <User className="w-5 h-5" style={{ color: primaryColor }} />
+                        {tAccount("gotIt")}
+                      </button>
+                    </>
+                  ) : !showPasswordForm ? (
+                    <>
+                      {/* Info box */}
+                      <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                        <p className="text-sm text-gray-900 font-semibold text-center mb-1">
+                          {t("trackOrdersAndGetUpdates")}
+                        </p>
+                        <p className="text-xs text-gray-600 text-center">
+                          {t("createAccountToTrack")}
+                        </p>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-900">{checkout.customerName}</p>
-                        {checkout.customerPhone && (
-                          <p className="text-xs text-gray-600 flex items-center gap-1">
-                            <Phone className="w-3 h-3" />
-                            {checkout.customerPhone}
-                          </p>
+
+                      {/* Create Account Button */}
+                      <button
+                        onClick={() => setShowPasswordForm(true)}
+                        className="w-full py-4 rounded-xl font-bold text-white transition-all hover:opacity-90 flex items-center justify-center gap-2"
+                        style={{ backgroundColor: primaryColor }}
+                      >
+                        <User className="w-5 h-5" />
+                        {tAccount("createAccount")}
+                      </button>
+
+                      {/* Skip Button */}
+                      <button
+                        onClick={handleCloseCheckout}
+                        className="w-full py-3 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                      >
+                        {t("skipForNow")}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      {/* Password-based Account Creation Form */}
+                      <div className="space-y-4">
+                        {accountError && (
+                          <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600 text-center">
+                            {accountError}
+                          </div>
                         )}
+
+                        {/* Google Sign In */}
+                        <button
+                          onClick={async () => {
+                            setIsCreatingAccount(true);
+                            setAccountError(null);
+                            try {
+                              console.log('[CheckoutFlow SUCCESS] Starting Google OAuth popup...');
+
+                              // Store customer info for OAuth
+                              const customerData = {
+                                user_type: "customer",
+                                name: checkout.customerName,
+                                phone: checkout.customerPhone,
+                                first_merchant_id: merchantId,
+                              };
+                              localStorage.setItem('pending_customer_signup', JSON.stringify(customerData));
+
+                              // Get OAuth URL first
+                              const { data, error } = await supabase.auth.signInWithOAuth({
+                                provider: "google",
+                                options: {
+                                  redirectTo: `${window.location.origin}/auth/callback-popup?type=customer&name=${encodeURIComponent(checkout.customerName || '')}&phone=${encodeURIComponent(checkout.customerPhone)}`,
+                                  queryParams: {
+                                    prompt: 'select_account',
+                                  },
+                                  skipBrowserRedirect: true, // Don't redirect main window
+                                },
+                              });
+
+                              console.log('[CheckoutFlow SUCCESS] OAuth response:', { hasData: !!data, hasUrl: !!data?.url, error });
+
+                              if (error) throw error;
+
+                              if (data?.url) {
+                                console.log('[CheckoutFlow SUCCESS] Opening popup with URL');
+
+                                // Open popup with OAuth URL
+                                const width = 500;
+                                const height = 600;
+                                const left = window.screenX + (window.outerWidth - width) / 2;
+                                const top = window.screenY + (window.outerHeight - height) / 2;
+
+                                const popup = window.open(
+                                  data.url,
+                                  'googleSignIn',
+                                  `width=${width},height=${height},left=${left},top=${top},popup=1,toolbar=0,location=0,menubar=0`
+                                );
+
+                                console.log('[CheckoutFlow SUCCESS] Popup opened:', !!popup);
+
+                                if (!popup) {
+                                  throw new Error(locale === 'vi' ? "Popup bị chặn. Vui lòng cho phép popup." : "Popup blocked. Please allow popups.");
+                                }
+                              }
+                            } catch (err) {
+                              console.error("[CheckoutFlow SUCCESS] Error with Google sign in:", err);
+                              setAccountError(err instanceof Error ? err.message : (locale === 'vi' ? "Không thể đăng nhập bằng Google" : "Unable to sign in with Google"));
+                              setIsCreatingAccount(false);
+                            }
+                          }}
+                          disabled={isCreatingAccount}
+                          className="w-full py-4 rounded-xl font-bold border-2 border-gray-200 bg-white hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                          <svg className="w-5 h-5" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                          </svg>
+                          <span className="text-gray-700">
+                            {isCreatingAccount ? tAccount("sendingLink") : tAccount("continueWithGoogle")}
+                          </span>
+                        </button>
+
+                        {/* Divider */}
+                        <div className="relative">
+                          <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-gray-200"></div>
+                          </div>
+                          <div className="relative flex justify-center text-sm">
+                            <span className="px-2 bg-white text-gray-500">
+                              {locale === 'vi' ? "Or continue with email" : "Or continue with email"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Email Input */}
+                        <div>
+                          <label className="text-sm font-semibold text-gray-900 mb-2 block">Email</label>
+                          <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="you@example.com"
+                            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-gray-50 focus:outline-none focus:border-purple-500 focus:bg-white transition-all"
+                          />
+                        </div>
+
+                        {/* Password Input */}
+                        <div>
+                          <label className="text-sm font-semibold text-gray-900 mb-2 block">Password</label>
+                          <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="••••••••"
+                            minLength={6}
+                            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-gray-50 focus:outline-none focus:border-purple-500 focus:bg-white transition-all"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            {locale === 'vi' ? "Ít nhất 6 ký tự" : "At least 6 characters"}
+                          </p>
+                        </div>
+
+                        {/* Create Account Button */}
+                        <button
+                          onClick={handleCreateAccountWithPassword}
+                          disabled={isCreatingAccount || !email.trim() || !password || password.length < 6}
+                          className="w-full py-4 rounded-xl font-bold text-white transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                          style={{ backgroundColor: primaryColor }}
+                        >
+                          {isCreatingAccount ? t("creating") : tAccount("createAccount")}
+                        </button>
+
+                        {/* Back to options */}
+                        <button
+                          onClick={() => {
+                            setShowPasswordForm(false);
+                            setEmail("");
+                            setPassword("");
+                            setAccountError(null);
+                          }}
+                          className="w-full py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                        >
+                          {t("back")}
+                        </button>
                       </div>
-                    </div>
-                    {checkout.customerEmail ? (
-                      <div className="flex items-center gap-2 text-xs text-gray-600 pl-[46px]">
-                        <Mail className="w-3 h-3" />
-                        <p className="truncate">{checkout.customerEmail}</p>
-                      </div>
-                    ) : (
-                      <p className="text-xs text-orange-600 italic pl-[46px]">{tAccount("emailRequired")}</p>
-                    )}
-                  </div>
-
-                  {/* Magic Link Button */}
-                  <button
-                    onClick={handleSendMagicLink}
-                    disabled={isCreatingAccount || !checkout.customerEmail}
-                    className="w-full mb-3 py-3 rounded-xl font-bold text-white transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    style={{ backgroundColor: primaryColor }}
-                  >
-                    {isCreatingAccount ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        {tAccount("sendingLink")}
-                      </>
-                    ) : (
-                      <>
-                        <Mail className="w-5 h-5" />
-                        {tAccount("sendMagicLink")}
-                      </>
-                    )}
-                  </button>
-
-                  {/* Divider */}
-                  <div className="relative mb-3">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-gray-200"></div>
-                    </div>
-                    <div className="relative flex justify-center text-xs">
-                      <span className="px-3 bg-white text-gray-500">{tAccount("orContinueWith")}</span>
-                    </div>
-                  </div>
-
-                  {/* Google Sign In Button */}
-                  <button
-                    onClick={handleGoogleSignIn}
-                    disabled={isCreatingAccount}
-                    className="w-full mb-3 py-3 rounded-xl font-bold border-2 border-gray-200 bg-white hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24">
-                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                    </svg>
-                    <span className="text-gray-700">{tAccount("continueWithGoogle")}</span>
-                  </button>
-
-                  {/* Skip Link */}
-                  <div className="text-center">
-                    <button
-                      onClick={handleCloseCheckout}
-                      className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
-                    >
-                      {tAccount("skipForNow")}
-                    </button>
-                  </div>
+                    </>
+                  )}
                 </div>
               )}
 
-              {/* Close Button (always visible) */}
-              {emailSent && (
+              {/* Logged in users - just close button */}
+              {checkout.isLoggedIn && (
                 <button
                   onClick={handleCloseCheckout}
-                  className="w-full py-4 rounded-2xl font-semibold text-white transition-all hover:opacity-90"
+                  className="w-full py-4 rounded-2xl font-bold text-white transition-all hover:opacity-90"
                   style={{ backgroundColor: primaryColor }}
                 >
                   {t("close")}
@@ -308,7 +694,7 @@ export function CheckoutFlow({
                     {checkout.currentStep === "confirm" && t("confirmOrder")}
                   </h2>
                   <button
-                    onClick={onClose}
+                    onClick={handleCloseCheckout}
                     className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                   >
                     <X className="w-5 h-5 text-gray-500" />
@@ -474,6 +860,238 @@ export function CheckoutFlow({
                   </div>
                 )}
 
+                {/* Choose Step - Guest/Login/Create Account */}
+                {checkout.currentStep === "choose" && (
+                  <div className="space-y-4">
+                    {!showAuthForm ? (
+                      <>
+                        <div className="text-center mb-6">
+                          <p className="text-sm text-gray-600">{t("chooseHowToContinue")}</p>
+                        </div>
+
+                        {/* Big Guest Checkout Button */}
+                        <button
+                          onClick={() => {
+                            checkout.setSkippedAuth(true);
+                            checkout.goToNextStep();
+                          }}
+                          className="w-full py-6 rounded-2xl font-bold text-white text-lg transition-all hover:opacity-90 shadow-lg"
+                          style={{ backgroundColor: primaryColor }}
+                        >
+                          {t("checkoutAsGuest")}
+                        </button>
+
+                        {/* Divider */}
+                        <div className="relative my-6">
+                          <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-gray-200"></div>
+                          </div>
+                          <div className="relative flex justify-center text-xs">
+                            <span className="px-3 bg-white text-gray-500">{t("orContinueAs")}</span>
+                          </div>
+                        </div>
+
+                        {/* Login Button */}
+                        <button
+                          onClick={() => {
+                            setAuthMode('login');
+                            setShowAuthForm(true);
+                            setAccountError(null);
+                          }}
+                          className="w-full py-4 rounded-xl font-semibold border-2 transition-all hover:bg-gray-50 flex items-center justify-center"
+                          style={{ borderColor: primaryColor, color: primaryColor }}
+                        >
+                          {tAccount("login")}
+                        </button>
+
+                        {/* Create Account Button */}
+                        <button
+                          onClick={() => {
+                            setAuthMode('signup');
+                            setShowAuthForm(true);
+                            setAccountError(null);
+                          }}
+                          className="w-full py-4 rounded-xl font-semibold border-2 border-gray-200 text-gray-700 transition-all hover:bg-gray-50 flex items-center justify-center"
+                        >
+                          {tAccount("createAccount")}
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        {/* Inline Auth Form */}
+                        <div className="space-y-4">
+                          <div className="text-center mb-4">
+                            <h3 className="text-lg font-bold text-gray-900">
+                              {authMode === 'login' ? tAccount("login") : tAccount("createAccount")}
+                            </h3>
+                            <p className="text-sm text-gray-600 mt-1">
+                              {authMode === 'login'
+                                ? (locale === 'vi' ? "Đăng nhập để tiếp tục" : "Sign in to continue")
+                                : (locale === 'vi' ? "Tạo tài khoản để theo dõi đơn hàng" : "Create account to track your orders")}
+                            </p>
+                          </div>
+
+                          {accountError && (
+                            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600 text-center">
+                              {accountError}
+                            </div>
+                          )}
+
+                          {emailSent ? (
+                            <div className="p-4 bg-green-50 border border-green-200 rounded-xl text-center">
+                              <Check className="w-8 h-8 mx-auto mb-2 text-green-600" />
+                              <p className="text-sm font-semibold text-green-800 mb-1">
+                                {tAccount("checkYourEmail")}
+                              </p>
+                              <p className="text-xs text-gray-600">
+                                {tAccount("magicLinkSent")} {tempEmail}
+                              </p>
+                              <button
+                                onClick={() => {
+                                  setShowAuthForm(false);
+                                  setEmailSent(false);
+                                  setTempEmail("");
+                                  setTempPhone("");
+                                  setTempName("");
+                                }}
+                                className="mt-3 text-sm font-medium"
+                                style={{ color: primaryColor }}
+                              >
+                                {t("back")}
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              {/* Name (Optional) - Only for signup */}
+                              {authMode === 'signup' && (
+                                <div>
+                                  <label className="text-sm font-semibold text-gray-900 mb-2 block">
+                                    {t("fullName")}
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={tempName}
+                                    onChange={(e) => setTempName(e.target.value)}
+                                    placeholder={t("fullNamePlaceholder")}
+                                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-gray-50 focus:outline-none focus:border-purple-500 focus:bg-white transition-all"
+                                  />
+                                </div>
+                              )}
+
+                              {/* Phone (Required) - Only for signup */}
+                              {authMode === 'signup' && (
+                                <div>
+                                  <label className="text-sm font-semibold text-gray-900 mb-2 block">
+                                    {t("phoneNumber")} <span className="text-red-500">*</span>
+                                  </label>
+                                  <input
+                                    type="tel"
+                                    value={tempPhone}
+                                    onChange={(e) => setTempPhone(e.target.value)}
+                                    placeholder={t("phoneNumberPlaceholder")}
+                                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-gray-50 focus:outline-none focus:border-purple-500 focus:bg-white transition-all"
+                                  />
+                                </div>
+                              )}
+
+                              {/* Google Sign In */}
+                              <button
+                                onClick={async () => {
+                                  if (authMode === 'login') {
+                                    // Login with Google - no phone required
+                                    setIsCreatingAccount(true);
+                                    setAccountError(null);
+                                    try {
+                                      const { error } = await supabase.auth.signInWithOAuth({
+                                        provider: "google",
+                                        options: {
+                                          redirectTo: `${window.location.origin}/auth/callback?type=customer`,
+                                          queryParams: {
+                                            access_type: "offline",
+                                            prompt: "consent",
+                                          },
+                                        },
+                                      });
+                                      if (error) throw error;
+                                    } catch (err) {
+                                      console.error("Error with Google sign in:", err);
+                                      setAccountError(err instanceof Error ? err.message : (locale === 'vi' ? "Không thể đăng nhập bằng Google" : "Unable to sign in with Google"));
+                                      setIsCreatingAccount(false);
+                                    }
+                                  } else {
+                                    // Signup - require phone
+                                    handleGoogleSignIn();
+                                  }
+                                }}
+                                disabled={isCreatingAccount || (authMode === 'signup' && !tempPhone.trim())}
+                                className="w-full py-4 rounded-xl font-bold border-2 border-gray-200 bg-white hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                              >
+                                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                                </svg>
+                                <span className="text-gray-700">
+                                  {isCreatingAccount ? tAccount("sendingLink") : tAccount("continueWithGoogle")}
+                                </span>
+                              </button>
+
+                              {/* Divider */}
+                              <div className="relative">
+                                <div className="absolute inset-0 flex items-center">
+                                  <div className="w-full border-t border-gray-200"></div>
+                                </div>
+                                <div className="relative flex justify-center text-xs uppercase">
+                                  <span className="px-3 bg-white text-gray-500">{tAccount("orContinueWith")}</span>
+                                </div>
+                              </div>
+
+                              {/* Email Input */}
+                              <div>
+                                <label className="text-sm font-semibold text-gray-900 mb-2 block">
+                                  Email
+                                </label>
+                                <input
+                                  type="email"
+                                  value={tempEmail}
+                                  onChange={(e) => setTempEmail(e.target.value)}
+                                  placeholder={t("emailPlaceholder")}
+                                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-gray-50 focus:outline-none focus:border-purple-500 focus:bg-white transition-all"
+                                />
+                              </div>
+
+                              {/* Send Magic Link Button */}
+                              <button
+                                onClick={handleSendMagicLink}
+                                disabled={isCreatingAccount || !tempEmail.trim() || (authMode === 'signup' && !tempPhone.trim())}
+                                className="w-full py-4 rounded-xl font-bold text-white transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                                style={{ backgroundColor: primaryColor }}
+                              >
+                                {isCreatingAccount ? tAccount("sendingLink") : tAccount("sendMagicLinkSignInOrUp")}
+                              </button>
+
+                              {/* Back Button */}
+                              <button
+                                onClick={() => {
+                                  setShowAuthForm(false);
+                                  setTempEmail("");
+                                  setTempPhone("");
+                                  setTempName("");
+                                  setAccountError(null);
+                                }}
+                                className="w-full py-3 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                              >
+                                {t("back")}
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+
                 {/* Customer Information */}
                 {checkout.currentStep === "info" && (
                   <div className="space-y-5">
@@ -487,7 +1105,7 @@ export function CheckoutFlow({
                         value={checkout.customerName}
                         onChange={(e) => checkout.setCustomerName(e.target.value)}
                         className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-gray-50 focus:outline-none focus:border-current focus:bg-white transition-all"
-                        style={{ "--tw-border-opacity": "1", borderColor: checkout.customerName ? primaryColor : undefined } as React.CSSProperties}
+                        style={{ borderColor: checkout.customerName ? primaryColor : undefined } as React.CSSProperties}
                         placeholder={t("fullNamePlaceholder")}
                       />
                     </div>
@@ -504,21 +1122,6 @@ export function CheckoutFlow({
                         className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-gray-50 focus:outline-none focus:border-current focus:bg-white transition-all"
                         style={{ borderColor: checkout.customerPhone ? primaryColor : undefined } as React.CSSProperties}
                         placeholder={t("phoneNumberPlaceholder")}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2">
-                        <Mail className="w-4 h-4" style={{ color: primaryColor }} />
-                        {t("emailOptional")}
-                      </label>
-                      <input
-                        type="email"
-                        value={checkout.customerEmail}
-                        onChange={(e) => checkout.setCustomerEmail(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-gray-50 focus:outline-none focus:border-current focus:bg-white transition-all"
-                        style={{ borderColor: checkout.customerEmail ? primaryColor : undefined } as React.CSSProperties}
-                        placeholder={t("emailPlaceholder")}
                       />
                     </div>
 
@@ -616,7 +1219,7 @@ export function CheckoutFlow({
               {/* Footer */}
               <div className="px-6 py-5 border-t border-gray-100 bg-white">
                 <div className="flex gap-3">
-                  {((checkout.currentStep === "info" && checkout.hasServices) || checkout.currentStep === "confirm") && (
+                  {(checkout.currentStep === "info" || checkout.currentStep === "confirm") && (
                     <button
                       onClick={checkout.goToPreviousStep}
                       className="px-6 py-3 rounded-xl font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
@@ -625,28 +1228,44 @@ export function CheckoutFlow({
                     </button>
                   )}
 
-                  <button
-                    onClick={() => {
-                      if (checkout.currentStep === "info" && !checkout.canProceedFromInfo()) {
-                        alert(t("pleaseEnterRequired"));
-                        return;
-                      }
-                      checkout.goToNextStep();
-                    }}
-                    disabled={
-                      (checkout.currentStep === "datetime" && !checkout.canProceedFromDateTime()) ||
-                      (checkout.currentStep === "info" && !checkout.canProceedFromInfo()) ||
-                      checkout.isSubmitting
-                    }
-                    className="flex-1 py-4 rounded-2xl font-bold text-white transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{ backgroundColor: primaryColor }}
-                  >
-                    {checkout.isSubmitting
-                      ? t("processing")
-                      : checkout.currentStep === "confirm"
-                      ? t("confirmPlaceOrder")
-                      : t("continue")}
-                  </button>
+                  {checkout.currentStep === "datetime" && (
+                    <button
+                      onClick={checkout.goToNextStep}
+                      disabled={!checkout.canProceedFromDateTime()}
+                      className="flex-1 py-4 rounded-2xl font-bold text-white transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{ backgroundColor: primaryColor }}
+                    >
+                      {t("continue")}
+                    </button>
+                  )}
+
+                  {checkout.currentStep === "info" && (
+                    <button
+                      onClick={() => {
+                        if (!checkout.canProceedFromInfo()) {
+                          alert(t("pleaseEnterRequired"));
+                          return;
+                        }
+                        checkout.goToNextStep();
+                      }}
+                      disabled={!checkout.canProceedFromInfo()}
+                      className="flex-1 py-4 rounded-2xl font-bold text-white transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{ backgroundColor: primaryColor }}
+                    >
+                      {t("continue")}
+                    </button>
+                  )}
+
+                  {checkout.currentStep === "confirm" && (
+                    <button
+                      onClick={checkout.goToNextStep}
+                      disabled={checkout.isSubmitting}
+                      className="flex-1 py-4 rounded-2xl font-bold text-white transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{ backgroundColor: primaryColor }}
+                    >
+                      {checkout.isSubmitting ? t("processing") : t("confirmPlaceOrder")}
+                    </button>
+                  )}
                 </div>
               </div>
             </>
