@@ -202,7 +202,7 @@ function BusinessSignupContent() {
 
             <div>
               <label htmlFor="phone" className="label">
-                Số điện thoại
+                Số điện thoại <span className="text-red-500">*</span>
               </label>
               <input
                 id="phone"
@@ -213,6 +213,9 @@ function BusinessSignupContent() {
                 placeholder="0123456789"
                 required
               />
+              <p className="mt-1 text-xs text-gray-500">
+                Bắt buộc - Để khách hàng liên hệ với bạn
+              </p>
             </div>
 
             <div>
