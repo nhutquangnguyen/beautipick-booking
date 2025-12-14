@@ -536,7 +536,8 @@ export function CheckoutFlow({
                             setIsCreatingAccount(true);
                             setAccountError(null);
                             try {
-                              console.log('[CheckoutFlow SUCCESS] Starting Google OAuth popup...');
+                              // Detect if mobile device
+                              const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
                               // Store customer info for OAuth
                               const customerData = {
@@ -547,41 +548,61 @@ export function CheckoutFlow({
                               };
                               localStorage.setItem('pending_customer_signup', JSON.stringify(customerData));
 
-                              // Get OAuth URL first
-                              const { data, error } = await supabase.auth.signInWithOAuth({
-                                provider: "google",
-                                options: {
-                                  redirectTo: `${window.location.origin}/auth/callback-popup?type=customer&name=${encodeURIComponent(checkout.customerName || '')}&phone=${encodeURIComponent(checkout.customerPhone)}`,
-                                  queryParams: {
-                                    prompt: 'select_account',
+                              if (isMobile) {
+                                // On mobile, use redirect flow
+                                console.log('[CheckoutFlow SUCCESS] Mobile detected, using redirect flow');
+                                const { error } = await supabase.auth.signInWithOAuth({
+                                  provider: "google",
+                                  options: {
+                                    redirectTo: `${window.location.origin}/auth/callback?type=customer&name=${encodeURIComponent(checkout.customerName || '')}&phone=${encodeURIComponent(checkout.customerPhone)}`,
+                                    queryParams: {
+                                      prompt: 'select_account',
+                                    },
                                   },
-                                  skipBrowserRedirect: true, // Don't redirect main window
-                                },
-                              });
+                                });
 
-                              console.log('[CheckoutFlow SUCCESS] OAuth response:', { hasData: !!data, hasUrl: !!data?.url, error });
+                                if (error) throw error;
+                                // Redirect will happen automatically, loading state continues
+                              } else {
+                                // On desktop, use popup flow
+                                console.log('[CheckoutFlow SUCCESS] Desktop detected, using popup flow');
+                                const { data, error } = await supabase.auth.signInWithOAuth({
+                                  provider: "google",
+                                  options: {
+                                    redirectTo: `${window.location.origin}/auth/callback-popup?type=customer&name=${encodeURIComponent(checkout.customerName || '')}&phone=${encodeURIComponent(checkout.customerPhone)}`,
+                                    queryParams: {
+                                      prompt: 'select_account',
+                                    },
+                                    skipBrowserRedirect: true, // Don't redirect main window
+                                  },
+                                });
 
-                              if (error) throw error;
+                                console.log('[CheckoutFlow SUCCESS] OAuth response:', { hasData: !!data, hasUrl: !!data?.url, error });
 
-                              if (data?.url) {
-                                console.log('[CheckoutFlow SUCCESS] Opening popup with URL');
+                                if (error) throw error;
 
-                                // Open popup with OAuth URL
-                                const width = 500;
-                                const height = 600;
-                                const left = window.screenX + (window.outerWidth - width) / 2;
-                                const top = window.screenY + (window.outerHeight - height) / 2;
+                                if (data?.url) {
+                                  console.log('[CheckoutFlow SUCCESS] Opening popup with URL');
 
-                                const popup = window.open(
-                                  data.url,
-                                  'googleSignIn',
-                                  `width=${width},height=${height},left=${left},top=${top},popup=1,toolbar=0,location=0,menubar=0`
-                                );
+                                  // Open popup with OAuth URL
+                                  const width = 500;
+                                  const height = 600;
+                                  const left = window.screenX + (window.outerWidth - width) / 2;
+                                  const top = window.screenY + (window.outerHeight - height) / 2;
 
-                                console.log('[CheckoutFlow SUCCESS] Popup opened:', !!popup);
+                                  const popup = window.open(
+                                    data.url,
+                                    'googleSignIn',
+                                    `width=${width},height=${height},left=${left},top=${top},popup=1,toolbar=0,location=0,menubar=0`
+                                  );
 
-                                if (!popup) {
-                                  throw new Error(locale === 'vi' ? "Popup bị chặn. Vui lòng cho phép popup." : "Popup blocked. Please allow popups.");
+                                  console.log('[CheckoutFlow SUCCESS] Popup opened:', !!popup);
+
+                                  if (!popup) {
+                                    throw new Error(locale === 'vi' ? "Popup bị chặn. Vui lòng cho phép popup." : "Popup blocked. Please allow popups.");
+                                  } else {
+                                    setIsCreatingAccount(false);
+                                  }
                                 }
                               }
                             } catch (err) {

@@ -55,45 +55,74 @@ export function OAuthButtons({ redirectTo = "/business/dashboard", userType, onS
     setLoading("google");
 
     try {
-      // Get OAuth URL first
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          // Use callback-popup page for popup flow
-          redirectTo: `${window.location.origin}/auth/callback-popup?next=${redirectTo}&type=${userType}`,
-          queryParams: {
-            prompt: 'select_account',
+      // Detect if mobile device
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+      if (isMobile) {
+        // On mobile, use redirect flow (not popup)
+        console.log('[OAuthButtons] Mobile detected, using redirect flow');
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            // Use regular callback page for redirect flow
+            redirectTo: `${window.location.origin}/auth/callback?next=${redirectTo}&type=${userType}`,
+            queryParams: {
+              prompt: 'select_account',
+            },
+            // Don't skip redirect on mobile
           },
-          skipBrowserRedirect: true, // Don't redirect main window
-        },
-      });
+        });
 
-      if (error) {
-        setError(error.message);
-        return;
-      }
+        if (error) {
+          setError(error.message);
+          setLoading(null);
+        }
+        // Loading state will continue until redirect happens
+      } else {
+        // On desktop, use popup flow
+        console.log('[OAuthButtons] Desktop detected, using popup flow');
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            // Use callback-popup page for popup flow
+            redirectTo: `${window.location.origin}/auth/callback-popup?next=${redirectTo}&type=${userType}`,
+            queryParams: {
+              prompt: 'select_account',
+            },
+            skipBrowserRedirect: true, // Don't redirect main window
+          },
+        });
 
-      if (data?.url) {
-        // Open popup with OAuth URL directly
-        const width = 500;
-        const height = 600;
-        const left = window.screenX + (window.outerWidth - width) / 2;
-        const top = window.screenY + (window.outerHeight - height) / 2;
+        if (error) {
+          setError(error.message);
+          setLoading(null);
+          return;
+        }
 
-        const popup = window.open(
-          data.url,  // Open directly with OAuth URL
-          'googleSignIn',
-          `width=${width},height=${height},left=${left},top=${top},popup=1,toolbar=0,location=0,menubar=0`
-        );
+        if (data?.url) {
+          // Open popup with OAuth URL directly
+          const width = 500;
+          const height = 600;
+          const left = window.screenX + (window.outerWidth - width) / 2;
+          const top = window.screenY + (window.outerHeight - height) / 2;
 
-        if (!popup) {
-          setError("Popup was blocked. Please allow popups for this site.");
+          const popup = window.open(
+            data.url,  // Open directly with OAuth URL
+            'googleSignIn',
+            `width=${width},height=${height},left=${left},top=${top},popup=1,toolbar=0,location=0,menubar=0`
+          );
+
+          if (!popup) {
+            setError("Popup was blocked. Please allow popups for this site.");
+            setLoading(null);
+          } else {
+            setLoading(null);
+          }
         }
       }
     } catch (err) {
       setError("An unexpected error occurred");
       console.error('[OAuthButtons] Error:', err);
-    } finally {
       setLoading(null);
     }
   };
