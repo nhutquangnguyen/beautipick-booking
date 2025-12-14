@@ -2,7 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { MerchantCard } from "@/components/directory/MerchantCard";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
-import { Search, MapPin, Sparkles } from "lucide-react";
+import { HeroSearch } from "@/components/directory/HeroSearch";
+import { MapPin, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -91,22 +92,7 @@ export default async function DirectoryHomepage() {
             </p>
 
             {/* Quick Search */}
-            <div id="hero-search" className="max-w-2xl mx-auto bg-white rounded-2xl shadow-2xl p-2 flex flex-col sm:flex-row gap-2">
-              <div className="flex-1 flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl">
-                <Search className="h-5 w-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Tìm theo tên salon, dịch vụ..."
-                  className="flex-1 bg-transparent border-none outline-none text-gray-900 placeholder-gray-400"
-                />
-              </div>
-              <Link
-                href="/search"
-                className="px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-semibold hover:opacity-90 transition text-center"
-              >
-                Tìm kiếm
-              </Link>
-            </div>
+            <HeroSearch />
 
             {/* Quick City Filters */}
             <div className="mt-6 flex flex-wrap gap-3 justify-center">

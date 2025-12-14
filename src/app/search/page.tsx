@@ -3,6 +3,7 @@ import { MerchantCard } from "@/components/directory/MerchantCard";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
 import { SearchFilters } from "@/components/directory/SearchFilters";
+import { MobileFilters } from "@/components/directory/MobileFilters";
 import { Search } from "lucide-react";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -10,15 +11,16 @@ import { Suspense } from "react";
 export const dynamic = "force-dynamic";
 
 interface SearchPageProps {
-  searchParams: {
+  searchParams: Promise<{
     q?: string;
     city?: string;
     tag?: string;
     sort?: string;
-  };
+  }>;
 }
 
-export default async function SearchPage({ searchParams }: SearchPageProps) {
+export default async function SearchPage({ searchParams: searchParamsPromise }: SearchPageProps) {
+  const searchParams = await searchParamsPromise;
   const supabase = await createClient();
 
   // Check if logged-in user is a merchant-only (no customer account), redirect to dashboard
@@ -54,7 +56,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const query = searchParams.q || "";
   const city = searchParams.city || "";
   const tag = searchParams.tag || "";
-  const sort = searchParams.sort || "name";
+  const sort = searchParams.sort || "relevance";
 
   // Build query - only show active merchants visible in directory
   let merchantsQuery = supabase
@@ -65,18 +67,29 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       slug,
       logo_url,
       city,
-      description
+      description,
+      tags
     `)
     .eq("is_active", true)
     .eq("show_in_directory", true);
 
   // Apply filters
   if (query) {
-    merchantsQuery = merchantsQuery.ilike("business_name", `%${query}%`);
+    // Use full-text search if available, fallback to ilike
+    // Note: The search_vector column will be available after migration
+    // PostgREST or() syntax uses * for wildcards, not %
+    merchantsQuery = merchantsQuery.or(
+      `business_name.ilike.*${query}*,description.ilike.*${query}*,city.ilike.*${query}*`
+    );
   }
 
   if (city) {
     merchantsQuery = merchantsQuery.eq("city", city);
+  }
+
+  if (tag) {
+    // Filter by tags array
+    merchantsQuery = merchantsQuery.contains("tags", [tag]);
   }
 
   // Apply sorting
@@ -87,8 +100,15 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     case "newest":
       merchantsQuery = merchantsQuery.order("created_at", { ascending: false });
       break;
+    case "relevance":
     default:
-      merchantsQuery = merchantsQuery.order("business_name");
+      // When there's a query, order by relevance (business_name matches first)
+      if (query) {
+        merchantsQuery = merchantsQuery.order("business_name");
+      } else {
+        merchantsQuery = merchantsQuery.order("business_name");
+      }
+      break;
   }
 
   const { data: merchants } = await merchantsQuery.limit(48);
@@ -181,9 +201,13 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                   </div>
 
                   {/* Mobile Filter Toggle */}
-                  <button className="lg:hidden px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium">
-                    Bộ lọc
-                  </button>
+                  <MobileFilters
+                    cities={uniqueCities as string[]}
+                    tags={popularTags}
+                    selectedCity={city}
+                    selectedTag={tag}
+                    selectedSort={sort}
+                  />
                 </div>
 
                 {/* Results Grid */}

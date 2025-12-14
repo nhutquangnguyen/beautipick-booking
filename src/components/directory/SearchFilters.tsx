@@ -100,13 +100,14 @@ export function SearchFilters({
           onChange={(e) => updateFilter("sort", e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
         >
+          <option value="relevance">Phù hợp nhất</option>
           <option value="name">Tên A-Z</option>
           <option value="newest">Mới nhất</option>
         </select>
       </div>
 
       {/* Clear Filters */}
-      {(selectedCity || selectedTag || selectedSort !== "name") && (
+      {(selectedCity || selectedTag || selectedSort !== "relevance") && (
         <button
           onClick={() => router.push("/search")}
           className="w-full px-4 py-2 text-sm font-medium text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
