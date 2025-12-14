@@ -335,12 +335,30 @@ export function BookingPage({
 
     if (!dayAvailability) return [];
 
-    return generateTimeSlots(
+    const allSlots = generateTimeSlots(
       dayAvailability.start_time,
       dayAvailability.end_time,
       cartTotals.totalDuration || 30 // Default 30 min if only products
     );
-  }, [selectedDate, hasServices, availability, cartTotals.totalDuration]);
+
+    // Filter out past time slots if selected date is today
+    const isToday = isSameDay(selectedDate, new Date());
+    if (!isToday) return allSlots;
+
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const currentTimeInMinutes = currentHour * 60 + currentMinute;
+
+    // Add lead time buffer (booking lead time in hours converted to minutes)
+    const leadTimeBuffer = (settings.bookingLeadTime || 0) * 60;
+
+    return allSlots.filter((timeSlot) => {
+      const [slotHour, slotMinute] = timeSlot.split(':').map(Number);
+      const slotTimeInMinutes = slotHour * 60 + slotMinute;
+      return slotTimeInMinutes >= currentTimeInMinutes + leadTimeBuffer;
+    });
+  }, [selectedDate, hasServices, availability, cartTotals.totalDuration, settings.bookingLeadTime]);
 
   // Calendar days for current month
   const calendarDays = useMemo(() => {

@@ -18,9 +18,10 @@ interface BookingsViewProps {
   bookings: BookingWithRelations[];
   customerFilter?: string;
   initialStatusFilter?: string;
+  currency?: string;
 }
 
-export function BookingsView({ bookings, customerFilter, initialStatusFilter }: BookingsViewProps) {
+export function BookingsView({ bookings, customerFilter, initialStatusFilter, currency = "VND" }: BookingsViewProps) {
   const t = useTranslations("bookings");
   const router = useRouter();
   const [view, setView] = useState<"list" | "calendar">("list");
@@ -82,9 +83,9 @@ export function BookingsView({ bookings, customerFilter, initialStatusFilter }: 
 
       {/* View Content */}
       {view === "calendar" ? (
-        <BookingsCalendar bookings={bookings} />
+        <BookingsCalendar bookings={bookings} currency={currency} />
       ) : (
-        <BookingsList bookings={bookings} initialStatusFilter={initialStatusFilter} />
+        <BookingsList bookings={bookings} initialStatusFilter={initialStatusFilter} currency={currency} />
       )}
     </div>
   );

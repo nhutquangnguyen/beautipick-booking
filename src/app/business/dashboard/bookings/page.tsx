@@ -17,10 +17,17 @@ export default async function BookingsPage({ searchParams }: BookingsPageProps) 
   const customerPhone = params.customer;
   const statusFilter = params.status;
 
+  // Fetch merchant currency
+  const { data: merchant } = await supabase
+    .from("merchants")
+    .select("currency")
+    .eq("id", user!.id)
+    .single();
+
   // Build query
   let query = supabase
     .from("bookings")
-    .select("*, services(name), staff(name), customers(name, phone)")
+    .select("*, services(name), staff(name), customer_accounts(name, phone)")
     .eq("merchant_id", user!.id);
 
   // Filter by customer phone if provided
@@ -39,7 +46,7 @@ export default async function BookingsPage({ searchParams }: BookingsPageProps) 
         <p className="text-gray-600">{t("subtitle")}</p>
       </div>
 
-      <BookingsView bookings={bookings ?? []} customerFilter={customerPhone} initialStatusFilter={statusFilter} />
+      <BookingsView bookings={bookings ?? []} customerFilter={customerPhone} initialStatusFilter={statusFilter} currency={merchant?.currency || "VND"} />
     </div>
   );
 }

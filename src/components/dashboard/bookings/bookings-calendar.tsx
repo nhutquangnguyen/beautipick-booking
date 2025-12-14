@@ -45,9 +45,10 @@ type BookingWithRelations = Booking & {
 
 interface BookingsCalendarProps {
   bookings: BookingWithRelations[];
+  currency?: string;
 }
 
-export function BookingsCalendar({ bookings }: BookingsCalendarProps) {
+export function BookingsCalendar({ bookings, currency = "VND" }: BookingsCalendarProps) {
   const t = useTranslations("bookings");
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -296,7 +297,7 @@ export function BookingsCalendar({ bookings }: BookingsCalendarProps) {
                       </div>
                     </div>
                     <span className="font-medium text-gray-900">
-                      {formatCurrency(booking.total_price)}
+                      {formatCurrency(booking.total_price, currency)}
                     </span>
                   </div>
                 </div>
@@ -365,7 +366,7 @@ export function BookingsCalendar({ bookings }: BookingsCalendarProps) {
                             </div>
                           </div>
                           <span className="text-sm font-medium text-gray-700">
-                            {formatCurrency((price || 0) * quantity)}
+                            {formatCurrency((price || 0) * quantity, currency)}
                           </span>
                         </div>
                       );
@@ -382,7 +383,7 @@ export function BookingsCalendar({ bookings }: BookingsCalendarProps) {
                   <p className="text-sm text-gray-500 mt-2">with {selectedBooking.staff.name}</p>
                 )}
                 <p className="text-lg font-semibold text-purple-600 mt-3 pt-3 border-t border-gray-200">
-                  {formatCurrency(selectedBooking.total_price)}
+                  {formatCurrency(selectedBooking.total_price, currency)}
                 </p>
               </div>
 

@@ -31,7 +31,7 @@ type BookingWithRelations = Booking & {
   staff: { name: string } | null;
 };
 
-export function BookingsList({ bookings, initialStatusFilter }: { bookings: BookingWithRelations[]; initialStatusFilter?: string }) {
+export function BookingsList({ bookings, initialStatusFilter, currency = "VND" }: { bookings: BookingWithRelations[]; initialStatusFilter?: string; currency?: string }) {
   const t = useTranslations("bookings");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBooking, setSelectedBooking] = useState<BookingWithRelations | null>(null);
@@ -314,7 +314,7 @@ export function BookingsList({ bookings, initialStatusFilter }: { bookings: Book
                     <span className="text-sm font-medium text-gray-700">{t("total")}</span>
                   </div>
                   <span className="text-lg font-bold text-purple-600">
-                    {formatCurrency(booking.total_price)}
+                    {formatCurrency(booking.total_price, currency)}
                   </span>
                 </div>
               </div>
@@ -382,7 +382,7 @@ export function BookingsList({ bookings, initialStatusFilter }: { bookings: Book
                             </div>
                           </div>
                           <span className="text-sm font-medium text-gray-700">
-                            {formatCurrency((price || 0) * quantity)}
+                            {formatCurrency((price || 0) * quantity, currency)}
                           </span>
                         </div>
                       );
@@ -399,7 +399,7 @@ export function BookingsList({ bookings, initialStatusFilter }: { bookings: Book
                   <p className="text-sm text-gray-500 mt-2">{t("withStaff", { name: selectedBooking.staff.name })}</p>
                 )}
                 <p className="text-lg font-semibold text-purple-600 mt-3 pt-3 border-t border-gray-200">
-                  {formatCurrency(selectedBooking.total_price)}
+                  {formatCurrency(selectedBooking.total_price, currency)}
                 </p>
               </div>
 
@@ -446,7 +446,6 @@ export function BookingsList({ bookings, initialStatusFilter }: { bookings: Book
                         onClick={() => setShowActionDropdown(!showActionDropdown)}
                         className="w-full flex items-center justify-center gap-2 rounded-xl bg-green-600 py-2.5 font-medium text-white hover:bg-green-700"
                       >
-                        <Check className="h-4 w-4" />
                         {t("updateStatus")}
                         <ChevronDown className="h-4 w-4" />
                       </button>
@@ -454,16 +453,14 @@ export function BookingsList({ bookings, initialStatusFilter }: { bookings: Book
                         <div className="absolute bottom-full left-0 right-0 mb-2 rounded-xl bg-white border border-gray-200 shadow-lg overflow-hidden z-10">
                           <button
                             onClick={() => updateStatus(selectedBooking.id, "confirmed")}
-                            className="w-full flex items-center gap-2 px-4 py-3 text-left text-green-700 hover:bg-green-50"
+                            className="w-full px-4 py-3 text-left text-green-700 hover:bg-green-50"
                           >
-                            <Check className="h-4 w-4" />
                             {t("confirmOrder")}
                           </button>
                           <button
                             onClick={() => updateStatus(selectedBooking.id, "cancelled")}
-                            className="w-full flex items-center gap-2 px-4 py-3 text-left text-red-700 hover:bg-red-50 border-t border-gray-100"
+                            className="w-full px-4 py-3 text-left text-red-700 hover:bg-red-50 border-t border-gray-100"
                           >
-                            <X className="h-4 w-4" />
                             {t("cancelOrder")}
                           </button>
                         </div>
@@ -487,7 +484,6 @@ export function BookingsList({ bookings, initialStatusFilter }: { bookings: Book
                         onClick={() => setShowActionDropdown(!showActionDropdown)}
                         className="w-full flex items-center justify-center gap-2 rounded-xl bg-blue-600 py-2.5 font-medium text-white hover:bg-blue-700"
                       >
-                        <Clock className="h-4 w-4" />
                         {t("updateStatus")}
                         <ChevronDown className="h-4 w-4" />
                       </button>
@@ -495,16 +491,14 @@ export function BookingsList({ bookings, initialStatusFilter }: { bookings: Book
                         <div className="absolute bottom-full left-0 right-0 mb-2 rounded-xl bg-white border border-gray-200 shadow-lg overflow-hidden z-10">
                           <button
                             onClick={() => updateStatus(selectedBooking.id, "completed")}
-                            className="w-full flex items-center gap-2 px-4 py-3 text-left text-blue-700 hover:bg-blue-50"
+                            className="w-full px-4 py-3 text-left text-blue-700 hover:bg-blue-50"
                           >
-                            <Check className="h-4 w-4" />
                             {t("markCompleted")}
                           </button>
                           <button
                             onClick={() => updateStatus(selectedBooking.id, "cancelled")}
-                            className="w-full flex items-center gap-2 px-4 py-3 text-left text-red-700 hover:bg-red-50 border-t border-gray-100"
+                            className="w-full px-4 py-3 text-left text-red-700 hover:bg-red-50 border-t border-gray-100"
                           >
-                            <X className="h-4 w-4" />
                             {t("cancelOrder")}
                           </button>
                         </div>

@@ -86,12 +86,10 @@ function SignupContent() {
         return;
       }
 
-      // Redirect to homepage
-      router.push("/");
-      router.refresh();
+      // Redirect to homepage - use hard redirect for reliability
+      window.location.href = "/";
     } catch {
       setError("An unexpected error occurred");
-    } finally {
       setLoading(false);
     }
   };

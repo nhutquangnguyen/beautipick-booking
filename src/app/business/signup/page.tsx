@@ -89,9 +89,8 @@ function BusinessSignupContent() {
         return;
       }
 
-      // Redirect to onboarding - don't reset loading state to prevent page re-render
-      router.push("/business/dashboard/onboarding");
-      router.refresh();
+      // Redirect to onboarding - use hard redirect for reliability
+      window.location.href = "/business/dashboard/onboarding";
     } catch (err) {
       setError("An unexpected error occurred");
       setLoading(false);

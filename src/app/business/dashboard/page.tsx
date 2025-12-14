@@ -13,7 +13,6 @@ import {
   Package,
   Image,
   Store,
-  ExternalLink,
   ShoppingBag,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
@@ -107,16 +106,17 @@ export default async function DashboardPage() {
       .limit(10),
     supabase
       .from("bookings")
-      .select("total_price")
+      .select("total_price, updated_at")
       .eq("merchant_id", user.id)
-      .eq("booking_date", today)
-      .eq("status", "completed"),
+      .eq("status", "completed")
+      .gte("updated_at", `${today}T00:00:00`)
+      .lte("updated_at", `${today}T23:59:59`),
     supabase
       .from("bookings")
-      .select("total_price")
+      .select("total_price, updated_at")
       .eq("merchant_id", user.id)
-      .gte("booking_date", startOfMonthStr)
-      .eq("status", "completed"),
+      .eq("status", "completed")
+      .gte("updated_at", `${startOfMonthStr}T00:00:00`),
     supabase
       .from("bookings")
       .select("*", { count: "exact" })
@@ -124,11 +124,11 @@ export default async function DashboardPage() {
       .gte("booking_date", startOfMonthStr),
     supabase
       .from("bookings")
-      .select("total_price")
+      .select("total_price, updated_at")
       .eq("merchant_id", user.id)
-      .gte("booking_date", startOfLastMonthStr)
-      .lte("booking_date", endOfLastMonthStr)
-      .eq("status", "completed"),
+      .eq("status", "completed")
+      .gte("updated_at", `${startOfLastMonthStr}T00:00:00`)
+      .lte("updated_at", `${endOfLastMonthStr}T23:59:59`),
     supabase
       .from("services")
       .select("id, name, price, image_url")
@@ -141,11 +141,11 @@ export default async function DashboardPage() {
       .eq("is_active", true),
     supabase
       .from("bookings")
-      .select("booking_date, total_price, services(name)")
+      .select("updated_at, total_price, services(name)")
       .eq("merchant_id", user.id)
-      .gte("booking_date", ninetyDaysAgoStr)
       .eq("status", "completed")
-      .order("booking_date", { ascending: true }),
+      .gte("updated_at", `${ninetyDaysAgoStr}T00:00:00`)
+      .order("updated_at", { ascending: true }),
   ]);
 
   const todayBookings = todayBookingsResult.count ?? 0;
@@ -192,8 +192,10 @@ export default async function DashboardPage() {
   // Revenue by day (last 90 days)
   const revenueByDay: Record<string, number> = {};
   last90DaysBookings.forEach(booking => {
-    const date = booking.booking_date;
-    revenueByDay[date] = (revenueByDay[date] || 0) + (booking.total_price || 0);
+    const date = booking.updated_at?.split("T")[0] || "";
+    if (date) {
+      revenueByDay[date] = (revenueByDay[date] || 0) + (booking.total_price || 0);
+    }
   });
 
   // Fill in missing days with 0 for all 90 days
@@ -253,12 +255,6 @@ export default async function DashboardPage() {
       <div>
         <h2 className="text-lg font-semibold text-gray-900 mb-3">{t("quickActions")}</h2>
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-        <QuickActionButton
-          href={`/m/${merchant.slug}`}
-          icon={<ExternalLink className="h-5 w-5" />}
-          label={t("preview")}
-          external
-        />
         <QuickActionButton
           href="/business/dashboard/store"
           icon={<ShoppingBag className="h-5 w-5" />}

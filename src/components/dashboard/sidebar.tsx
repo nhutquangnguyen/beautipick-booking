@@ -17,6 +17,7 @@ import {
   ClipboardList,
   User,
   LogOut,
+  ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Merchant } from "@/types/database";
@@ -165,7 +166,7 @@ export function DashboardSidebar({
 
   const handleSignOut = useCallback(async () => {
     await supabase.auth.signOut();
-    router.push("/login");
+    router.push("/business");
   }, [supabase, router]);
 
   const renderNavItem = (item: NavItem, depth = 0) => {
@@ -260,6 +261,19 @@ export function DashboardSidebar({
         </div>
       </nav>
 
+      {/* Preview Button */}
+      <div className="px-3 pb-3">
+        <a
+          href={`/m/${merchant.slug}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 w-full px-3 py-2.5 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors text-sm font-medium"
+        >
+          <ExternalLink className="h-4 w-4" />
+          <span>Xem trang đặt chỗ</span>
+        </a>
+      </div>
+
       {/* Bottom Section - Account Menu */}
       <div ref={accountMenuRef} className="relative px-3 pb-4 border-t border-gray-200 pt-4">
         {/* Account Button */}
@@ -330,14 +344,26 @@ export function DashboardSidebar({
           <span className="font-semibold text-gray-900">{merchant.business_name}</span>
         </Link>
 
-        {/* Mobile Account Button */}
-        <div ref={accountMenuRef} className="relative">
-          <button
-            onClick={() => setIsAccountMenuOpen(!isAccountMenuOpen)}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 text-purple-600 hover:bg-purple-200 transition-colors"
+        {/* Mobile Actions */}
+        <div className="flex items-center gap-2">
+          {/* Preview Button */}
+          <a
+            href={`/m/${merchant.slug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-green-50 text-green-700 hover:bg-green-100 transition-colors"
           >
-            <User className="h-5 w-5" />
-          </button>
+            <ExternalLink className="h-5 w-5" />
+          </a>
+
+          {/* Mobile Account Button */}
+          <div ref={accountMenuRef} className="relative">
+            <button
+              onClick={() => setIsAccountMenuOpen(!isAccountMenuOpen)}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 text-purple-600 hover:bg-purple-200 transition-colors"
+            >
+              <User className="h-5 w-5" />
+            </button>
 
           {/* Mobile Dropdown Menu */}
           {isAccountMenuOpen && (
@@ -362,6 +388,7 @@ export function DashboardSidebar({
               </button>
             </div>
           )}
+          </div>
         </div>
       </header>
 

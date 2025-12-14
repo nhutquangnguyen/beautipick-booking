@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
-import { Check, ChevronRight, Clock, Scissors, Store, Sparkles, Languages } from "lucide-react";
+import { Check, ChevronRight, Clock, Scissors, Store, Sparkles, Languages, ExternalLink } from "lucide-react";
 
 type Step = "business" | "category" | "hours" | "complete";
 
@@ -114,8 +114,8 @@ export default function OnboardingPage() {
   const t = useTranslations("onboarding");
   const supabase = createClient();
 
-  // Language selection state (default to current locale)
-  const [selectedLanguage, setSelectedLanguage] = useState<"en" | "vi">(defaultLocale as "en" | "vi");
+  // Language selection state (default to Vietnamese)
+  const [selectedLanguage, setSelectedLanguage] = useState<"en" | "vi">("vi");
 
   // Set currency and timezone - default to VND and GMT+7
   const currency = "VND";
@@ -130,7 +130,7 @@ export default function OnboardingPage() {
     businessNameLabel: selectedLanguage === "vi" ? "Tên doanh nghiệp" : "Business Name",
     businessNamePlaceholder: selectedLanguage === "vi" ? "VD: Salon Bella" : "e.g., Bella Salon",
     phoneLabel: selectedLanguage === "vi" ? "Số điện thoại" : "Phone Number",
-    phonePlaceholder: selectedLanguage === "vi" ? "+84 xxx xxx xxx" : "+1 (555) 123-4567",
+    phonePlaceholder: selectedLanguage === "vi" ? "0xxx xxx xxx" : "(555) 123-4567",
     addressLabel: selectedLanguage === "vi" ? "Địa chỉ" : "Address",
     addressPlaceholder: selectedLanguage === "vi" ? "123 Nguyễn Huệ, Q.1" : "123 Main St, City",
     continue: selectedLanguage === "vi" ? "Tiếp tục" : "Continue",
@@ -149,6 +149,29 @@ export default function OnboardingPage() {
 
   // Hours
   const [hours, setHours] = useState(DEFAULT_HOURS);
+
+  // Merchant slug for booking page URL
+  const [merchantSlug, setMerchantSlug] = useState<string>("");
+
+  // Fetch merchant slug on component mount
+  useEffect(() => {
+    const fetchMerchantSlug = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: merchant } = await supabase
+          .from("merchants")
+          .select("slug")
+          .eq("id", user.id)
+          .single();
+
+        if (merchant?.slug) {
+          setMerchantSlug(merchant.slug);
+        }
+      }
+    };
+
+    fetchMerchantSlug();
+  }, [supabase]);
 
   const handleBusinessSubmit = async () => {
     // Validate required fields
@@ -372,21 +395,6 @@ export default function OnboardingPage() {
             </p>
 
             <div className="mt-8 space-y-6">
-              {/* Language Selection Dropdown */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  {labels.languageLabel} *
-                </label>
-                <select
-                  value={selectedLanguage}
-                  onChange={(e) => setSelectedLanguage(e.target.value as "en" | "vi")}
-                  className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200"
-                >
-                  <option value="en">🇺🇸 English (VND)</option>
-                  <option value="vi">🇻🇳 Tiếng Việt (VND)</option>
-                </select>
-              </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   {labels.businessNameLabel} *
@@ -457,10 +465,10 @@ export default function OnboardingPage() {
         {step === "category" && (
           <div className="rounded-2xl bg-white p-4 sm:p-8 shadow-sm">
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-              What services do you offer?
+              {t("categoryTitle")}
             </h1>
             <p className="mt-2 text-sm sm:text-base text-gray-600">
-              Select your business category. We'll add sample services and products for you.
+              {t("categorySubtitle")}
             </p>
 
             <div className="mt-8 grid gap-4">
@@ -468,23 +476,23 @@ export default function OnboardingPage() {
                 {
                   key: "hair" as const,
                   icon: "💇",
-                  title: "Hair Salon",
-                  description: "Haircuts, coloring, styling services",
-                  services: "4 services • 3 products"
+                  title: t("hairSalon"),
+                  description: t("hairSalonDesc"),
+                  services: t("servicesAndProducts")
                 },
                 {
                   key: "nail" as const,
                   icon: "💅",
-                  title: "Nail Salon",
-                  description: "Manicure, pedicure, nail art",
-                  services: "4 services • 3 products"
+                  title: t("nailSalon"),
+                  description: t("nailSalonDesc"),
+                  services: t("servicesAndProducts")
                 },
                 {
                   key: "spa" as const,
                   icon: "🧖",
-                  title: "Spa & Wellness",
-                  description: "Massage, facial, body treatments",
-                  services: "4 services • 3 products"
+                  title: t("spaWellness"),
+                  description: t("spaWellnessDesc"),
+                  services: t("servicesAndProducts")
                 },
               ].map((category) => (
                 <button
@@ -520,7 +528,7 @@ export default function OnboardingPage() {
               disabled={loading}
               className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 py-4 font-semibold text-white hover:bg-purple-700 disabled:opacity-50"
             >
-              {loading ? t("saving") : selectedCategory ? "Continue" : "Skip"}
+              {loading ? t("saving") : selectedCategory ? t("continue") : t("skipForNow")}
               <ChevronRight className="h-5 w-5" />
             </button>
           </div>
@@ -623,12 +631,26 @@ export default function OnboardingPage() {
               {t("completeSubtitle")}
             </p>
 
-            <button
-              onClick={handleComplete}
-              className="mt-6 sm:mt-8 w-full rounded-xl bg-purple-600 py-3 sm:py-4 font-semibold text-white hover:bg-purple-700"
-            >
-              {t("goToDashboard")}
-            </button>
+            <div className="mt-6 sm:mt-8 space-y-3">
+              {merchantSlug && (
+                <a
+                  href={`/m/${merchantSlug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 py-3 sm:py-4 font-semibold text-white hover:bg-green-700 transition-colors"
+                >
+                  {t("viewBookingPage")}
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              )}
+
+              <button
+                onClick={handleComplete}
+                className="w-full rounded-xl bg-purple-600 py-3 sm:py-4 font-semibold text-white hover:bg-purple-700"
+              >
+                {t("goToDashboard")}
+              </button>
+            </div>
           </div>
         )}
       </div>

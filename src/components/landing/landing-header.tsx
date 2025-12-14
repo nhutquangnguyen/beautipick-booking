@@ -65,7 +65,7 @@ export function LandingHeader({
                 {login}
               </Link>
               <Link
-                href="/signup"
+                href="/business/signup"
                 className="rounded-full bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-2.5 text-sm font-semibold text-white hover:shadow-lg hover:scale-105 transition-all duration-200 shadow-md"
               >
                 {getStarted}

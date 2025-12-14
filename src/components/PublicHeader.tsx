@@ -190,7 +190,7 @@ export function PublicHeader({ showSearch = false, merchantId, cartCount = 0, on
     }
     await supabase.auth.signOut();
     setIsAccountMenuOpen(false);
-    router.refresh();
+    router.push("/");
   };
 
   const handleSearch = (e: React.FormEvent) => {
