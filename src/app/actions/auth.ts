@@ -83,6 +83,7 @@ export async function createMerchantAccount(data: {
   userId: string;
   email: string;
   businessName: string;
+  phone?: string;
   theme: any;
   settings: any;
   timezone: string;
@@ -130,6 +131,7 @@ export async function createMerchantAccount(data: {
         id: data.userId,
         email: data.email,
         business_name: data.businessName,
+        phone: data.phone,
         slug: finalSlug,
         theme: data.theme,
         settings: data.settings,

@@ -15,6 +15,7 @@ function BusinessSignupContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [businessName, setBusinessName] = useState("");
+  const [phone, setPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -50,6 +51,7 @@ function BusinessSignupContent() {
           data: {
             user_type: "merchant",
             business_name: businessName,
+            phone: phone,
           },
         },
       });
@@ -77,6 +79,7 @@ function BusinessSignupContent() {
         userId: authData.user.id,
         email,
         businessName,
+        phone,
         theme: defaultTheme,
         settings: defaultSettings,
         timezone,
@@ -193,6 +196,21 @@ function BusinessSignupContent() {
                 onChange={(e) => setBusinessName(e.target.value)}
                 className="input mt-1"
                 placeholder="Tên salon của bạn"
+                required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="phone" className="label">
+                Số điện thoại
+              </label>
+              <input
+                id="phone"
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="input mt-1"
+                placeholder="0123456789"
                 required
               />
             </div>

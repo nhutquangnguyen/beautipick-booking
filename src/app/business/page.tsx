@@ -85,7 +85,7 @@ export default async function Home() {
             {/* CTA Buttons */}
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
-                href="/signup"
+                href="/business/signup"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-green-600 to-emerald-600 px-8 py-4 text-lg font-semibold text-white hover:opacity-90 transition-opacity shadow-lg shadow-green-500/25"
               >
                 {t("startFreeTrial")}
@@ -216,7 +216,7 @@ export default async function Home() {
 
                 <div className="mt-8 text-center">
                   <Link
-                    href="/signup"
+                    href="/business/signup"
                     className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-green-600 to-emerald-600 px-8 py-4 text-lg font-semibold text-white hover:opacity-90 transition-opacity shadow-lg"
                   >
                     {t("startFreeTrial")}
@@ -457,7 +457,7 @@ export default async function Home() {
                 {t("ctaSubtitle")}
               </p>
               <Link
-                href="/signup"
+                href="/business/signup"
                 className="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-white px-8 py-4 text-lg font-semibold text-green-600 hover:bg-green-50 transition-colors shadow-lg"
               >
                 {t("ctaButton")}
