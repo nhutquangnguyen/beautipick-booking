@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { createCustomerAccount } from "@/app/actions/auth";
 import { OAuthButtons } from "@/components/auth/OAuthButtons";
 
-export default function SignupPage() {
+function SignupContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -307,5 +307,20 @@ export default function SignupPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
+        <div className="animate-pulse text-center">
+          <div className="h-12 w-12 rounded-full border-4 border-purple-600 border-r-transparent animate-spin mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <SignupContent />
+    </Suspense>
   );
 }

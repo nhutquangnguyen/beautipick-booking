@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale } from "next-intl";
@@ -11,7 +11,7 @@ import { OAuthButtons } from "@/components/auth/OAuthButtons";
 import { createMerchantAccount } from "@/app/actions/auth";
 import { ArrowLeft, Store } from "lucide-react";
 
-export default function BusinessSignupPage() {
+function BusinessSignupContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [businessName, setBusinessName] = useState("");
@@ -260,5 +260,20 @@ export default function BusinessSignupPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function BusinessSignupPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-600 to-purple-700 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-white border-r-transparent"></div>
+          <p className="mt-4 text-white">Loading...</p>
+        </div>
+      </div>
+    }>
+      <BusinessSignupContent />
+    </Suspense>
   );
 }

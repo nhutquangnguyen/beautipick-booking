@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter, usePathname } from "next/navigation";
-import { User, LogOut, ChevronDown, LayoutDashboard, UserCircle, Calendar, Settings, Search, ShoppingBag, Heart } from "lucide-react";
+import { User, LogOut, ChevronDown, LayoutDashboard, UserCircle, Calendar, Settings, Search, ShoppingBag, Heart, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface PublicHeaderProps {
@@ -19,10 +19,12 @@ export function PublicHeader({ showSearch = false, merchantId, cartCount = 0, on
   const [userType, setUserType] = useState<string | null>(null);
   const [hasMerchantAccount, setHasMerchantAccount] = useState(false);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showHeaderSearch, setShowHeaderSearch] = useState(showSearch);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const accountMenuRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClient();
@@ -141,6 +143,23 @@ export function PublicHeader({ showSearch = false, merchantId, cartCount = 0, on
     };
   }, [isAccountMenuOpen]);
 
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    if (isMobileMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isMobileMenuOpen]);
+
   // Scroll detection for showing search on homepage
   useEffect(() => {
     // If showSearch is explicitly true (like on /account pages), always show
@@ -221,18 +240,7 @@ export function PublicHeader({ showSearch = false, merchantId, cartCount = 0, on
             </form>
           )}
 
-          {/* Mobile Search Button */}
-          {showHeaderSearch && (
-            <Link
-              href="/search"
-              className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              aria-label="Search"
-            >
-              <Search className="h-5 w-5 text-gray-600" />
-            </Link>
-          )}
-
-          {/* Right Side: Cart & Auth */}
+          {/* Right Side: Cart & Mobile Menu / Desktop Auth */}
           <div className="flex items-center gap-2 flex-shrink-0">
             {/* Cart Button - Show when merchantId is provided and cart has items */}
             {merchantId && cartCount > 0 && onCartClick && (
@@ -248,15 +256,133 @@ export function PublicHeader({ showSearch = false, merchantId, cartCount = 0, on
               </button>
             )}
 
-            {/* Auth Links or Account Menu - Only show for customers */}
+            {/* Mobile Menu Button - Show on mobile */}
+            <div className="md:hidden" ref={mobileMenuRef}>
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                aria-label="Menu"
+              >
+                {isMobileMenuOpen ? (
+                  <X className="h-6 w-6 text-gray-700" />
+                ) : (
+                  <Menu className="h-6 w-6 text-gray-700" />
+                )}
+              </button>
+
+              {/* Mobile Dropdown Menu */}
+              {isMobileMenuOpen && (
+                <div className="absolute right-4 top-full mt-2 w-64 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+                  {isLoadingAuth ? (
+                    <div className="px-4 py-3">
+                      <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
+                    </div>
+                  ) : user && userType === "customer" ? (
+                    <>
+                      {/* Profile */}
+                      <Link
+                        href="/account/profile"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <UserCircle className="h-5 w-5" />
+                        <span>Hồ sơ</span>
+                      </Link>
+
+                      {/* Appointments */}
+                      <Link
+                        href="/account/appointments"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <Calendar className="h-5 w-5" />
+                        <span>Các cuộc hẹn</span>
+                      </Link>
+
+                      {/* Favorites */}
+                      <Link
+                        href="/account/favorites"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <Heart className="h-5 w-5" />
+                        <span>Mục yêu thích</span>
+                      </Link>
+
+                      {/* Settings */}
+                      <Link
+                        href="/account/settings"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <Settings className="h-5 w-5" />
+                        <span>Cài đặt</span>
+                      </Link>
+
+                      {/* Merchant Dashboard Link (if user also has merchant account) */}
+                      {hasMerchantAccount && (
+                        <>
+                          <div className="border-t border-gray-200 my-1"></div>
+                          <Link
+                            href="/business/dashboard"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                          >
+                            <LayoutDashboard className="h-5 w-5" />
+                            <span>Quản lý Salon</span>
+                          </Link>
+                        </>
+                      )}
+
+                      {/* Sign Out */}
+                      <div className="border-t border-gray-200 my-1"></div>
+                      <button
+                        onClick={() => {
+                          handleSignOut();
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        <LogOut className="h-5 w-5" />
+                        <span>Đăng xuất</span>
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      {/* Login */}
+                      <Link
+                        href="/login"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <User className="h-5 w-5" />
+                        <span>Đăng nhập</span>
+                      </Link>
+
+                      {/* Sign Up */}
+                      <Link
+                        href="/signup"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-purple-600 hover:bg-purple-50 transition-colors"
+                      >
+                        <UserCircle className="h-5 w-5" />
+                        <span>Đăng ký</span>
+                      </Link>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Desktop Auth Links or Account Menu - Only show for customers */}
             {isLoadingAuth ? (
               /* Loading skeleton */
-              <div className="flex items-center gap-2">
+              <div className="hidden md:flex items-center gap-2">
                 <div className="h-10 w-10 rounded-full bg-gray-200 animate-pulse"></div>
                 <div className="hidden sm:block h-4 w-20 bg-gray-200 rounded animate-pulse"></div>
               </div>
             ) : user && userType === "customer" ? (
-              <div ref={accountMenuRef} className="relative">
+              <div ref={accountMenuRef} className="relative hidden md:block">
                 <button
                   onClick={() => setIsAccountMenuOpen(!isAccountMenuOpen)}
                   className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-50 transition-all border border-transparent hover:border-gray-200"
@@ -344,7 +470,7 @@ export function PublicHeader({ showSearch = false, merchantId, cartCount = 0, on
                 )}
               </div>
             ) : (
-              <>
+              <div className="hidden md:flex items-center gap-2">
                 <Link href="/login" className="text-gray-600 hover:text-gray-900 font-medium">
                   Đăng nhập
                 </Link>
@@ -354,7 +480,7 @@ export function PublicHeader({ showSearch = false, merchantId, cartCount = 0, on
                 >
                   Đăng ký
                 </Link>
-              </>
+              </div>
             )}
           </div>
         </div>

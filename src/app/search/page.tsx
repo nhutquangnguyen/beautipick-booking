@@ -5,6 +5,7 @@ import { PublicFooter } from "@/components/PublicFooter";
 import { SearchFilters } from "@/components/directory/SearchFilters";
 import { Search } from "lucide-react";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
 
@@ -146,13 +147,20 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             <div className="lg:grid lg:grid-cols-4 lg:gap-8">
               {/* Sidebar Filters */}
               <aside className="hidden lg:block">
-                <SearchFilters
-                  cities={uniqueCities as string[]}
-                  tags={popularTags}
-                  selectedCity={city}
-                  selectedTag={tag}
-                  selectedSort={sort}
-                />
+                <Suspense fallback={
+                  <div className="animate-pulse">
+                    <div className="h-8 bg-gray-200 rounded mb-4"></div>
+                    <div className="h-64 bg-gray-200 rounded"></div>
+                  </div>
+                }>
+                  <SearchFilters
+                    cities={uniqueCities as string[]}
+                    tags={popularTags}
+                    selectedCity={city}
+                    selectedTag={tag}
+                    selectedSort={sort}
+                  />
+                </Suspense>
               </aside>
 
               {/* Results */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
  * This page handles OAuth callbacks when opened in a popup window
  * It creates customer account, then closes the popup
  */
-export default function CallbackPopupPage() {
+function CallbackPopupContent() {
   const [status, setStatus] = useState<string>("Processing...");
   const searchParams = useSearchParams();
   const supabase = createClient();
@@ -118,5 +118,20 @@ export default function CallbackPopupPage() {
         <p className="mt-4 text-gray-600">{status}</p>
       </div>
     </div>
+  );
+}
+
+export default function CallbackPopupPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
+        <div className="text-center">
+          <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-purple-600 border-r-transparent"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <CallbackPopupContent />
+    </Suspense>
   );
 }
