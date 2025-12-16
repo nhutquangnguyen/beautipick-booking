@@ -77,11 +77,27 @@ export function useCheckoutFlow({
           // Check if we have all required info (name and phone are required, email is optional)
           const hasPhone = !!customerAccount.phone;
           const hasName = !!customerAccount.name;
+          const hasInfo = hasPhone && hasName;
 
-          setHasCustomerInfo(hasPhone && hasName);
+          console.log('[CheckoutFlow] Setting auth state:', {
+            isLoggedIn: true,
+            hasCustomerInfo: hasInfo,
+            hasPhone,
+            hasName,
+            name: customerAccount.name,
+            phone: customerAccount.phone,
+            email: customerAccount.email,
+          });
+
+          setHasCustomerInfo(hasInfo);
         } else {
           // User is authenticated but doesn't have a customer account (probably a merchant)
           console.log('[CheckoutFlow] User authenticated but NO customer account - treating as guest');
+          console.log('[CheckoutFlow] Setting auth state:', {
+            isLoggedIn: false,
+            hasCustomerInfo: false,
+          });
+
           setCurrentUserId(null); // IMPORTANT: Don't set customer_id for users without customer accounts
           setIsLoggedIn(false);
 
@@ -297,11 +313,22 @@ export function useCheckoutFlow({
   const goToNextStep = () => {
     if (currentStep === "datetime") {
       // After selecting datetime, check if we should skip info step
+      console.log('[CheckoutFlow goToNextStep] Checking shouldSkipInfoStep:', {
+        isLoggedIn,
+        hasCustomerInfo,
+        shouldSkip: shouldSkipInfoStep(),
+        customerName,
+        customerPhone,
+        customerEmail,
+      });
+
       if (shouldSkipInfoStep()) {
         // User is logged in with complete info, skip directly to confirm
+        console.log('[CheckoutFlow goToNextStep] SKIPPING info step - going to confirm');
         setCurrentStep("confirm");
       } else {
         // Go to info step to collect customer details
+        console.log('[CheckoutFlow goToNextStep] Going to info step');
         setCurrentStep("info");
       }
     } else if (currentStep === "info") {

@@ -450,14 +450,16 @@ export function CheckoutFlow({
                       {/* Info box */}
                       <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
                         <p className="text-sm text-gray-900 font-semibold text-center mb-1">
-                          {t("trackOrdersAndGetUpdates")}
+                          {locale === 'vi' ? "Theo dõi đơn hàng và nhận cập nhật" : "Track your orders and get updates"}
                         </p>
                         <p className="text-xs text-gray-600 text-center">
-                          {t("createAccountToTrack")}
+                          {locale === 'vi'
+                            ? "Đăng nhập hoặc tạo tài khoản để quản lý đơn hàng của bạn"
+                            : "Sign in or create an account to manage your orders"}
                         </p>
                       </div>
 
-                      {/* Create Account Button */}
+                      {/* Continue with Account Button */}
                       <button
                         onClick={() => {
                           setShowPasswordForm(true);
@@ -468,7 +470,7 @@ export function CheckoutFlow({
                         style={{ backgroundColor: primaryColor }}
                       >
                         <User className="w-5 h-5" />
-                        {tAccount("createAccount")}
+                        {locale === 'vi' ? "Tiếp tục với tài khoản" : "Continue with Account"}
                       </button>
 
                       {/* Skip Button */}
@@ -534,7 +536,7 @@ export function CheckoutFlow({
                           ) : (
                             <>
                               <Check className="w-5 h-5" />
-                              {locale === 'vi' ? "Xác nhận và tạo tài khoản" : "Verify and Create Account"}
+                              {locale === 'vi' ? "Xác nhận và tiếp tục" : "Verify and Continue"}
                             </>
                           )}
                         </button>
@@ -664,7 +666,7 @@ export function CheckoutFlow({
                           </div>
                           <div className="relative flex justify-center text-sm">
                             <span className="px-2 bg-white text-gray-500">
-                              {locale === 'vi' ? "Or continue with email" : "Or continue with email"}
+                              {locale === 'vi' ? "Hoặc tiếp tục với email" : "Or continue with email"}
                             </span>
                           </div>
                         </div>
@@ -696,7 +698,7 @@ export function CheckoutFlow({
                           ) : (
                             <>
                               <Mail className="w-5 h-5" />
-                              {locale === 'vi' ? "Gửi mã xác nhận" : "Send Verification Code"}
+                              {locale === 'vi' ? "Tiếp tục với email" : "Continue with Email"}
                             </>
                           )}
                         </button>
