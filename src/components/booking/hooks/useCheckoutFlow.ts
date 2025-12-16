@@ -105,13 +105,9 @@ export function useCheckoutFlow({
   // Reset step when modal opens (but not if we're showing success)
   useEffect(() => {
     if (isOpen && currentStep !== "success") {
-      // Determine the correct initial step based on login status
-      if (shouldSkipInfoStep()) {
-        // If logged in with all info, skip directly to confirm
-        setCurrentStep("confirm");
-      } else {
-        setCurrentStep(initialStep);
-      }
+      // Always start at the initial step (datetime if has services, info otherwise)
+      // We'll skip the info step later in the flow if user is logged in with complete info
+      setCurrentStep(initialStep);
     }
   }, [isOpen]); // Removed initialStep from dependencies to prevent reset during checkout
 
@@ -300,8 +296,14 @@ export function useCheckoutFlow({
 
   const goToNextStep = () => {
     if (currentStep === "datetime") {
-      // After selecting datetime, go directly to info (skip choose step)
-      setCurrentStep("info");
+      // After selecting datetime, check if we should skip info step
+      if (shouldSkipInfoStep()) {
+        // User is logged in with complete info, skip directly to confirm
+        setCurrentStep("confirm");
+      } else {
+        // Go to info step to collect customer details
+        setCurrentStep("info");
+      }
     } else if (currentStep === "info") {
       setCurrentStep("confirm");
     } else if (currentStep === "confirm") {
@@ -315,7 +317,16 @@ export function useCheckoutFlow({
         setCurrentStep("datetime");
       }
     } else if (currentStep === "confirm") {
-      setCurrentStep("info");
+      // Check if we skipped the info step
+      if (shouldSkipInfoStep()) {
+        // User is logged in with complete info, go back to datetime
+        if (hasServices) {
+          setCurrentStep("datetime");
+        }
+      } else {
+        // Go back to info step
+        setCurrentStep("info");
+      }
     }
   };
 

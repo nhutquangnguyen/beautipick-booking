@@ -3,6 +3,7 @@
 import { useState, ReactNode } from "react";
 import { PublicHeader } from "@/components/PublicHeader";
 import { MerchantProfileClient } from "./MerchantProfileClient";
+import { FloatingZaloButton } from "./FloatingZaloButton";
 
 interface MerchantPageWrapperProps {
   merchant: any;
@@ -36,6 +37,11 @@ export function MerchantPageWrapper(props: MerchantPageWrapperProps) {
         onShowCartChange={setShowCart}
         onCartCountChange={setCartCount}
       />
+
+      {/* Floating Zalo Button */}
+      {props.merchant.phone && (
+        <FloatingZaloButton phone={props.merchant.phone} />
+      )}
     </>
   );
 }

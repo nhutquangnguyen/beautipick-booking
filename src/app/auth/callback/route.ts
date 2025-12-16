@@ -36,13 +36,17 @@ export async function GET(request: Request) {
 
     console.log('[Auth Callback] User authenticated:', data.user.id, data.user.email);
     console.log('[Auth Callback] User metadata:', data.user.user_metadata);
+    console.log('[Auth Callback] URL params:', { signupType, nameParam, phoneParam, emailParam, merchantIdParam });
 
     // Check user type from metadata or query params (for Google OAuth customer signup)
-    let userType = data.user.user_metadata?.user_type || signupType;
-    let customerName = data.user.user_metadata?.name || nameParam;
-    let customerPhone = data.user.user_metadata?.phone || phoneParam;
-    let customerEmail = data.user.user_metadata?.email || emailParam;
-    let firstMerchantId = data.user.user_metadata?.first_merchant_id || merchantIdParam;
+    // IMPORTANT: Prioritize URL params over Google metadata to use the name the user entered
+    let userType = signupType || data.user.user_metadata?.user_type;
+    let customerName = nameParam || data.user.user_metadata?.name;
+    let customerPhone = phoneParam || data.user.user_metadata?.phone;
+    let customerEmail = emailParam || data.user.user_metadata?.email;
+    let firstMerchantId = merchantIdParam || data.user.user_metadata?.first_merchant_id;
+
+    console.log('[Auth Callback] Resolved values:', { userType, customerName, customerPhone, customerEmail });
 
     // Use admin client to check existing profiles (bypasses RLS)
     const adminClient = createAdminClient();
@@ -74,7 +78,11 @@ export async function GET(request: Request) {
       // No customer account exists, create one
       // Allow merchants to also have customer accounts (dual accounts)
       console.log('[Auth Callback] Creating customer account' + (existingMerchant ? ' (merchant also becoming customer)' : ''));
-      customerName = customerName || data.user.email?.split('@')[0] || 'Customer';
+
+      // Final fallback for name: use email prefix or Google's full name, or 'Customer'
+      if (!customerName || customerName.trim() === '') {
+        customerName = data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'Customer';
+      }
       customerEmail = customerEmail || data.user.email;
 
       const { error: customerError } = await (adminClient as any)

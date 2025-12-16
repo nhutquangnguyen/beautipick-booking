@@ -6,15 +6,16 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { createCustomerAccount } from "@/app/actions/auth";
 import { OAuthButtons } from "@/components/auth/OAuthButtons";
+import { Mail } from "lucide-react";
 
 function SignupContent() {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [otp, setOtp] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
@@ -27,7 +28,7 @@ function SignupContent() {
     }
   }, [searchParams]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
@@ -40,44 +41,88 @@ function SignupContent() {
         return;
       }
 
-      // Create auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // Store customer data in localStorage temporarily
+      localStorage.setItem('pending_customer_signup', JSON.stringify({
         email,
-        password,
+        name: name || email.split("@")[0],
+        phone,
+      }));
+
+      // Send OTP code to email
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?type=customer`,
-          data: {
-            user_type: "customer",
-            name: name || email.split("@")[0],
-            phone: phone,
-          },
+          shouldCreateUser: true,
         },
       });
 
-      if (authError) {
-        setError(authError.message);
+      if (otpError) {
+        setError(otpError.message);
+        setLoading(false);
+        return;
+      }
+
+      setOtpSent(true);
+      setLoading(false);
+    } catch (err) {
+      setError("An unexpected error occurred");
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      // Verify OTP code
+      const { data: authData, error: verifyError } = await supabase.auth.verifyOtp({
+        email,
+        token: otp,
+        type: "email",
+      });
+
+      if (verifyError) {
+        setError(verifyError.message);
+        setLoading(false);
         return;
       }
 
       if (!authData.user) {
-        setError("Failed to create account");
+        setError("Failed to verify code");
+        setLoading(false);
         return;
       }
 
-      // Check if email confirmation is required
-      if (!authData.session) {
-        // Email confirmation enabled - show success message
-        // Customer account will be created after email confirmation in auth callback
-        setSuccess(true);
+      // Check if customer account already exists (in case of re-login)
+      const { data: existingCustomer } = await supabase
+        .from("customer_accounts")
+        .select("id")
+        .eq("id", authData.user.id)
+        .maybeSingle();
+
+      if (existingCustomer) {
+        // Clean up temporary data
+        localStorage.removeItem('pending_customer_signup');
+        // Customer account already exists, redirect to home
+        window.location.href = "/";
         return;
       }
 
-      // No email confirmation required - create account immediately
+      // Get signup data from localStorage
+      const pendingSignup = localStorage.getItem('pending_customer_signup');
+      const signupData = pendingSignup ? JSON.parse(pendingSignup) : {
+        name: name || email.split("@")[0],
+        phone,
+      };
+
+      // Create customer account
       const result = await createCustomerAccount({
         userId: authData.user.id,
         email,
-        name: name || email.split("@")[0],
-        phone: phone,
+        name: signupData.name,
+        phone: signupData.phone,
       });
 
       if (!result.success) {
@@ -86,55 +131,16 @@ function SignupContent() {
         return;
       }
 
-      // Redirect to homepage - use hard redirect for reliability
+      // Clean up temporary data
+      localStorage.removeItem('pending_customer_signup');
+
+      // Redirect to homepage
       window.location.href = "/";
-    } catch {
+    } catch (err) {
       setError("An unexpected error occurred");
       setLoading(false);
     }
   };
-
-  // Show success message if email confirmation is required
-  if (success) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 px-4">
-        <div className="w-full max-w-md">
-          <div className="mb-8 text-center">
-            <Link href="/" className="inline-flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-purple-600 to-pink-600" />
-              <span className="text-xl font-bold text-gray-900">BeautiPick</span>
-            </Link>
-          </div>
-
-          <div className="card p-8 text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-              <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h1 className="mt-4 text-2xl font-bold text-gray-900">Kiểm tra email</h1>
-            <p className="mt-2 text-gray-600">
-              Chúng tôi đã gửi link xác nhận đến <strong>{email}</strong>
-            </p>
-            <p className="mt-4 text-sm text-gray-500">
-              Nhấp vào link trong email để xác minh tài khoản và hoàn tất đăng ký.
-            </p>
-            <div className="mt-6 rounded-lg bg-blue-50 p-4">
-              <p className="text-sm text-blue-800">
-                <strong>Lưu ý:</strong> Nếu không thấy email, vui lòng kiểm tra thư mục spam.
-              </p>
-            </div>
-            <Link
-              href="/login"
-              className="mt-6 inline-block text-sm font-medium text-purple-600 hover:text-purple-500"
-            >
-              Quay lại đăng nhập
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 px-4">
@@ -156,35 +162,36 @@ function SignupContent() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-            <div>
-              <label htmlFor="name" className="label">
-                Tên của bạn
-              </label>
-              <input
-                id="name"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="input mt-1"
-                placeholder="Nguyễn Văn A"
-              />
-            </div>
+          {!otpSent ? (
+            <form onSubmit={handleSendOtp} className="mt-6 space-y-4">
+              <div>
+                <label htmlFor="name" className="label">
+                  Tên của bạn
+                </label>
+                <input
+                  id="name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="input mt-1"
+                  placeholder="Nguyễn Văn A"
+                />
+              </div>
 
-            <div>
-              <label htmlFor="phone" className="label">
-                Số điện thoại <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="phone"
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="input mt-1"
-                placeholder="0901234567"
-                required
-              />
-            </div>
+              <div>
+                <label htmlFor="phone" className="label">
+                  Số điện thoại <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="input mt-1"
+                  placeholder="0901234567"
+                  required
+                />
+              </div>
 
             {/* Google OAuth Button - only enabled if phone is entered */}
             <div>
@@ -237,57 +244,94 @@ function SignupContent() {
               </button>
             </div>
 
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="bg-white px-2 text-gray-500">Or continue with email</span>
+                </div>
               </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-2 text-gray-500">Or continue with email</span>
+
+              <div>
+                <label htmlFor="email" className="label">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="input mt-1"
+                  placeholder="you@example.com"
+                  required
+                />
               </div>
-            </div>
 
-            <div>
-              <label htmlFor="email" className="label">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="input mt-1"
-                placeholder="you@example.com"
-                required
-              />
-            </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn btn-primary btn-md w-full"
+              >
+                {loading ? "Đang gửi mã..." : "Gửi mã xác nhận"}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleVerifyOtp} className="mt-6 space-y-4">
+              <div className="rounded-lg bg-blue-50 p-4 mb-4">
+                <div className="flex items-start gap-3">
+                  <Mail className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-blue-900">
+                      Mã đã được gửi
+                    </p>
+                    <p className="text-sm text-blue-700 mt-1">
+                      Sao chép mã xác thực đã được gửi đến <strong>{email}</strong>
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-            <div>
-              <label htmlFor="password" className="label">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="input mt-1"
-                placeholder="••••••••"
-                minLength={6}
-                required
-              />
-              <p className="mt-1 text-xs text-gray-500">
-                At least 6 characters
-              </p>
-            </div>
+              <div>
+                <label htmlFor="otp" className="label">
+                  Mã xác nhận
+                </label>
+                <input
+                  id="otp"
+                  type="text"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.trim())}
+                  className="input mt-1 text-center text-lg tracking-wider font-mono"
+                  placeholder="Nhập mã từ email"
+                  required
+                  autoComplete="one-time-code"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Sao chép và dán mã từ email
+                </p>
+              </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn btn-primary btn-md w-full"
-            >
-              {loading ? "Đang tạo tài khoản..." : "Tạo tài khoản"}
-            </button>
-          </form>
+              <button
+                type="submit"
+                disabled={loading || otp.length < 4}
+                className="btn btn-primary btn-md w-full"
+              >
+                {loading ? "Đang xác nhận..." : "Xác nhận và tạo tài khoản"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setOtpSent(false);
+                  setOtp("");
+                  setError(null);
+                }}
+                className="w-full text-sm text-gray-600 hover:text-gray-900"
+              >
+                Gửi lại mã hoặc thay đổi email
+              </button>
+            </form>
+          )}
 
           <p className="mt-6 text-center text-sm text-gray-600">
             Đã có tài khoản?{" "}

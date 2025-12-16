@@ -9,14 +9,15 @@ import { generateSlug } from "@/lib/utils";
 import { defaultTheme, defaultSettings } from "@/types/database";
 import { OAuthButtons } from "@/components/auth/OAuthButtons";
 import { createMerchantAccount } from "@/app/actions/auth";
-import { ArrowLeft, Store } from "lucide-react";
+import { ArrowLeft, Store, Mail } from "lucide-react";
 
 function BusinessSignupContent() {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [otp, setOtp] = useState("");
   const [businessName, setBusinessName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
   const [success, setSuccess] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -35,52 +36,100 @@ function BusinessSignupContent() {
   const timezone = locale === "vi" ? "Asia/Ho_Chi_Minh" : "America/New_York";
   const currency = locale === "vi" ? "VND" : "USD";
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
     try {
-      // Create auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // Store metadata in localStorage temporarily (since OTP doesn't support metadata directly)
+      localStorage.setItem('pending_merchant_signup', JSON.stringify({
         email,
-        password,
+        businessName,
+        timezone,
+        currency,
+      }));
+
+      // Send OTP code to email (this will send actual OTP code if configured)
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?type=merchant&next=/business/dashboard/onboarding`,
-          data: {
-            user_type: "merchant",
-            business_name: businessName,
-          },
+          shouldCreateUser: true,
+          // Note: emailRedirectTo is ignored for OTP codes
         },
       });
 
-      if (authError) {
-        setError(authError.message);
+      if (otpError) {
+        setError(otpError.message);
+        setLoading(false);
+        return;
+      }
+
+      setOtpSent(true);
+      setLoading(false);
+    } catch (err) {
+      setError("An unexpected error occurred");
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      // Verify OTP code
+      const { data: authData, error: verifyError } = await supabase.auth.verifyOtp({
+        email,
+        token: otp,
+        type: "email",
+      });
+
+      if (verifyError) {
+        setError(verifyError.message);
+        setLoading(false);
         return;
       }
 
       if (!authData.user) {
-        setError("Failed to create account");
+        setError("Failed to verify code");
+        setLoading(false);
         return;
       }
 
-      // Check if email confirmation is required
-      if (!authData.session) {
-        // Email confirmation enabled - show success message
-        // Merchant account will be created after email confirmation in auth callback
-        setSuccess(true);
+      // Check if merchant account already exists (in case of re-login)
+      const { data: existingMerchant } = await supabase
+        .from("merchants")
+        .select("id")
+        .eq("id", authData.user.id)
+        .maybeSingle();
+
+      if (existingMerchant) {
+        // Clean up temporary data
+        localStorage.removeItem('pending_merchant_signup');
+        // Merchant account already exists, redirect to dashboard
+        window.location.href = "/business/dashboard";
         return;
       }
 
-      // No email confirmation required - create account immediately
+      // Get signup data from localStorage
+      const pendingSignup = localStorage.getItem('pending_merchant_signup');
+      const signupData = pendingSignup ? JSON.parse(pendingSignup) : {
+        businessName,
+        timezone,
+        currency,
+      };
+
+      // Create merchant account
       const result = await createMerchantAccount({
         userId: authData.user.id,
         email,
-        businessName,
+        businessName: signupData.businessName,
         theme: defaultTheme,
         settings: defaultSettings,
-        timezone,
-        currency,
+        timezone: signupData.timezone,
+        currency: signupData.currency,
       });
 
       if (!result.success) {
@@ -89,48 +138,16 @@ function BusinessSignupContent() {
         return;
       }
 
-      // Redirect to onboarding - use hard redirect for reliability
+      // Clean up temporary data
+      localStorage.removeItem('pending_merchant_signup');
+
+      // Redirect to onboarding
       window.location.href = "/business/dashboard/onboarding";
     } catch (err) {
       setError("An unexpected error occurred");
       setLoading(false);
     }
   };
-
-  // Show success message if email confirmation is required
-  if (success) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-600 to-purple-700 flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-              <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h1 className="mt-4 text-2xl font-bold text-gray-900">Kiểm tra email</h1>
-            <p className="mt-2 text-gray-600">
-              Chúng tôi đã gửi link xác nhận đến <strong>{email}</strong>
-            </p>
-            <p className="mt-4 text-sm text-gray-500">
-              Nhấp vào link trong email để xác minh tài khoản và hoàn tất đăng ký.
-            </p>
-            <div className="mt-6 rounded-lg bg-blue-50 p-4">
-              <p className="text-sm text-blue-800">
-                <strong>Lưu ý:</strong> Nếu không thấy email, vui lòng kiểm tra thư mục spam.
-              </p>
-            </div>
-            <Link
-              href="/business/login"
-              className="mt-6 inline-block text-sm font-medium text-purple-600 hover:text-purple-500"
-            >
-              Quay lại đăng nhập
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-600 to-purple-700 flex items-center justify-center p-4">
@@ -173,70 +190,114 @@ function BusinessSignupContent() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
-                {error}
+          {!otpSent ? (
+            <form onSubmit={handleSendOtp} className="space-y-4">
+              {error && (
+                <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
+                  {error}
+                </div>
+              )}
+
+              <div>
+                <label htmlFor="businessName" className="label">
+                  Tên Salon
+                </label>
+                <input
+                  id="businessName"
+                  type="text"
+                  value={businessName}
+                  onChange={(e) => setBusinessName(e.target.value)}
+                  className="input mt-1"
+                  placeholder="Tên salon của bạn"
+                  required
+                />
               </div>
-            )}
 
-            <div>
-              <label htmlFor="businessName" className="label">
-                Tên Salon
-              </label>
-              <input
-                id="businessName"
-                type="text"
-                value={businessName}
-                onChange={(e) => setBusinessName(e.target.value)}
-                className="input mt-1"
-                placeholder="Tên salon của bạn"
-                required
-              />
-            </div>
+              <div>
+                <label htmlFor="email" className="label">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="input mt-1"
+                  placeholder="you@example.com"
+                  required
+                />
+              </div>
 
-            <div>
-              <label htmlFor="email" className="label">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="input mt-1"
-                placeholder="you@example.com"
-                required
-              />
-            </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn btn-primary btn-md w-full"
+              >
+                {loading ? "Đang gửi mã..." : "Gửi mã xác nhận"}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleVerifyOtp} className="space-y-4">
+              {error && (
+                <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
+                  {error}
+                </div>
+              )}
 
-            <div>
-              <label htmlFor="password" className="label">
-                Mật khẩu
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="input mt-1"
-                placeholder="••••••••"
-                minLength={6}
-                required
-              />
-              <p className="mt-1 text-xs text-gray-500">
-                Tối thiểu 6 ký tự
-              </p>
-            </div>
+              <div className="rounded-lg bg-blue-50 p-4 mb-4">
+                <div className="flex items-start gap-3">
+                  <Mail className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-blue-900">
+                      Mã đã được gửi
+                    </p>
+                    <p className="text-sm text-blue-700 mt-1">
+                      Sao chép mã xác thực đã được gửi đến <strong>{email}</strong>
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn btn-primary btn-md w-full"
-            >
-              {loading ? "Đang tạo tài khoản..." : "Tạo tài khoản"}
-            </button>
-          </form>
+              <div>
+                <label htmlFor="otp" className="label">
+                  Mã xác nhận
+                </label>
+                <input
+                  id="otp"
+                  type="text"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.trim())}
+                  className="input mt-1 text-center text-lg tracking-wider font-mono"
+                  placeholder="Nhập mã từ email"
+                  required
+                  autoComplete="one-time-code"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Sao chép và dán mã từ email
+                </p>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading || otp.length < 4}
+                className="btn btn-primary btn-md w-full"
+              >
+                {loading ? "Đang xác nhận..." : "Xác nhận và tạo tài khoản"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setOtpSent(false);
+                  setOtp("");
+                  setError(null);
+                }}
+                className="w-full text-sm text-gray-600 hover:text-gray-900"
+              >
+                Gửi lại mã hoặc thay đổi email
+              </button>
+            </form>
+          )}
 
           {/* Footer */}
           <div className="mt-6 pt-6 border-t border-gray-200 text-center">

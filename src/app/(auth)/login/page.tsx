@@ -5,29 +5,61 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { OAuthButtons } from "@/components/auth/OAuthButtons";
+import { Mail } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [otp, setOtp] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // Send OTP code to email
+      const { error: otpError } = await supabase.auth.signInWithOtp({
         email,
-        password,
+        options: {
+          shouldCreateUser: false, // Don't create user on login
+        },
       });
 
-      if (error) {
-        console.error('[Login] Auth error:', error);
-        setError(`Đăng nhập thất bại: ${error.message}`);
+      if (otpError) {
+        setError(otpError.message);
+        setLoading(false);
+        return;
+      }
+
+      setOtpSent(true);
+      setLoading(false);
+    } catch (err) {
+      setError("An unexpected error occurred");
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      // Verify OTP code
+      const { data, error: verifyError } = await supabase.auth.verifyOtp({
+        email,
+        token: otp,
+        type: "email",
+      });
+
+      if (verifyError) {
+        console.error('[Login] Auth error:', verifyError);
+        setError(`Đăng nhập thất bại: ${verifyError.message}`);
         setLoading(false);
         return;
       }
@@ -89,7 +121,6 @@ export default function LoginPage() {
     } catch (err) {
       console.error('[Login] Unexpected error:', err);
       setError(`Lỗi không mong đợi: ${err instanceof Error ? err.message : 'Unknown error'}`);
-    } finally {
       setLoading(false);
     }
   };
@@ -121,51 +152,99 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
-                {error}
+          {!otpSent ? (
+            <form onSubmit={handleSendOtp} className="space-y-4">
+              {error && (
+                <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
+                  {error}
+                </div>
+              )}
+
+              <div>
+                <label htmlFor="email" className="label">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="input mt-1"
+                  placeholder="you@example.com"
+                  required
+                />
               </div>
-            )}
 
-            <div>
-              <label htmlFor="email" className="label">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="input mt-1"
-                placeholder="you@example.com"
-                required
-              />
-            </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn btn-primary btn-md w-full"
+              >
+                {loading ? "Đang gửi mã..." : "Gửi mã xác nhận"}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleVerifyOtp} className="space-y-4">
+              {error && (
+                <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
+                  {error}
+                </div>
+              )}
 
-            <div>
-              <label htmlFor="password" className="label">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="input mt-1"
-                placeholder="••••••••"
-                required
-              />
-            </div>
+              <div className="rounded-lg bg-blue-50 p-4 mb-4">
+                <div className="flex items-start gap-3">
+                  <Mail className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-blue-900">
+                      Mã đã được gửi
+                    </p>
+                    <p className="text-sm text-blue-700 mt-1">
+                      Sao chép mã xác thực đã được gửi đến <strong>{email}</strong>
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn btn-primary btn-md w-full"
-            >
-              {loading ? "Đang đăng nhập..." : "Đăng nhập"}
-            </button>
-          </form>
+              <div>
+                <label htmlFor="otp" className="label">
+                  Mã xác nhận
+                </label>
+                <input
+                  id="otp"
+                  type="text"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.trim())}
+                  className="input mt-1 text-center text-lg tracking-wider font-mono"
+                  placeholder="Nhập mã từ email"
+                  required
+                  autoComplete="one-time-code"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Sao chép và dán mã từ email
+                </p>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading || otp.length < 4}
+                className="btn btn-primary btn-md w-full"
+              >
+                {loading ? "Đang xác nhận..." : "Xác nhận và đăng nhập"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setOtpSent(false);
+                  setOtp("");
+                  setError(null);
+                }}
+                className="w-full text-sm text-gray-600 hover:text-gray-900"
+              >
+                Gửi lại mã hoặc thay đổi email
+              </button>
+            </form>
+          )}
 
           <p className="mt-6 text-center text-sm text-gray-600">
             Chưa có tài khoản?{" "}

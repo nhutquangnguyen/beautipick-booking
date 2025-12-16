@@ -17,97 +17,83 @@ function CallbackPopupContent() {
     console.log('[Callback Popup] Page loaded, waiting for Supabase to handle OAuth callback...');
     setStatus("Signing you in...");
 
-    // Supabase automatically handles OAuth callback when page loads with code in URL
-    // We just need to listen for the auth state change
+    let processed = false; // Prevent double processing
+
+    // Function to close popup successfully
+    const closePopupSuccess = () => {
+      if (processed) return;
+      processed = true;
+      setStatus("Success! Closing...");
+
+      if (window.opener && !window.opener.closed) {
+        console.log('[Callback Popup] Closing popup and notifying parent');
+        window.opener.postMessage({ type: 'OAUTH_SUCCESS' }, window.location.origin);
+        setTimeout(() => window.close(), 500);
+      } else {
+        console.log('[Callback Popup] No opener, redirecting...');
+        const userType = searchParams.get('type');
+        const redirectUrl = userType === 'merchant' ? '/business/dashboard' : '/';
+        window.location.href = redirectUrl;
+      }
+    };
+
+    // Check if session already exists (for faster resolution)
+    const checkExistingSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          console.log('[Callback Popup] Session already exists, closing immediately');
+          closePopupSuccess();
+        }
+      } catch (error) {
+        console.error('[Callback Popup] Error checking existing session:', error);
+      }
+    };
+
+    // Check immediately after a small delay to let Supabase finish processing
+    setTimeout(checkExistingSession, 1000);
+
+    // Also listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('[Callback Popup] Auth state change:', event, { hasSession: !!session });
+      console.log('[Callback Popup] Auth state change:', event, { hasSession: !!session, processed });
+
+      // Process only once and only on SIGNED_IN event
+      if (processed) {
+        console.log('[Callback Popup] Already processed, skipping');
+        return;
+      }
 
       if (event === 'SIGNED_IN' && session?.user) {
-        console.log('[Callback Popup] User signed in:', session.user.id);
-        setStatus("Creating your account...");
-
-        try {
-          // Get customer data from query params or localStorage
-          const userType = searchParams.get('type');
-          const name = searchParams.get('name');
-          const phone = searchParams.get('phone');
-          const merchantId = searchParams.get('merchant_id');
-
-          let customerName = name;
-          let customerPhone = phone;
-          let firstMerchantId = merchantId;
-
-          // Try localStorage if not in params
-          const pendingSignup = localStorage.getItem('pending_customer_signup');
-          if (pendingSignup) {
-            try {
-              const data = JSON.parse(pendingSignup);
-              customerName = customerName || data.name;
-              customerPhone = customerPhone || data.phone;
-              firstMerchantId = firstMerchantId || data.first_merchant_id;
-            } catch (e) {
-              console.error('[Callback Popup] Error parsing pending signup data:', e);
-            }
-          }
-
-          console.log('[Callback Popup] Creating customer account with:', {
-            userId: session.user.id,
-            name: customerName,
-            phone: customerPhone,
-            type: userType
-          });
-
-          // Create customer account
-          const response = await fetch('/api/customer-accounts', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId: session.user.id,
-              email: session.user.email,
-              name: customerName || session.user.user_metadata?.name || session.user.email?.split('@')[0],
-              phone: customerPhone,
-              firstMerchantId: firstMerchantId,
-            }),
-          });
-
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-            console.error('[Callback Popup] Failed to create customer account:', errorData);
-            setStatus("Error: Could not create account");
-            return;
-          }
-
-          const result = await response.json();
-          console.log('[Callback Popup] Customer account created successfully:', result);
-
-          // Clean up
-          localStorage.removeItem('pending_customer_signup');
-
-          setStatus("Success! Closing...");
-
-          // Close popup and notify parent
-          if (window.opener && !window.opener.closed) {
-            console.log('[Callback Popup] Notifying parent and closing popup...');
-            window.opener.postMessage({ type: 'OAUTH_SUCCESS' }, window.location.origin);
-
-            setTimeout(() => {
-              window.close();
-            }, 500);
-          } else {
-            // Not a popup, redirect
-            console.log('[Callback Popup] Not a popup, redirecting...');
-            window.location.href = '/account/appointments';
-          }
-        } catch (error) {
-          console.error('[Callback Popup] Account creation error:', error);
-          setStatus("Error creating account");
-        }
+        console.log('[Callback Popup] User signed in via auth state change:', session.user.id);
+        closePopupSuccess();
       }
     });
+
+    // Fallback: If no auth state change happens within 5 seconds, check session manually
+    const timeoutId = setTimeout(async () => {
+      if (!processed) {
+        console.log('[Callback Popup] Timeout reached, checking session manually...');
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+
+          if (session?.user) {
+            console.log('[Callback Popup] Session found via fallback timeout, closing popup');
+            closePopupSuccess();
+          } else {
+            console.error('[Callback Popup] No session found after timeout');
+            setStatus("Error: Authentication timed out. Please close this window and try again.");
+          }
+        } catch (error) {
+          console.error('[Callback Popup] Error in fallback check:', error);
+          setStatus("Error: Failed to verify authentication. Please close this window and try again.");
+        }
+      }
+    }, 5000);
 
     // Cleanup subscription on unmount
     return () => {
       subscription.unsubscribe();
+      clearTimeout(timeoutId);
     };
   }, [supabase, searchParams]);
 

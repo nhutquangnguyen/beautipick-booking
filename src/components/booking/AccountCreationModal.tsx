@@ -28,11 +28,12 @@ export function AccountCreationModal({
   const t = useTranslations("customerAccount");
   const [isLoading, setIsLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [otp, setOtp] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const supabase = createClient();
 
-  const handleSendMagicLink = async () => {
+  const handleSendOtp = async () => {
     if (!customerEmail || !customerEmail.trim()) {
       setError("Please provide an email address");
       return;
@@ -42,17 +43,19 @@ export function AccountCreationModal({
     setError(null);
 
     try {
-      // Send magic link with metadata
+      // Store customer data in localStorage temporarily
+      localStorage.setItem('pending_checkout_customer', JSON.stringify({
+        email: customerEmail,
+        name: customerName,
+        phone: customerPhone,
+        merchantId,
+      }));
+
+      // Send OTP code
       const { error: signInError } = await supabase.auth.signInWithOtp({
         email: customerEmail,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-          data: {
-            user_type: "customer",
-            name: customerName,
-            phone: customerPhone,
-            first_merchant_id: merchantId,
-          },
+          shouldCreateUser: true,
         },
       });
 
@@ -60,8 +63,74 @@ export function AccountCreationModal({
 
       setEmailSent(true);
     } catch (err) {
-      console.error("Error sending magic link:", err);
-      setError(err instanceof Error ? err.message : "Failed to send magic link");
+      console.error("Error sending OTP:", err);
+      setError(err instanceof Error ? err.message : "Failed to send verification code");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otp || otp.trim().length < 4) {
+      setError("Please enter a valid verification code");
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Verify OTP code
+      const { data: authData, error: verifyError } = await supabase.auth.verifyOtp({
+        email: customerEmail,
+        token: otp,
+        type: "email",
+      });
+
+      if (verifyError) throw verifyError;
+
+      if (!authData.user) {
+        throw new Error("Failed to verify code");
+      }
+
+      // Get customer data from localStorage
+      const pendingCheckout = localStorage.getItem('pending_checkout_customer');
+      const checkoutData = pendingCheckout ? JSON.parse(pendingCheckout) : {
+        name: customerName,
+        phone: customerPhone,
+        merchantId,
+      };
+
+      // Check if customer account already exists
+      const { data: existingCustomer } = await supabase
+        .from("customer_accounts")
+        .select("id")
+        .eq("id", authData.user.id)
+        .maybeSingle();
+
+      if (!existingCustomer) {
+        // Create customer account using server action
+        const { createCustomerAccount } = await import("@/app/actions/auth");
+        const result = await createCustomerAccount({
+          userId: authData.user.id,
+          email: customerEmail,
+          name: checkoutData.name,
+          phone: checkoutData.phone,
+        });
+
+        if (!result.success) {
+          throw new Error(result.error || "Failed to create account");
+        }
+      }
+
+      // Clean up temporary data
+      localStorage.removeItem('pending_checkout_customer');
+
+      // Reload the page to refresh auth state
+      window.location.reload();
+    } catch (err) {
+      console.error("Error verifying OTP:", err);
+      setError(err instanceof Error ? err.message : "Failed to verify code");
     } finally {
       setIsLoading(false);
     }
@@ -110,30 +179,83 @@ export function AccountCreationModal({
           onClick={(e) => e.stopPropagation()}
         >
           {emailSent ? (
-            // Email Sent Success State
-            <div className="p-8 text-center">
-              <div
-                className="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center"
-                style={{ backgroundColor: `${primaryColor}20` }}
-              >
-                <Mail className="w-10 h-10" style={{ color: primaryColor }} />
+            // OTP Input State
+            <div className="p-6">
+              <div className="text-center mb-6">
+                <div
+                  className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"
+                  style={{ backgroundColor: `${primaryColor}20` }}
+                >
+                  <Mail className="w-8 h-8" style={{ color: primaryColor }} />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900 mb-2">
+                  {t("checkYourEmail")}
+                </h2>
+                <p className="text-sm text-gray-600">
+                  {t("magicLinkSent")}
+                </p>
+                <p className="text-sm font-medium text-gray-900 mt-1">
+                  {customerEmail}
+                </p>
               </div>
-              <h2 className="text-2xl font-bold mb-3 text-gray-900">
-                {t("checkYourEmail")}
-              </h2>
-              <p className="text-gray-600 mb-2">
-                {t("magicLinkSent")}
-              </p>
-              <p className="text-sm text-gray-500 mb-8">
-                {customerEmail}
-              </p>
-              <button
-                onClick={onClose}
-                className="w-full py-3 rounded-2xl font-semibold text-white transition-all hover:opacity-90"
-                style={{ backgroundColor: primaryColor }}
-              >
-                {t("gotIt")}
-              </button>
+
+              {error && (
+                <div className="p-3 mb-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+                  {error}
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-2">
+                    {t("verificationCode")}
+                  </label>
+                  <input
+                    id="otp"
+                    type="text"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.trim())}
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-center text-lg tracking-wider font-mono focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    placeholder={t("enterCode")}
+                    autoComplete="one-time-code"
+                    disabled={isLoading}
+                  />
+                  <p className="text-xs text-gray-500 mt-2 text-center">
+                    {t("copyPasteCode")}
+                  </p>
+                </div>
+
+                <button
+                  onClick={handleVerifyOtp}
+                  disabled={isLoading || otp.length < 4}
+                  className="w-full py-3 rounded-2xl font-semibold text-white transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      {t("verifying")}
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-5 h-5" />
+                      {t("verifyAndContinue")}
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => {
+                    setEmailSent(false);
+                    setOtp("");
+                    setError(null);
+                  }}
+                  disabled={isLoading}
+                  className="w-full text-center text-sm text-gray-500 hover:text-gray-700 transition-colors py-2"
+                >
+                  {t("resendOrChangeEmail")}
+                </button>
+              </div>
             </div>
           ) : (
             <>
@@ -187,9 +309,9 @@ export function AccountCreationModal({
                   </div>
                 </div>
 
-                {/* Magic Link Button */}
+                {/* Send OTP Button */}
                 <button
-                  onClick={handleSendMagicLink}
+                  onClick={handleSendOtp}
                   disabled={isLoading}
                   className="w-full py-4 rounded-2xl font-bold text-white transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   style={{ backgroundColor: primaryColor }}
@@ -197,12 +319,12 @@ export function AccountCreationModal({
                   {isLoading ? (
                     <>
                       <Loader2 className="w-5 h-5 animate-spin" />
-                      {t("sendingLink")}
+                      {t("sendingCode")}
                     </>
                   ) : (
                     <>
                       <Mail className="w-5 h-5" />
-                      {t("sendMagicLink")}
+                      {t("sendVerificationCode")}
                     </>
                   )}
                 </button>

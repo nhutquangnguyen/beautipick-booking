@@ -25,8 +25,9 @@ export function OAuthButtons({ redirectTo = "/business/dashboard", userType, onS
         if (onSuccess) {
           onSuccess();
         } else {
-          // Refresh to update UI
-          router.refresh();
+          // Redirect to the specified page
+          console.log('[OAuthButtons] Redirecting to:', redirectTo);
+          window.location.href = redirectTo;
         }
       }
     });
@@ -48,7 +49,7 @@ export function OAuthButtons({ redirectTo = "/business/dashboard", userType, onS
       subscription.unsubscribe();
       window.removeEventListener('message', handleMessage);
     };
-  }, [supabase, router, onSuccess]);
+  }, [supabase, router, onSuccess, redirectTo]);
 
   const handleOAuthSignIn = async () => {
     setError(null);

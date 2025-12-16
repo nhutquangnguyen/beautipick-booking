@@ -356,13 +356,13 @@ export default async function Home() {
             <div className="text-center mb-16">
               <div className="inline-flex items-center gap-2 rounded-full bg-purple-100 px-4 py-1.5 text-sm font-medium text-purple-700 mb-4">
                 <BookOpen className="h-4 w-4" />
-                Blog & Insights
+                {t("blogBadge")}
               </div>
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
-                Latest from Our Blog
+                {t("blogTitle")}
               </h2>
               <p className="mt-4 text-lg text-gray-600">
-                Tips, trends, and insights for beauty professionals
+                {t("blogSubtitle")}
               </p>
             </div>
 
@@ -414,7 +414,7 @@ export default async function Home() {
                       </span>
                     </div>
                     <div className="mt-4 flex items-center gap-2 text-purple-600 font-semibold text-sm group-hover:gap-3 transition-all">
-                      Read more
+                      {t("blogReadMore")}
                       <ArrowRight className="h-4 w-4" />
                     </div>
                   </div>
@@ -427,7 +427,7 @@ export default async function Home() {
                 href="/blog"
                 className="inline-flex items-center gap-2 px-6 py-3 border-2 border-purple-600 text-purple-600 rounded-full font-semibold hover:bg-purple-50 transition-colors"
               >
-                View All Posts
+                {t("blogViewAll")}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>

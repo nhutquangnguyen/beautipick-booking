@@ -38,7 +38,7 @@ export function CheckoutFlow({
   const [tempPhone, setTempPhone] = useState("");
   const [tempName, setTempName] = useState("");
   const [showPasswordForm, setShowPasswordForm] = useState(false);
-  const [password, setPassword] = useState("");
+  const [otp, setOtp] = useState("");
   const [email, setEmail] = useState("");
   const [showAuthForm, setShowAuthForm] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
@@ -236,14 +236,9 @@ export function CheckoutFlow({
     }
   };
 
-  const handleCreateAccountWithPassword = async () => {
-    if (!email || !password) {
-      setAccountError(locale === 'vi' ? "Vui lòng nhập email và mật khẩu" : "Please enter email and password");
-      return;
-    }
-
-    if (password.length < 6) {
-      setAccountError(locale === 'vi' ? "Mật khẩu phải có ít nhất 6 ký tự" : "Password must be at least 6 characters");
+  const handleSendOtpForAccountCreation = async () => {
+    if (!email || !email.trim()) {
+      setAccountError(locale === 'vi' ? "Vui lòng nhập email" : "Please enter email");
       return;
     }
 
@@ -251,147 +246,129 @@ export function CheckoutFlow({
     setAccountError(null);
 
     try {
-      // First, sign up the user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // Store customer data in localStorage
+      localStorage.setItem('pending_checkout_account', JSON.stringify({
         email,
-        password,
+        name: checkout.customerName,
+        phone: checkout.customerPhone,
+        merchantId,
+      }));
+
+      // Send OTP
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email,
         options: {
-          data: {
-            user_type: "customer",
-            name: checkout.customerName,
-            phone: checkout.customerPhone,
-          },
+          shouldCreateUser: true,
         },
       });
 
-      if (authError) throw authError;
+      if (otpError) throw otpError;
 
-      console.log('SignUp response:', authData);
+      setEmailSent(true);
+    } catch (err) {
+      console.error("Error sending OTP:", err);
+      setAccountError(err instanceof Error ? err.message : (locale === 'vi' ? "Không thể gửi mã xác nhận" : "Unable to send verification code"));
+    } finally {
+      setIsCreatingAccount(false);
+    }
+  };
 
-      if (!authData.user) {
-        throw new Error('No user returned from signup');
-      }
+  const handleVerifyOtpForAccountCreation = async () => {
+    if (!otp || otp.trim().length < 4) {
+      setAccountError(locale === 'vi' ? "Vui lòng nhập mã xác nhận" : "Please enter verification code");
+      return;
+    }
 
-      // Create customer account
-      const response = await fetch('/api/customer-accounts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: authData.user.id,
-          email,
-          name: checkout.customerName,
-          phone: checkout.customerPhone,
-        }),
+    setIsCreatingAccount(true);
+    setAccountError(null);
+
+    try {
+      // Verify OTP
+      const { data: authData, error: verifyError } = await supabase.auth.verifyOtp({
+        email,
+        token: otp,
+        type: "email",
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        console.error('Customer account creation error:', errorData);
-        throw new Error(errorData.error || 'Failed to create customer account');
+      if (verifyError) throw verifyError;
+
+      if (!authData.user) {
+        throw new Error('No user returned from verification');
       }
 
-      const result = await response.json();
-      console.log('Customer account created successfully:', result);
+      // Get customer data from localStorage
+      const pendingAccount = localStorage.getItem('pending_checkout_account');
+      const accountData = pendingAccount ? JSON.parse(pendingAccount) : {
+        name: checkout.customerName,
+        phone: checkout.customerPhone,
+      };
 
-      // Check if session was created (email confirmation is OFF)
-      if (authData.session) {
-        // User is already logged in - link pending booking to account
-        console.log('User is logged in with session after signup');
+      // Check if customer account already exists
+      const { data: existingCustomer } = await supabase
+        .from("customer_accounts")
+        .select("id")
+        .eq("id", authData.user.id)
+        .maybeSingle();
 
-        // Link pending booking before redirect
-        const pendingBookingId = localStorage.getItem('pending_booking_id');
-        if (pendingBookingId && authData.user) {
-          console.log('[CheckoutFlow] Linking pending booking to new account:', { bookingId: pendingBookingId, userId: authData.user.id });
-          try {
-            const linkResponse = await fetch('/api/bookings', {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                bookingId: pendingBookingId,
-                customerId: authData.user.id,
-              }),
-            });
-
-            const linkResult = await linkResponse.json();
-
-            if (linkResponse.ok) {
-              console.log('[CheckoutFlow] Successfully linked booking:', linkResult);
-              localStorage.removeItem('pending_booking_id');
-              document.cookie = 'pending_booking_id=; path=/; max-age=0';
-            } else {
-              console.error('[CheckoutFlow] Failed to link booking:', linkResult);
-            }
-          } catch (error) {
-            console.error('[CheckoutFlow] Error linking booking:', error);
-          }
-        } else {
-          console.log('[CheckoutFlow] No pending booking to link', { pendingBookingId, userId: authData.user?.id });
-        }
-
-        handleCloseCheckout();
-        // Redirect to appointments page to see the booking
-        window.location.href = '/account/appointments';
-      } else {
-        // No session - need to sign in manually (happens when email confirmation is OFF but auto-confirm is enabled)
-        console.log('No session after signup, signing in manually...');
-
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
+      if (!existingCustomer) {
+        // Create customer account
+        const response = await fetch('/api/customer-accounts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: authData.user.id,
+            email,
+            name: accountData.name,
+            phone: accountData.phone,
+          }),
         });
 
-        if (signInError) {
-          console.error('Sign in error:', signInError);
-          // If sign-in fails, might need email confirmation
-          setEmailSent(true);
-          setAccountError(null);
-        } else if (signInData.session) {
-          // Successfully signed in - link pending booking to account
-          console.log('Successfully signed in after signup');
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+          console.error('Customer account creation error:', errorData);
+          throw new Error(errorData.error || 'Failed to create customer account');
+        }
 
-          // Link pending booking before redirect
-          const pendingBookingId = localStorage.getItem('pending_booking_id');
-          if (pendingBookingId && signInData.user) {
-            console.log('[CheckoutFlow] Linking pending booking to new account:', { bookingId: pendingBookingId, userId: signInData.user.id });
-            try {
-              const linkResponse = await fetch('/api/bookings', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  bookingId: pendingBookingId,
-                  customerId: signInData.user.id,
-                }),
-              });
+        console.log('Customer account created successfully');
+      }
 
-              const linkResult = await linkResponse.json();
+      // Clean up temporary data
+      localStorage.removeItem('pending_checkout_account');
 
-              if (linkResponse.ok) {
-                console.log('[CheckoutFlow] Successfully linked booking:', linkResult);
-                localStorage.removeItem('pending_booking_id');
-                document.cookie = 'pending_booking_id=; path=/; max-age=0';
-              } else {
-                console.error('[CheckoutFlow] Failed to link booking:', linkResult);
-              }
-            } catch (error) {
-              console.error('[CheckoutFlow] Error linking booking:', error);
-            }
+      // Link pending booking to account
+      const pendingBookingId = localStorage.getItem('pending_booking_id');
+      if (pendingBookingId && authData.user) {
+        console.log('[CheckoutFlow] Linking pending booking to new account:', { bookingId: pendingBookingId, userId: authData.user.id });
+        try {
+          const linkResponse = await fetch('/api/bookings', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              bookingId: pendingBookingId,
+              customerId: authData.user.id,
+            }),
+          });
+
+          const linkResult = await linkResponse.json();
+
+          if (linkResponse.ok) {
+            console.log('[CheckoutFlow] Successfully linked booking:', linkResult);
+            localStorage.removeItem('pending_booking_id');
+            document.cookie = 'pending_booking_id=; path=/; max-age=0';
           } else {
-            console.log('[CheckoutFlow] No pending booking to link', { pendingBookingId, userId: signInData.user?.id });
+            console.error('[CheckoutFlow] Failed to link booking:', linkResult);
           }
-
-          handleCloseCheckout();
-          // Redirect to appointments page to see the booking
-          window.location.href = '/account/appointments';
-        } else {
-          // Email confirmation required
-          console.log('Email confirmation required');
-          setEmailSent(true);
-          setAccountError(null);
+        } catch (error) {
+          console.error('[CheckoutFlow] Error linking booking:', error);
         }
       }
+
+      handleCloseCheckout();
+      // Redirect to appointments page to see the booking
+      window.location.href = '/account/appointments';
     } catch (err) {
-      console.error("Error creating account:", err);
-      setAccountError(err instanceof Error ? err.message : (locale === 'vi' ? "Không thể tạo tài khoản" : "Unable to create account"));
+      console.error("Error verifying OTP:", err);
+      setAccountError(err instanceof Error ? err.message : (locale === 'vi' ? "Không thể xác nhận mã" : "Unable to verify code"));
     } finally {
       setIsCreatingAccount(false);
     }
@@ -408,7 +385,7 @@ export function CheckoutFlow({
     setTempPhone("");
     setTempName("");
     setShowPasswordForm(false);
-    setPassword("");
+    setOtp("");
     setEmail("");
     setShowAuthForm(false);
     setAuthMode('login');
@@ -468,29 +445,7 @@ export function CheckoutFlow({
               {/* Account Creation Section (for guests only) */}
               {!checkout.isLoggedIn && (
                 <div className="space-y-4">
-                  {emailSent ? (
-                    <>
-                      {/* Email Verification Required */}
-                      <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl text-center">
-                        <Mail className="w-12 h-12 mx-auto mb-3" style={{ color: primaryColor }} />
-                        <p className="text-sm font-semibold text-gray-900 mb-1">
-                          {tAccount("checkYourEmail")}
-                        </p>
-                        <p className="text-xs text-gray-600">
-                          {locale === 'vi'
-                            ? `Chúng tôi đã gửi email xác nhận đến ${email}. Vui lòng kiểm tra và xác nhận để hoàn tất tạo tài khoản.`
-                            : `We've sent a confirmation email to ${email}. Please check and verify to complete your account creation.`}
-                        </p>
-                      </div>
-                      <button
-                        onClick={handleCloseCheckout}
-                        className="w-full py-4 rounded-xl font-bold text-white transition-all hover:opacity-90"
-                        style={{ backgroundColor: primaryColor }}
-                      >
-                        {tAccount("gotIt")}
-                      </button>
-                    </>
-                  ) : !showPasswordForm ? (
+                  {!showPasswordForm ? (
                     <>
                       {/* Info box */}
                       <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
@@ -504,7 +459,11 @@ export function CheckoutFlow({
 
                       {/* Create Account Button */}
                       <button
-                        onClick={() => setShowPasswordForm(true)}
+                        onClick={() => {
+                          setShowPasswordForm(true);
+                          setEmailSent(false);
+                          setOtp("");
+                        }}
                         className="w-full py-4 rounded-xl font-bold text-white transition-all hover:opacity-90 flex items-center justify-center gap-2"
                         style={{ backgroundColor: primaryColor }}
                       >
@@ -520,9 +479,82 @@ export function CheckoutFlow({
                         {t("skipForNow")}
                       </button>
                     </>
+                  ) : emailSent ? (
+                    <>
+                      {/* OTP Verification Screen */}
+                      <div className="space-y-4">
+                        <div className="text-center mb-4">
+                          <Mail className="w-12 h-12 mx-auto mb-3" style={{ color: primaryColor }} />
+                          <p className="text-sm font-semibold text-gray-900 mb-1">
+                            {tAccount("checkYourEmail")}
+                          </p>
+                          <p className="text-xs text-gray-600">
+                            {locale === 'vi'
+                              ? `Mã xác nhận đã được gửi đến ${email}`
+                              : `Verification code sent to ${email}`}
+                          </p>
+                        </div>
+
+                        {accountError && (
+                          <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600 text-center">
+                            {accountError}
+                          </div>
+                        )}
+
+                        {/* OTP Input */}
+                        <div>
+                          <label className="text-sm font-semibold text-gray-900 mb-2 block">
+                            {locale === 'vi' ? "Mã xác nhận" : "Verification Code"}
+                          </label>
+                          <input
+                            type="text"
+                            value={otp}
+                            onChange={(e) => setOtp(e.target.value.trim())}
+                            placeholder={locale === 'vi' ? "Nhập mã từ email" : "Enter code from email"}
+                            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-gray-50 focus:outline-none focus:border-purple-500 focus:bg-white transition-all text-center text-lg tracking-wider font-mono"
+                            autoComplete="one-time-code"
+                          />
+                          <p className="text-xs text-gray-500 mt-1 text-center">
+                            {locale === 'vi' ? "Sao chép và dán mã từ email" : "Copy and paste code from email"}
+                          </p>
+                        </div>
+
+                        {/* Verify Button */}
+                        <button
+                          onClick={handleVerifyOtpForAccountCreation}
+                          disabled={isCreatingAccount || otp.length < 4}
+                          className="w-full py-4 rounded-xl font-bold text-white transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                          style={{ backgroundColor: primaryColor }}
+                        >
+                          {isCreatingAccount ? (
+                            <>
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                              {locale === 'vi' ? "Đang xác nhận..." : "Verifying..."}
+                            </>
+                          ) : (
+                            <>
+                              <Check className="w-5 h-5" />
+                              {locale === 'vi' ? "Xác nhận và tạo tài khoản" : "Verify and Create Account"}
+                            </>
+                          )}
+                        </button>
+
+                        {/* Back to email */}
+                        <button
+                          onClick={() => {
+                            setEmailSent(false);
+                            setOtp("");
+                            setAccountError(null);
+                          }}
+                          className="w-full py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                        >
+                          {locale === 'vi' ? "Gửi lại mã hoặc thay đổi email" : "Resend code or change email"}
+                        </button>
+                      </div>
+                    </>
                   ) : (
                     <>
-                      {/* Password-based Account Creation Form */}
+                      {/* Email OTP Account Creation Form */}
                       <div className="space-y-4">
                         {accountError && (
                           <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600 text-center">
@@ -649,30 +681,24 @@ export function CheckoutFlow({
                           />
                         </div>
 
-                        {/* Password Input */}
-                        <div>
-                          <label className="text-sm font-semibold text-gray-900 mb-2 block">Password</label>
-                          <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="••••••••"
-                            minLength={6}
-                            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-gray-50 focus:outline-none focus:border-purple-500 focus:bg-white transition-all"
-                          />
-                          <p className="text-xs text-gray-500 mt-1">
-                            {locale === 'vi' ? "Ít nhất 6 ký tự" : "At least 6 characters"}
-                          </p>
-                        </div>
-
-                        {/* Create Account Button */}
+                        {/* Send OTP Button */}
                         <button
-                          onClick={handleCreateAccountWithPassword}
-                          disabled={isCreatingAccount || !email.trim() || !password || password.length < 6}
-                          className="w-full py-4 rounded-xl font-bold text-white transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                          onClick={handleSendOtpForAccountCreation}
+                          disabled={isCreatingAccount || !email.trim()}
+                          className="w-full py-4 rounded-xl font-bold text-white transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                           style={{ backgroundColor: primaryColor }}
                         >
-                          {isCreatingAccount ? t("creating") : tAccount("createAccount")}
+                          {isCreatingAccount ? (
+                            <>
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                              {locale === 'vi' ? "Đang gửi..." : "Sending..."}
+                            </>
+                          ) : (
+                            <>
+                              <Mail className="w-5 h-5" />
+                              {locale === 'vi' ? "Gửi mã xác nhận" : "Send Verification Code"}
+                            </>
+                          )}
                         </button>
 
                         {/* Back to options */}
@@ -680,7 +706,7 @@ export function CheckoutFlow({
                           onClick={() => {
                             setShowPasswordForm(false);
                             setEmail("");
-                            setPassword("");
+                            setOtp("");
                             setAccountError(null);
                           }}
                           className="w-full py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
