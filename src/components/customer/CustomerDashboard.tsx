@@ -254,14 +254,14 @@ export function CustomerDashboard({ customer, bookings }: CustomerDashboardProps
                         booking.cart_items.map((item: any, index: number) => (
                           <div key={index} className="flex justify-between items-center text-sm">
                             <span className="text-gray-900">
-                              {item.type === "service" ? item.service.name : item.product.name}
-                              {item.type === "product" && ` × ${item.quantity}`}
+                              {item.type === "service" ? item.service?.name || "Service" : item.product?.name || "Product"}
+                              {item.type === "product" && item.quantity && ` × ${item.quantity}`}
                             </span>
                             <span className="font-semibold text-gray-900">
                               {formatPrice(
                                 item.type === "service"
-                                  ? item.service.price
-                                  : item.product.price * item.quantity,
+                                  ? item.service?.price || 0
+                                  : (item.product?.price || 0) * (item.quantity || 1),
                                 booking.merchants.currency
                               )}
                             </span>
