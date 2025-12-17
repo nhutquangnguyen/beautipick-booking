@@ -49,42 +49,39 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Check user type for route protection
+  // Check user profiles for route protection
+  // Allow users with both merchant and customer accounts to access both areas
   if (user && (request.nextUrl.pathname.startsWith("/business/dashboard") || request.nextUrl.pathname.startsWith("/customer"))) {
-    const { data: userType } = await supabase
-      .from("user_types")
-      .select("user_type")
-      .eq("user_id", user.id)
+    // Check if user has merchant profile
+    const { data: merchantProfile } = await supabase
+      .from("merchants")
+      .select("id")
+      .eq("id", user.id)
       .maybeSingle();
 
-    // If no user_type found, check if user is a merchant (has merchant profile)
-    if (!userType) {
-      const { data: merchantProfile } = await supabase
-        .from("merchants")
-        .select("id")
-        .eq("id", user.id)
-        .maybeSingle();
+    // Check if user has customer profile
+    const { data: customerProfile } = await supabase
+      .from("customer_accounts")
+      .select("id")
+      .eq("id", user.id)
+      .maybeSingle();
 
-      // Redirect based on what profile exists
-      if (request.nextUrl.pathname.startsWith("/customer") && merchantProfile) {
-        const url = request.nextUrl.clone();
-        url.pathname = "/business/dashboard";
-        return NextResponse.redirect(url);
-      }
-    } else {
-      // Prevent customers from accessing merchant dashboard
-      if (request.nextUrl.pathname.startsWith("/business/dashboard") && userType.user_type === "customer") {
-        const url = request.nextUrl.clone();
-        url.pathname = "/customer";
-        return NextResponse.redirect(url);
-      }
+    // Block access to business dashboard if user has NO merchant profile
+    if (request.nextUrl.pathname.startsWith("/business/dashboard") && !merchantProfile) {
+      const url = request.nextUrl.clone();
+      // If they have a customer profile, redirect to customer dashboard
+      // Otherwise redirect to business login
+      url.pathname = customerProfile ? "/customer" : "/business/login";
+      return NextResponse.redirect(url);
+    }
 
-      // Prevent merchants from accessing customer dashboard
-      if (request.nextUrl.pathname.startsWith("/customer") && userType.user_type === "merchant") {
-        const url = request.nextUrl.clone();
-        url.pathname = "/business/dashboard";
-        return NextResponse.redirect(url);
-      }
+    // Block access to customer dashboard if user has NO customer profile
+    if (request.nextUrl.pathname.startsWith("/customer") && !customerProfile) {
+      const url = request.nextUrl.clone();
+      // If they have a merchant profile, redirect to business dashboard
+      // Otherwise redirect to home
+      url.pathname = merchantProfile ? "/business/dashboard" : "/";
+      return NextResponse.redirect(url);
     }
   }
 
@@ -94,18 +91,29 @@ export async function updateSession(request: NextRequest) {
       request.nextUrl.pathname === "/signup") &&
     user
   ) {
-    // Check user type to redirect appropriately
-    const { data: userType } = await supabase
-      .from("user_types")
-      .select("user_type")
-      .eq("user_id", user.id)
+    // Check what profiles the user has to redirect appropriately
+    const { data: merchantProfile } = await supabase
+      .from("merchants")
+      .select("id")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const { data: customerProfile } = await supabase
+      .from("customer_accounts")
+      .select("id")
+      .eq("id", user.id)
       .maybeSingle();
 
     const url = request.nextUrl.clone();
-    if (userType?.user_type === "customer") {
-      url.pathname = "/customer";
-    } else {
+    // If user has customer profile (with or without merchant), redirect to home
+    // If user only has merchant profile, redirect to business dashboard
+    if (customerProfile) {
+      url.pathname = "/";
+    } else if (merchantProfile) {
       url.pathname = "/business/dashboard";
+    } else {
+      // No profile found, allow them to continue to signup/login
+      return supabaseResponse;
     }
     return NextResponse.redirect(url);
   }
